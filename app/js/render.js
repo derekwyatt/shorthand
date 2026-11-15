@@ -166,6 +166,20 @@ export function pathData(compiled, unit, origin) {
   return d;
 }
 
+// The pen-down strokes of compiled geometry, in writing order: runs of cubic segments
+// with no pen lift between them. A joined outline is one stroke; a sentence has one per
+// outline (and per punctuation mark). Each run has the shape of compiled geometry.
+export function penStrokes(compiled) {
+  const runs = [];
+  let run = null;
+  for (const seg of compiled.segments) {
+    if (seg.type === 'dot') continue;
+    if (!run || !same(run[run.length - 1].p3, seg.p0)) runs.push(run = []);
+    run.push(seg);
+  }
+  return runs.map((segments) => ({ segments, start: segments[0].p0, end: segments[segments.length - 1].p3 }));
+}
+
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const el = (name, attrs = {}) => {
   const node = document.createElementNS(SVG_NS, name);
@@ -192,12 +206,16 @@ export function renderCompiledSVG(compiled, {
 
   const svg = el('svg', { viewBox: `0 0 ${fmt(width)} ${fmt(height)}`, width: fmt(width), height: fmt(height), class: 'stroke-svg' });
   svg.setAttribute('aria-label', label);
-  const parts = { svg, compiled, ink: null, dots: [], startMark: null, arrow: null };
+  // One path per pen-down stroke, each with its own start mark and end arrow.
+  const parts = { svg, compiled, strokes: [], dots: [] };
 
-  const d = pathData(compiled, unit, origin);
-  if (d) {
-    parts.ink = el('path', { d, fill: 'none', stroke: color, 'stroke-width': strokeWidth, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', class: 'ink' });
-    svg.append(parts.ink);
+  for (const run of penStrokes(compiled)) {
+    const ink = el('path', { d: pathData(run, unit, origin), fill: 'none', stroke: color, 'stroke-width': strokeWidth, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', class: 'ink' });
+    svg.append(ink);
+    const s = toPx(run.start, unit, origin);
+    const startMark = el('circle', { cx: fmt(s.x), cy: fmt(s.y), r: strokeWidth * 1.8, fill: '#2e9d4f', class: 'start-mark' });
+    svg.prepend(startMark); // under the ink, so small circles stay visible
+    parts.strokes.push({ run, ink, startMark, arrow: null });
   }
   for (const seg of compiled.segments.filter((s) => s.type === 'dot')) {
     const p = toPx(seg.p, unit, origin);
@@ -206,13 +224,10 @@ export function renderCompiledSVG(compiled, {
     svg.append(dot);
   }
 
-  if (parts.ink) {
-    const s = toPx(compiled.start, unit, origin);
-    parts.startMark = el('circle', { cx: fmt(s.x), cy: fmt(s.y), r: strokeWidth * 1.8, fill: '#2e9d4f', class: 'start-mark' });
-    svg.prepend(parts.startMark); // under the ink, so small circles stay visible
-
-    const e = toPx(compiled.end, unit, origin);
-    const t = tangent(compiled, 'end');
+  // Arrows go on top of all the ink.
+  for (const stroke of parts.strokes) {
+    const e = toPx(stroke.run.end, unit, origin);
+    const t = tangent(stroke.run, 'end');
     const dir = { x: t.x, y: -t.y }; // y down
     const nrm = { x: -dir.y, y: dir.x };
     const L = strokeWidth * 3.2;
@@ -220,32 +235,34 @@ export function renderCompiledSVG(compiled, {
     const tip = add(e, mul(dir, strokeWidth * 0.8));
     const back = add(tip, mul(dir, -L));
     const pts = [tip, add(back, mul(nrm, W)), add(back, mul(nrm, -W))].map((p) => `${fmt(p.x)},${fmt(p.y)}`).join(' ');
-    parts.arrow = el('polygon', { points: pts, fill: '#d0473a', class: 'arrow' });
-    svg.append(parts.arrow);
+    stroke.arrow = el('polygon', { points: pts, fill: '#d0473a', class: 'arrow' });
+    svg.append(stroke.arrow);
   }
 
   svg.parts = parts;
   return svg;
 }
 
-// Animates the stroke being written, in its writing direction. Resolves when done.
-export function animateStroke(svg, { msPerPx = 9, minMs = 350 } = {}) {
-  const { ink, dots, arrow, startMark } = svg.parts;
+// Animates the outline being written, one pen stroke after another, each in its writing
+// direction. Resolves when done.
+export function animateStroke(svg, { msPerPx = 9, minMs = 350, gapMs = 120 } = {}) {
+  const { strokes, dots } = svg.parts;
   const anims = [];
-  if (ink) {
+  let at = 0;
+  for (const { ink, startMark, arrow } of strokes) {
     const len = ink.getTotalLength();
     const duration = Math.max(minMs, len * msPerPx);
     ink.style.strokeDasharray = `${len} ${len}`;
-    if (startMark) startMark.style.opacity = '1';
+    // The start mark shows when this stroke begins; the arrow once its ink reaches the end.
+    anims.push(startMark.animate([{ opacity: 0 }, { opacity: 1 }],
+      { delay: at, duration: 120, fill: 'both' }).finished);
     anims.push(ink.animate(
       [{ strokeDashoffset: len }, { strokeDashoffset: 0 }],
-      { duration, easing: 'cubic-bezier(.4,0,.6,1)', fill: 'forwards' },
+      { delay: at, duration, easing: 'cubic-bezier(.4,0,.6,1)', fill: 'both' },
     ).finished);
-    // The arrow appears once the ink reaches the end.
-    if (arrow) {
-      anims.push(arrow.animate([{ opacity: 0 }, { opacity: 1 }],
-        { delay: duration, duration: 150, fill: 'both' }).finished);
-    }
+    anims.push(arrow.animate([{ opacity: 0 }, { opacity: 1 }],
+      { delay: at + duration, duration: 150, fill: 'both' }).finished);
+    at += duration + gapMs;
   }
   for (const dot of dots) {
     anims.push(dot.animate([{ opacity: 0, transform: 'scale(0.2)' }, { opacity: 1, transform: 'scale(1)' }],

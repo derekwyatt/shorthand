@@ -10,7 +10,7 @@
 import { STROKES, STROKE_BY_ID } from '../data/strokes.js';
 import { EXAMPLES } from '../data/examples.js';
 import { circleRotation, JOIN_CIRCLE, layoutWords } from './join.js';
-import { samplePoints, tangent } from './render.js';
+import { samplePoints, tangent, cubicPoint } from './render.js';
 
 const DEG = 180 / Math.PI;
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
@@ -95,7 +95,20 @@ export function modelUnits(example) {
     }
     const main = toks.filter((t) => t !== 'h');
     const consonants = main.filter((t) => !isCircleTok(t));
-    if (consonants.length !== 1) throw new Error(`assessment supports one consonant per outline (${toks.join(' ')})`);
+    if (consonants.length >= 2) {
+      // Joined consonants (level 7): the whole shape is matched, not its parts.
+      const geometry = { ...w.compiled, segments: [], tokenOf: [] };
+      w.compiled.segments.forEach((seg, k) => {
+        if (seg.type === 'dot') return;
+        geometry.segments.push(seg);
+        geometry.tokenOf.push(w.compiled.tokenOf[k]);
+      });
+      units.push({
+        kind: 'outline', shape: true, word: w.text, tokens: main, allTokens: toks, consonant: STROKE_BY_ID[consonants[0]],
+        circles: [], compiled: geometry, start: geometry.start,
+      });
+      continue;
+    }
     const cons = STROKE_BY_ID[consonants[0]];
     const ci = main.indexOf(consonants[0]);
     const circles = main.flatMap((t, i) => (isCircleTok(t) ? [{ tok: t, at: i < ci ? 'start' : 'end', rot: circleRotation(cons) }] : []));
@@ -308,6 +321,129 @@ function assessOutline(model, user, scale) {
   return { score: Math.round(100 - Math.min(100, penalty)), critiques, readsAs: best?.stroke.id ?? null, loops };
 }
 
+// ---------------------------------------------------------------- one joined outline (level 7)
+
+// Whole-shape scoring for outlines of 2+ consonants. Calibrated on the level 7 words:
+// a perfect copy with hand jitter scores >= 90; another word's outline scores < 70.
+export const SHAPE = {
+  samples: 64,
+  sizeBand: [0.7, 1.4], // userLength / (modelLength * scale) outside this is a size critique
+  slope: 330,           // score points lost per unit of mean normalised shape distance
+  drift: 0.2,           // U: a token whose samples are this far from the model on average drifts
+  reverseSmall: 0.12,   // a reversed fit this close (normalised) counts as "written backwards"
+};
+
+// Points and the token that owns each one, along the model outline.
+function modelPath(unit) {
+  const pts = [];
+  const owner = [];
+  unit.compiled.segments.forEach((seg, k) => {
+    for (let i = pts.length ? 1 : 0; i <= 32; i++) { pts.push(cubicPoint(seg, i / 32)); owner.push(unit.compiled.tokenOf[k]); }
+  });
+  return { pts, owner };
+}
+
+// n points evenly spaced by arc length (owner = token of the sample point, if given).
+function resample(pts, n, owner = null) {
+  const acc = cumulative(pts);
+  const total = acc[acc.length - 1];
+  const out = [];
+  const own = [];
+  let j = 1;
+  for (let k = 0; k < n; k++) {
+    const target = (total * k) / (n - 1);
+    while (j < pts.length - 1 && acc[j] < target) j++;
+    const span = acc[j] - acc[j - 1];
+    const f = span > 1e-12 ? clamp((target - acc[j - 1]) / span, 0, 1) : 0;
+    out.push({ x: pts[j - 1].x + f * (pts[j].x - pts[j - 1].x), y: pts[j - 1].y + f * (pts[j].y - pts[j - 1].y) });
+    if (owner) own.push(owner[f < 0.5 ? j - 1 : j]);
+  }
+  return { pts: out, owner: own, length: total };
+}
+
+// Mean distance between two equally sampled paths after scaling each to unit length and
+// centring it on its centroid.
+function shapeDistance(a, la, b, lb) {
+  const ca = centroid(a), cb = centroid(b);
+  let sum = 0;
+  for (let i = 0; i < a.length; i++) sum += Math.hypot((a[i].x - ca.x) / la - (b[i].x - cb.x) / lb, (a[i].y - ca.y) / la - (b[i].y - cb.y) / lb);
+  return sum / a.length;
+}
+
+function distToPath(p, path) {
+  let best = Infinity;
+  for (let i = 1; i < path.length; i++) {
+    const a = path[i - 1], b = path[i];
+    const v = sub(b, a);
+    const L2 = v.x * v.x + v.y * v.y;
+    const f = L2 > 1e-12 ? clamp(((p.x - a.x) * v.x + (p.y - a.y) * v.y) / L2, 0, 1) : 0;
+    best = Math.min(best, Math.hypot(p.x - a.x - f * v.x, p.y - a.y - f * v.y));
+  }
+  return best;
+}
+
+// "the r", "the a-circle at the beginning", "the e-circle between k and t".
+function tokenPhrase(tokens, i) {
+  const t = tokens[i];
+  if (!isCircleTok(t)) return `the ${t === 'h' ? 'h-dot' : strokeName(STROKE_BY_ID[t])}`;
+  const nameAt = (k) => (tokens[k] ? strokeName(STROKE_BY_ID[tokens[k]]) : null);
+  const [p, n] = [nameAt(i - 1), nameAt(i + 1)];
+  if (p && n) return `the ${t}-circle between ${p} and ${n}`;
+  return `the ${t}-circle at the ${p ? 'end' : 'beginning'}`;
+}
+
+export function assessShape(unit, user, { scale = 1 } = {}) {
+  const critiques = [];
+  let penalty = 0;
+  const add = (level, text, p) => { critiques.push({ level, text }); penalty += p; };
+  const q = `“${unit.word}”`;
+  const model = modelPath(unit);
+  const modelLen = pathLen(model.pts);
+  const userLen = pathLen(user.pts);
+  const result = { score: 0, critiques, readsAs: null, loops: {}, pieces: [], align: null };
+  if (userLen < 0.12) {
+    add('error', `I couldn't find the stroke for ${q}.`, 100);
+    return result;
+  }
+
+  const M = resample(model.pts, SHAPE.samples, model.owner);
+  const U = resample(user.pts, SHAPE.samples);
+  const ratio = userLen / (modelLen * scale);
+  const [lo, hi] = SHAPE.sizeBand;
+  if (ratio > hi) add(ratio > 1.8 ? 'error' : 'warn', `Too big: about ${ratio.toFixed(1)}× the size of ${q}.`, Math.min(25, (Math.log(ratio) - Math.log(hi)) * 80));
+  else if (ratio < lo) add(ratio < 0.55 ? 'error' : 'warn', `Too small: about ${ratio.toFixed(1)}× the size of ${q}.`, Math.min(25, (Math.log(1 / ratio) - Math.log(1 / lo)) * 80));
+
+  const d = shapeDistance(M.pts, modelLen, U.pts, userLen);
+  const dRev = shapeDistance([...M.pts].reverse(), modelLen, U.pts, userLen);
+  result.d = d;
+  result.dRev = dRev;
+  const reversed = dRev < 0.6 * d && dRev < SHAPE.reverseSmall;
+  if (reversed) {
+    const start = angleOf(sub(M.pts[Math.min(3, M.pts.length - 1)], M.pts[0]));
+    add('error', `Wrong direction: ${q} starts ${angleText(start)}; you wrote it from the other end.`, 0);
+  }
+  penalty += d * SHAPE.slope;
+
+  // Localise: lay the model over the learner's shape (same size, same centre) and measure
+  // how far each model sample is from the ink; a token's drift is its mean.
+  const s = userLen / modelLen;
+  const cM = centroid(M.pts), cU = centroid(U.pts);
+  const place = (p) => ({ x: cU.x + s * (p.x - cM.x), y: cU.y + s * (p.y - cM.y) });
+  const devs = M.pts.map((p) => distToPath(place(p), U.pts) / s);
+  const sums = new Map();
+  M.owner.forEach((tok, i) => { const e = sums.get(tok) ?? { n: 0, sum: 0 }; e.n++; e.sum += devs[i]; sums.set(tok, e); });
+  let worst = null;
+  for (const [tok, e] of sums) {
+    const mean = e.sum / e.n;
+    result.pieces.push({ token: tok, dev: mean, ok: mean <= SHAPE.drift });
+    if (!worst || mean > worst.mean) worst = { tok, mean };
+  }
+  if (worst && worst.mean > SHAPE.drift && !reversed) add('warn', `Drifts from the model at ${tokenPhrase(unit.allTokens, worst.tok)}.`, 0);
+  result.align = { s, cM, cU };
+  result.score = Math.round(100 - clamp(penalty, 0, 100));
+  return result;
+}
+
 // ---------------------------------------------------------------- whole attempt
 
 // Alignment of model outlines with the learner's strokes, in writing order. Outlines
@@ -321,8 +457,12 @@ function align(models, users, scale) {
     const ma = angleOf(sub(mp[mp.length - 1], mp[0])), ua = angleOf(sub(u.pts[u.pts.length - 1], u.pts[0]));
     const lr = Math.abs(Math.log(Math.max(pathLen(u.pts) / scale, 0.05) / pathLen(mp)));
     const mb = strokeFeatures(mp).bulge, ub = strokeFeatures(u.pts).bulge;
-    const bend = Math.abs(mb) > 0.05 && Math.abs(ub) > 0.05 && Math.sign(mb) !== Math.sign(ub) ? 0.3 : 0;
-    return Math.min(1, 0.5 * Math.abs(wrap(ua - ma)) / 180 + 0.5 * Math.min(1, lr / Math.log(4)) + bend);
+    const bend = !m.shape && Math.abs(mb) > 0.05 && Math.abs(ub) > 0.05 && Math.sign(mb) !== Math.sign(ub) ? 0.3 : 0;
+    // A joined outline written from the wrong end still pairs with its model (and is then
+    // told so), at a small extra cost.
+    const turn = Math.abs(wrap(ua - ma)) / 180;
+    const angle = m.shape ? Math.min(turn, Math.abs(wrap(ua - ma - 180)) / 180 + 0.2) : turn;
+    return Math.min(1, 0.5 * angle + 0.5 * Math.min(1, lr / Math.log(4)) + bend);
   };
   const GAP = 0.75;
   const n = models.length, k = users.length;
@@ -387,12 +527,12 @@ export function assessAttempt(example, strokes, unitPx, { scale = 1 } = {}) {
   const byModel = new Map();
   for (const p of pairs) {
     if (p.m && p.u) {
-      const r = assessOutline(p.m, p.u, lenScale);
+      const r = p.m.shape ? assessShape(p.m, p.u, { scale: lenScale }) : assessOutline(p.m, p.u, lenScale);
       const res = { unit: p.m, user: p.u, weight: 1, ...r };
       results.push(res);
       byModel.set(p.m, res);
     } else if (p.m) {
-      results.push({ unit: p.m, user: null, weight: 1, score: 0, missing: true, critiques: [{ level: 'error', text: `Missing: ${label(p.m) ?? strokeName(p.m.consonant)}.` }] });
+      results.push({ unit: p.m, user: null, weight: 1, score: 0, missing: true, critiques: [{ level: 'error', text: `Missing: ${label(p.m) ?? (p.m.shape ? `“${p.m.word}”` : strokeName(p.m.consonant))}.` }] });
     } else {
       extras.push(p.u);
     }
@@ -480,6 +620,22 @@ function checkPattern(results, { complete, lenScale, fit }) {
   for (const r of results) {
     const ok = !r.missing && !r.critiques.some((c) => c.level === 'error');
     if (r.unit.kind === 'outline') {
+      if (r.pieces && r.align && r.user) {
+        // Joined outline: one piece per token, green where it matches, red where it drifts.
+        const { s, cM, cU } = r.align;
+        const T = (p) => ({ x: cU.x + s * (p.x - cM.x), y: cU.y + s * (p.y - cM.y) });
+        const segs = r.unit.compiled.segments;
+        const okOf = new Map(r.pieces.map((x) => [x.token, x.ok]));
+        let k = 0;
+        while (k < segs.length) {
+          const tok = r.unit.compiled.tokenOf[k];
+          let e = k;
+          while (e < segs.length && r.unit.compiled.tokenOf[e] === tok) e++;
+          out.push({ kind: 'outline', word: r.unit.word, ok: okOf.get(tok) ?? true, segments: mapSegments(segs.slice(k, e), T) });
+          k = e;
+        }
+        continue;
+      }
       const T = placeOutline.get(r.unit);
       if (T) out.push({ kind: 'outline', word: r.unit.word, ok, segments: mapSegments(r.unit.compiled.segments, T) });
       continue;

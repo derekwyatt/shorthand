@@ -7,6 +7,7 @@ import { assessAttempt } from './assess.js';
 import { assessRepeats, repeatIndexFor, practiceLines } from './repeats.js';
 import { createAssist } from './assist.js';
 import { createQuiz } from './quiz.js';
+import { createLessons } from './lessons.js';
 import { getWriterScale, learnWriterScale } from './writer.js';
 
 // v2: strokes are kept per example. (v1 kept one global page; it is ignored.)
@@ -18,10 +19,13 @@ const spacingInput = $('spacing');
 const fingerInput = $('finger');
 let index = Math.min(Math.max(0, EXAMPLES.findIndex((e) => e.id === saved.exampleId)), EXAMPLES.length - 1);
 const currentExample = () => EXAMPLES[index];
+// The example the guide follows: the practice example, or the lesson's write step.
+const guidedExample = () => (inLessons() ? lessons.example() : currentExample());
 
 const guideInput = $('guide-on');
 const unitPx = () => pad.lineSpacing / U_PER_LINE;
 const inQuiz = () => document.body.classList.contains('view-quiz');
+const inLessons = () => document.body.classList.contains('view-learn');
 // y (px) of the line whose stats the panel shows; null shows every line.
 let pickedY = null;
 
@@ -33,6 +37,12 @@ const pad = new InkPad($('ink'), {
   onChange: (stroke) => {
     if (inQuiz()) {
       quiz.onPadChange();
+      return;
+    }
+    if (inLessons()) {
+      const result = lessons.onPadChange();
+      if (stroke && result) assist.afterStroke(result, stroke);
+      if (!pad.strokes.length) assist.reset();
       return;
     }
     const id = currentExample().id;
@@ -55,8 +65,9 @@ const panel = createExamplePanel({
   art: $('ex-art'), title: $('ex-title'), meaning: $('ex-meaning'), source: $('ex-source'), counter: $('ex-counter'),
   score: $('ex-score'), verdict: $('ex-verdict'), hint: $('ex-repeat-hint'), critiques: $('ex-critiques'),
 });
-const assist = createAssist({ overlay: $('guide'), check: $('check'), hint: $('hint'), unitPx, nextIndex: (strokes, point) => repeatIndexFor(currentExample(), strokes, point, { unitPx: unitPx(), lineSpacing: pad.lineSpacing }), enabled: () => guideInput.checked && !inQuiz() });
+const assist = createAssist({ overlay: $('guide'), check: $('check'), hint: $('hint'), unitPx, nextIndex: (strokes, point) => repeatIndexFor(guidedExample(), strokes, point, { unitPx: unitPx(), lineSpacing: pad.lineSpacing }), enabled: () => guideInput.checked && !inQuiz() && !!guidedExample() });
 const quiz = createQuiz({ panel: $('quiz-panel'), pad, assist, unitPx });
+const lessons = createLessons({ panel: $('lesson-panel'), pad, assist, unitPx });
 
 spacingInput.value = saved.lineSpacing;
 fingerInput.checked = saved.acceptTouch;
@@ -74,8 +85,11 @@ goTo(index, { animate: true });
 
 spacingInput.addEventListener('input', () => {
   applySpacing(Number(spacingInput.value));
-  showPanel(false);
-  refreshAssessment();
+  if (inLessons()) lessons.refresh();
+  else {
+    showPanel(false);
+    refreshAssessment();
+  }
   persist();
 });
 fingerInput.addEventListener('change', () => {
@@ -96,8 +110,9 @@ $('reset-all').addEventListener('click', () => {
   location.reload();
 });
 
-// Routing between views: #pad (practice, default), #quiz (shares the pad) and #strokes.
-const VIEWS = ['pad', 'strokes', 'quiz'];
+// Routing between views: #pad (practice, default), #learn and #quiz (both share the pad)
+// and #strokes.
+const VIEWS = ['pad', 'learn', 'strokes', 'quiz'];
 let gallery = null;
 let lastView = null;
 function route() {
@@ -107,6 +122,7 @@ function route() {
   const wasElsewhere = lastView !== null && lastView !== 'pad';
   lastView = view;
   if (view === 'quiz') quiz.show();
+  else if (view === 'learn') lessons.show();
   else if (wasElsewhere && view === 'pad') goTo(index, { animate: false });
   for (const a of document.querySelectorAll('.modes a')) a.classList.toggle('active', a.dataset.view === view);
   if (view === 'strokes') {
@@ -127,6 +143,10 @@ document.addEventListener('keydown', (e) => {
     goTo(index + 1);
   } else if (document.body.classList.contains('view-pad') && e.key === 'ArrowLeft') {
     goTo(index - 1);
+  } else if (inLessons() && e.key === 'ArrowRight') {
+    lessons.next();
+  } else if (inLessons() && e.key === 'ArrowLeft') {
+    lessons.prev();
   }
 });
 // iOS Safari ignores user-scalable=no; block pinch and double-tap zoom on the whole page.
@@ -168,7 +188,7 @@ function evaluate(strokes = pad.strokes) {
 }
 
 function refreshAssessment() {
-  if (inQuiz()) return;
+  if (inQuiz() || inLessons()) return;
   const result = evaluate();
   showAssessment(result);
   assist.drawCheck(result);

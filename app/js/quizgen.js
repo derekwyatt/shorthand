@@ -59,7 +59,11 @@ function similarity(answer, other) {
 function pickChoices(answer, pool, rng) {
   const inPool = (e) => e.title !== answer.title;
   const sameLevel = pool.filter((e) => e.level === answer.level && inPool(e));
-  const sameKind = sameLevel.length >= CHOICES - 1 ? sameLevel : pool.filter((e) => e.kind === answer.kind && inPool(e));
+  const sameLevelKind = sameLevel.filter((e) => e.kind === answer.kind);
+  // Prefer the answer's level and kind (level 8 mixes words and brief forms).
+  let sameKind = pool.filter((e) => e.kind === answer.kind && inPool(e));
+  if (sameLevelKind.length >= CHOICES - 1) sameKind = sameLevelKind;
+  else if (sameLevel.length >= CHOICES - 1) sameKind = sameLevel;
   const scored = shuffle(sameKind, rng).map((e) => ({ e, s: similarity(answer, e) }));
   scored.sort((a, b) => b.s - a.s);
   const picked = [];
@@ -80,7 +84,7 @@ function writePrompt(example, rng) {
     return `Write the letter “${example.title}”.`;
   }
   if (example.kind === 'brief') return `Write the brief form for “${example.title.split(' / ')[0]}”.`;
-  if (example.kind === 'word') return `Write the word “${example.title}”.`;
+  if (example.kind === 'word') return `Write the word “${example.title.split(' / ')[0]}”.`;
   return `Write the sentence: “${example.title}”`;
 }
 

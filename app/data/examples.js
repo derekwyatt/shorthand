@@ -38,6 +38,8 @@ export const LEVELS = [
   { id: 4, name: 'Circle words II', description: 'The same circle rules on p b f v sh ch j nk and the blends' },
   { id: 5, name: 'Short sentences', description: 'Two to four words' },
   { id: 6, name: 'Long sentences', description: 'Five to eight words' },
+  { id: 7, name: 'Joined words', description: 'Circles between strokes and joined curves (Manual §14–22)' },
+  { id: 8, name: 'Blends and drill', description: 'The ted and men blends, the frequent-word drill and brief forms (Manual §26–29)' },
 ];
 
 const quote = (words) => words.map((w) => `“${w}”`).join(', ');
@@ -91,7 +93,7 @@ const WORDS = [
 const BUILT_SOURCE = 'Built by the rules of Manual §11–12';
 const WORDS_3B = [
   ['era', ['e', 'r', 'a'], R11], ['lay', ['l', 'a'], R11], ['knee', ['n', 'e'], R12], ['nay', ['n', 'a'], R12],
-  ['any', ['e', 'n', 'e'], R12], ['eighty', ['a', 't', 'e'], R12],
+  ['eighty', ['a', 't', 'e'], R12],
 ];
 const WORDS_4 = [
   ['pay', ['p', 'a'], R11], ['pea', ['p', 'e'], R11], ['ape', ['a', 'p'], R11], ['happy', ['h', 'a', 'p', 'e'], R11, H],
@@ -101,6 +103,145 @@ const WORDS_4 = [
   ['age', ['a', 'j'], R12], ['edge', ['e', 'j'], R12], ['jay', ['j', 'a'], R12], ['ink', ['e', 'nk'], R12],
   ['inky', ['e', 'nk', 'e'], R12], ['eaten', ['e', 'ten'], R11], ['aunt', ['a', 'nd'], R11],
   ['aimed', ['a', 'md'], R11], ['many', ['men', 'e'], R11], ['amen', ['a', 'men'], R11],
+];
+
+// Level 7: Manual Unit 2 (pp. 7–9). The words and outlines are transcribed in
+// reference/manual-unit2.md; each carries the rule of the § it is printed under.
+const R14 = 'Where an angle, or a point, is formed at the junction of consonants, the circle goes outside the angle (Manual §14).';
+const R15 = 'Where straight strokes and curves join without an angle, or where two similar-motion curves join without an angle, the circle is placed inside the curve (Manual §15).';
+const R17 = 'Between straight strokes in the same direction the circle is written with right motion (Manual §17).';
+const R18 = 'Between opposite curves the circle is turned back on the first curve (Manual §18).';
+const R19 = 'K and r, and g and l, are equal curves and are made a little flatter than usual when joined (Manual §19).';
+const R20 = 'Where curves of unequal length join without an angle, note how a distinction in length is positively shown. The movement in writing gr is similar to that in writing y in longhand; kl to that in writing h (Manual §20).';
+const R21 = 'Since r and k are of equal length, the curves are somewhat flatter, as with kr and gl (Manual §21).';
+const R22 = 'The sign for t is curved to express th (Manual §22).';
+const N16 = 'The e in the words taken and maker is absolutely useless, and is omitted (Manual §16).';
+
+// [word(s), outline, rule, page, extra note]
+const WORDS_7 = [
+  ['kick', ['k', 'e', 'k'], R14, 7],
+  ['cake', ['k', 'a', 'k'], R14, 7],
+  ['get', ['g', 'e', 't'], R14, 7],
+  ['gate', ['g', 'a', 't'], R14, 7],
+  ['calm', ['k', 'a', 'm'], R14, 7],
+  ['make', ['m', 'a', 'k'], R14, 7],
+  ['met', ['m', 'e', 't'], R14, 7],
+  ['maid', ['m', 'a', 'd'], R14, 7],
+  ['team', ['t', 'e', 'm'], R14, 7],
+  ['rear', ['r', 'e', 'r'], R14, 7],
+  ['rain', ['r', 'a', 'n'], R14, 7],
+  ['rim', ['r', 'e', 'm'], R14, 7],
+  ['tale', ['t', 'a', 'l'], R14, 7],
+  ['rainy', ['r', 'a', 'n', 'e'], R14, 7],
+  ['dream', ['d', 'r', 'e', 'm'], R14, 7],
+  ['writ', ['r', 'e', 't'], R15, 7],
+  ['rid / red / read', ['r', 'e', 'd'], R15, 7],
+  ['rate', ['r', 'a', 't'], R15, 7],
+  ['raid', ['r', 'a', 'd'], R15, 7],
+  ['ticket', ['t', 'e', 'k', 'e', 't'], R15, 7],
+  ['tack / take', ['t', 'a', 'k'], R15, 7],
+  ['deck', ['d', 'e', 'k'], R15, 7],
+  ['dig', ['d', 'e', 'g'], R15, 7],
+  ['tag', ['t', 'a', 'g'], R15, 7],
+  ['taken', ['t', 'a', 'k', 'n'], R15, 7, N16],
+  ['rattle', ['r', 'a', 't', 'l'], R15, 7],
+  ['riddle', ['r', 'e', 'd', 'l'], R15, 7],
+  ['deed', ['d', 'e', 'd'], R17, 8],
+  ['dad', ['d', 'a', 'd'], R17, 8],
+  ['mean', ['m', 'e', 'n'], R17, 8],
+  ['main', ['m', 'a', 'n'], R17, 8],
+  ['wreck', ['r', 'e', 'k'], R18, 8],
+  ['rag', ['r', 'a', 'g'], R18, 8],
+  ['lake', ['l', 'a', 'k'], R18, 8],
+  ['kill', ['k', 'e', 'l'], R18, 8],
+  ['cream', ['k', 'r', 'e', 'm'], R19, 8],
+  ['crane', ['k', 'r', 'a', 'n'], R19, 8],
+  ['creed', ['k', 'r', 'e', 'd'], R19, 8],
+  ['crate', ['k', 'r', 'a', 't'], R19, 8],
+  ['eagle', ['e', 'g', 'l'], R19, 8],
+  ['glee', ['g', 'l', 'e'], R19, 8],
+  ['glean / glen', ['g', 'l', 'e', 'n'], R19, 8],
+  ['gleam', ['g', 'l', 'e', 'm'], R19, 8],
+  ['glare', ['g', 'l', 'a', 'r'], R19, 8],
+  ['acre', ['a', 'k', 'r'], R19, 8],
+  ['maker', ['m', 'a', 'k', 'r'], R19, 8, N16],
+  ['gray', ['g', 'r', 'a'], R20, 9],
+  ['grain', ['g', 'r', 'a', 'n'], R20, 9],
+  ['greed', ['g', 'r', 'e', 'd'], R20, 9],
+  ['green', ['g', 'r', 'e', 'n'], R20, 9],
+  ['greet', ['g', 'r', 'e', 't'], R20, 9],
+  ['grim', ['g', 'r', 'e', 'm'], R20, 9],
+  ['eager', ['e', 'g', 'r'], R20, 9],
+  ['clay', ['k', 'l', 'a'], R20, 9],
+  ['clan', ['k', 'l', 'a', 'n'], R20, 9],
+  ['ark', ['a', 'r', 'k'], R21, 9],
+  ['dark', ['d', 'a', 'r', 'k'], R21, 9],
+  ['mark', ['m', 'a', 'r', 'k'], R21, 9],
+  ['milk', ['m', 'e', 'l', 'k'], R21, 9],
+  ['tick', ['t', 'e', 'k'], R22, 9],
+  ['thick', ['th-over', 'e', 'k'], R22, 9],
+];
+
+// Level 8: Manual Unit 3 (pp. 12–14), transcribed in reference/manual-unit3.md. Drill
+// words whose outline is already an example elsewhere (eight = ate, came = calm, ...) are
+// not repeated here; the lessons point to the existing example.
+const R26 = 'By blending d and t into one long stroke the syllables ted, ded, det are expressed (Manual §26).';
+const R27 = 'By blending m and n into one long stroke the syllables men, mem are expressed; the blend also stands for similar sounds, such as min in minute, mun in money (Manual §27).';
+const R28 = 'A word from the frequent-word drill: the circles join by the rules of Units 1 and 2 (Manual §28).';
+const N26 = 'The combination det usually occurs at the beginning of words, as in detect, detach, while ted or ded usually occurs at the end of a word (Manual §26).';
+
+// [word(s), outline, rule, page, extra note]
+const WORDS_8 = [
+  ['added', ['a', 'ted'], R26, 12],
+  ['hated', ['h', 'a', 'ted'], R26, 12],
+  ['rated', ['r', 'a', 'ted'], R26, 12],
+  ['needed', ['n', 'e', 'ted'], R26, 12],
+  ['today', ['ted', 'a'], R26, 12, N26],
+  ['treated', ['t', 'r', 'e', 'ted'], R26, 12],
+  ['meant', ['men', 't'], R27, 12],
+  ['mend', ['men', 'd'], R27, 12],
+  ['minute', ['men', 'e', 't'], R27, 12],
+  ['mimic', ['men', 'e', 'k'], R27, 12],
+  ['memory', ['men', 'r', 'e'], R27, 12],
+  ['remain', ['r', 'e', 'men'], R27, 12],
+  ['emanate', ['e', 'men', 'a', 't'], R27, 12],
+  ['mental', ['men', 't', 'l'], R27, 12],
+  ['minimum', ['men', 'e', 'men'], R27, 12],
+  ['had', ['h', 'a', 'd'], R28, 13],
+  ['him', ['h', 'e', 'm'], R28, 13],
+  ['net', ['n', 'e', 't'], R28, 13],
+  ['need', ['n', 'e', 'd'], R28, 13],
+  ['tin', ['t', 'e', 'n'], R28, 13],
+  ['tan', ['t', 'a', 'n'], R28, 13],
+  ['cat', ['k', 'a', 't'], R28, 13],
+  ['kid', ['k', 'e', 'd'], R28, 13],
+  ['her / here', ['h', 'e', 'r'], R28, 13],
+  ['ready', ['r', 'e', 'd', 'e'], R28, 13],
+  ['led', ['l', 'e', 'd'], R28, 14],
+  ['late', ['l', 'a', 't'], R28, 14],
+  ['laid', ['l', 'a', 'd'], R28, 14],
+  ['mill', ['m', 'e', 'l'], R28, 14],
+  ['tree', ['t', 'r', 'e'], R28, 14],
+  ['train', ['t', 'r', 'a', 'n'], R28, 14],
+  ['clean', ['k', 'l', 'e', 'n'], R28, 14],
+  ['leg', ['l', 'e', 'g'], R28, 14],
+  ['attack', ['a', 't', 'a', 'k'], R28, 14],
+  ['headache', ['h', 'e', 'd', 'a', 'k'], R28, 14],
+];
+
+// Manual §29 brief forms that use only strokes in the stroke table (p. 14). Left out:
+// other, all, what, those, truth (hooks and th), into, like (see the reference file).
+// [words, outline, note]
+const BRIEF_8 = [
+  ['when', ['e', 'n'], 'Wh is omitted in when.'],
+  ['any', ['n', 'e']],
+  ['were', ['e', 'r'], 'W is omitted in were.'],
+  ['where / aware', ['a', 'r'], 'Wh is omitted in where.'],
+  ['my', ['m', 'a'], 'For convenience, the long i in my is expressed by a large circle.'],
+  ['could', ['k', 'd']],
+  ['come', ['k', 'm']],
+  ['little', ['l', 'e', 't']],
+  ['country', ['k', 't']],
 ];
 
 function tokenName(t) {
@@ -116,23 +257,45 @@ const wordExample = (level, source) => ([word, outline, rule, note]) => ({
   source,
 });
 
+// Level 7 and 8 titles may name several words that share one outline ("rid / red / read").
+const wordExampleAt = (level) => ([title, outline, rule, page, note]) => {
+  const names = title.split(' / ');
+  return {
+    id: `word-${names[0]}`, kind: 'word', level, title, outline,
+    meaning: [`The word${names.length > 1 ? 's' : ''} ${quote(names)}: ${spell(outline)}.`, rule, ...(note ? [note] : [])],
+    source: `Gregg Shorthand Manual (1929), p. ${page}`,
+  };
+};
+
+const briefExample8 = ([title, outline, note]) => {
+  const names = title.split(' / ');
+  return {
+    id: `brief-${names[0]}`, kind: 'brief', level: 8, title, outline,
+    meaning: [`A brief form for the word${names.length > 1 ? 's' : ''} ${quote(names)}: ${spell(outline)} (Manual §29).`, ...(note ? [note] : [])],
+    source: 'Gregg Shorthand Manual (1929), p. 14',
+  };
+};
+
 export const EXAMPLES = [
   ...letters,
   ...briefs,
   ...WORDS.map(wordExample(3, 'Gregg Shorthand Manual (1929), p. 5')),
   ...WORDS_3B.map(wordExample(3, BUILT_SOURCE)),
   ...WORDS_4.map(wordExample(4, BUILT_SOURCE)),
+  ...WORDS_7.map(wordExampleAt(7)),
+  ...WORDS_8.map(wordExampleAt(8)),
+  ...BRIEF_8.map(briefExample8),
 ];
 
 // ---------------------------------------------------------------- sentences
-// Built only from verified pieces: brief forms (single strokes, Simplified chart) and the
-// Manual p. 5 words and words built by §11–12 above. Every word is its own outline; experienced writers often join
+// Built only from verified pieces: brief forms (single strokes, Simplified chart; "any"
+// from Manual §29) and the Manual p. 5 words and words built by §11–12 above. Every word is its own outline; experienced writers often join
 // common phrases ("phrasing"), which these examples leave out.
 const BRIEF = {
   a: ['h'], an: ['h'], is: ['s-right'], his: ['s-right'], for: ['f'], have: ['v'],
   in: ['n'], not: ['n'], am: ['m'], more: ['m'], men: ['men'], it: ['t'], at: ['t'],
   would: ['d'], did: ['ted'], date: ['ted'], are: ['r'], our: ['r'], will: ['l'], well: ['l'],
-  put: ['p'], be: ['b'], by: ['b'], can: ['k'], go: ['g'], good: ['g'], shall: ['sh'],
+  put: ['p'], be: ['b'], by: ['b'], can: ['k'], go: ['g'], good: ['g'], shall: ['sh'], any: ['n', 'e'],
   which: ['ch'], the: ['th-over'], time: ['tem'], their: ['th-under'], there: ['th-under'],
   and: ['nd'], end: ['nd'],
 };

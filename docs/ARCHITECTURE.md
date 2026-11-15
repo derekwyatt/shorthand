@@ -12,14 +12,16 @@ The app is plain ES modules loaded by `app/index.html`; there is no bundler. Mod
 | `app/js/repeats.js` | `assessRepeats()`: splits pad strokes into repeats, scores each, aggregates. `practiceLines()` and `repeatIndexFor()`. |
 | `app/js/assist.js` | Real-time guide, live warnings, per-stroke notes, green/red check overlay. |
 | `app/js/practice.js` | The example panel: enlarged and actual-size art, meaning, source, score badge, critiques. |
+| `app/js/lessons.js` | The Lessons view: unit tabs, read / write / choose steps, progress. Shares the pad and reuses the example panel and `assessRepeats()`. |
 | `app/js/quiz.js` | Quiz UI (start screen, questions, summary) and result history. Shares the pad. |
 | `app/js/quizgen.js` | Seeded quiz generation, no DOM. Used by the dev server and, as a fallback, by the browser. |
 | `app/js/render.js` | Stroke primitives to cubic Bezier geometry (U, y up); SVG output and animation. |
-| `app/js/join.js` | Joins consonant strokes, vowel circles and the h dot into one outline (Manual §11 and §12). |
+| `app/js/join.js` | Joins consonant strokes, vowel circles and the h dot into one outline (Manual §11–12 for circles at the ends, §14–22 for circles between strokes and joined curves). |
 | `app/js/writer.js` | Learned writing-size scale, kept in localStorage. |
 | `app/js/gallery.js` | The Strokes view. |
 | `app/data/strokes.js` | The stroke table and look-alike families. |
-| `app/data/examples.js` | All practice examples, grouped in six levels. |
+| `app/data/examples.js` | All practice examples, grouped in eight levels. |
+| `app/data/lessons.js` | The lesson steps for Manual Units 1–3; they refer to examples by id. |
 | `tools/dev-server.mjs` | Static server for `app/` with live reload and `/api/quiz`. |
 
 ## Data flow
@@ -89,6 +91,7 @@ Everything is in localStorage. All keys start with `gregg.`, and Reset removes e
 | --- | --- | --- |
 | `gregg.practice.v2` | `main.js` | `{ lineSpacing, acceptTouch, guide, exampleId, attempts }`. `attempts` maps an example id to `{ strokes, exportedAt, assessment }`, where `strokes` is in the export stroke format below, `exportedAt` is a millisecond timestamp or `null`, and `assessment` is a short summary (`score`, `complete`, `completedCount`, `count`, `correctCount`, `best`, `critiques`). Strokes are kept per example. |
 | `gregg.quiz.v1` | `quiz.js` | The last 20 quiz results (an array). |
+| `gregg.lessons.v1` | `lessons.js` | `{ unit, at, done }`: the open unit, the current step per unit, and per unit the keys of the steps done (`read:<title>`, `write:<example id>`, `choose:<example id>`). |
 | `gregg.writer.v1` | `writer.js` | `{ scale, updated }`. |
 
 If storage is full or unavailable the app keeps working but nothing survives a reload.
@@ -143,14 +146,14 @@ If storage is full or unavailable the app keeps working but nothing survives a r
 
 ## Adding an example
 
-Examples live in `app/data/examples.js`. Each has `id`, `kind` (`letter`, `brief`, `word` or `sentence`), `level` (1 to 6), `title`, `outline` (a list of tokens), `meaning` (a list of strings) and `source`. Sentences also have `words`, a list of `{ text, tokens, brief }`.
+Examples live in `app/data/examples.js`. Each has `id`, `kind` (`letter`, `brief`, `word` or `sentence`), `level` (1 to 8), `title`, `outline` (a list of tokens), `meaning` (a list of strings) and `source`. Sentences also have `words`, a list of `{ text, tokens, brief }`.
 
 An outline token is a stroke id from `app/data/strokes.js`, `a` or `e` (vowel circles), or `h` (the dot). Strokes marked `verify` in the stroke table are deliberately left out of examples until they are checked against the sources.
 
 To add a word:
 
-1. Make sure the outline can be built by the rules in `join.js`: one consonant stroke with an optional circle at the start or end (Manual §11 for curves, §12 for straight strokes), and optionally a leading `h`. Circles between two strokes are not implemented, and assessment supports only one consonant per outline.
-2. Add an entry to `WORDS` (level 3, from the Manual) or `WORDS_3B` / `WORDS_4` (built by the same rules), as `[word, outline, rule, note]`. Use `R11` or `R12` for the rule text, and `H` as the note for words starting with h. The `source` is set by the list you add to.
+1. Make sure the outline can be built by the rules in `join.js`: consonant strokes joined in order, circles at either end (Manual §11 for curves, §12 for straight strokes) or between two strokes (§14–18), and optionally a leading `h`. Outlines of one consonant are scored part by part; outlines of two or more are scored as a whole shape (`assessShape()`).
+2. Add an entry to `WORDS` (level 3, from the Manual) or `WORDS_3B` / `WORDS_4` (built by the same rules), as `[word, outline, rule, note]`; or to `WORDS_7` / `WORDS_8` (Manual Units 2 and 3, transcribed in `reference/`), as `[title, outline, rule, page, note]`. Use `R11` or `R12` for the rule text, and `H` as the note for words starting with h. The `source` is set by the list you add to.
 3. To use the word in sentences, it is picked up automatically from those lists by `WORD_TOKENS`.
 
 To add a sentence, add it to `SENTENCES`. Every word must be a brief form (in the `BRIEF` map) or a word in the word lists, otherwise `sentenceExample()` throws at load time. The level is 5 for sentences of up to four words (not counting the period) and 6 for longer ones. A period mark is appended automatically.
@@ -158,3 +161,7 @@ To add a sentence, add it to `SENTENCES`. Every word must be a brief form (in th
 To add a brief form, add an entry to `BRIEF_STROKES` that matches the stroke's `briefForms` in the stroke table exactly (a mismatch throws), and add the word to `BRIEF` if sentences should use it.
 
 Cite the source in the example's `source` field. Then run `npm test`: `tests/examples.test.mjs` checks the example data, and the other tests exercise rendering and scoring.
+
+## Adding a lesson step
+
+Lessons live in `app/data/lessons.js`, one list of steps per unit, built with `read(title, ref, text, show)`, `write(exampleId, prompt)` and `choose(exampleId, choices)`. Steps only refer to examples, so add the example first. Saved progress is keyed by `stepKey()` (the read step's title, or the type and example id), so editing a step's text keeps it; renaming a read step or changing its example resets that step. `tests/lessons.test.mjs` checks that every id exists, that keys are unique within a unit, and that each choose step has four distinctly titled choices whose wrong answers do not share the answer's outline.

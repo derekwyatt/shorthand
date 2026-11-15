@@ -413,10 +413,14 @@ try {
     title: document.getElementById('ex-title').textContent,
     counter: document.getElementById('ex-counter').textContent,
     active: document.querySelector('.sections button.active')?.dataset.level,
-    ink: document.querySelectorAll('#ex-art path.ink').length,
+    ink: document.querySelectorAll('#ex-art .ex-big path.ink').length,
+    starts: document.querySelectorAll('#ex-art .ex-big .start-mark').length,
+    arrows: document.querySelectorAll('#ex-art .ex-big .arrow').length,
   }))()`);
-  check(sent.title === 'It will be good.' && /Level 5 · Short sentences · 1 of \d+/.test(sent.counter) && sent.active === '5' && sent.ink === 2,
+  check(sent.title === 'It will be good.' && /Level 5 · Short sentences · 1 of \d+/.test(sent.counter) && sent.active === '5',
     `Level 5 button shows a sentence (${sent.title}, ${sent.counter})`);
+  check(sent.ink === 5 && sent.starts === 5 && sent.arrows === 5,
+    `every stroke of the sentence has its own start mark and end arrow (${sent.ink} strokes, ${sent.starts} starts, ${sent.arrows} arrows)`);
 
   // Quiz mode. The static server has no /api/quiz; the page stubs fetch with a short quiz
   // (the length buttons only offer 5/10/20) built by the same generator.
@@ -506,6 +510,95 @@ try {
   const seriesSummary = await evaluate(`document.querySelector('#quiz-panel h2')?.textContent`);
   check(new RegExp(`of ${memberCount}$`).test(seriesSummary || ''), `series summary counts members (${seriesSummary})`);
 
+  // Lessons: Unit 1 opens on a rule with animated figures; a write step passes on a good
+  // copy; a choose step marks wrong picks and the right one; progress survives a reload.
+  const lessonsAttemptsBefore = await attempts();
+  await evaluate(`location.hash = '#learn'`);
+  await sleep(300);
+  const lessonText = () => evaluate(`(() => ({
+    counter: document.querySelector('#lesson-panel .ex-counter')?.textContent,
+    title: document.querySelector('#lesson-panel .lesson-title, #lesson-panel .quiz-prompt')?.textContent,
+    next: document.querySelector('#lesson-panel .lesson-next')?.textContent,
+    tab: document.querySelector('#lesson-panel .lesson-tabs button.active')?.dataset.unit,
+    figs: document.querySelectorAll('#lesson-panel .lesson-fig svg').length,
+    status: document.querySelector('#lesson-panel .lesson-status')?.textContent ?? '',
+  }))()`);
+  const lessonNext = () => click('#lesson-panel .lesson-next');
+  let ls = await lessonText();
+  check(await evaluate(`getComputedStyle(document.getElementById('lesson-panel')).display !== 'none' && getComputedStyle(document.getElementById('ex-title').closest('.example-panel')).display === 'none'`),
+    'lessons view shows the lesson panel instead of the example panel');
+  check(ls.tab === '1' && /^Unit 1 · Manual pp\. 1–6 · Step 1 of \d+$/.test(ls.counter) && ls.title === 'Written by sound' && ls.figs === 2,
+    `Unit 1 opens on its first rule with two figures (${ls.counter}, ${ls.title}, ${ls.figs})`);
+  // Step 1's outlines are also shown at actual size, and each can be tried on the pad.
+  const strip = await evaluate(`(() => ({
+    labels: [...document.querySelectorAll('#lesson-panel .lesson-actual .strip-label')].map((t) => t.textContent),
+    selected: document.querySelector('#lesson-panel .strip-label.selected')?.textContent,
+    figSelected: document.querySelectorAll('#lesson-panel .lesson-fig.selected').length,
+    tryText: document.querySelector('#lesson-panel .lesson-try')?.textContent,
+    h: document.querySelector('#lesson-panel .lesson-actual')?.getBoundingClientRect().height,
+    ls: Number(document.getElementById('spacing').value),
+  }))()`);
+  check(strip.labels.join() === 'aim,knee' && strip.selected === 'aim' && strip.figSelected === 1 && /write “aim”/.test(strip.tryText) && strip.h >= 1.5 * strip.ls,
+    `read step shows its outlines at actual size on ruled lines, "aim" ready to try (${JSON.stringify(strip)})`);
+  const modelPts = (id, ox, oy) => evaluate(`(async () => {
+    const { EXAMPLES } = await import('./data/examples.js');
+    const { modelUnits } = await import('./js/assess.js');
+    const { samplePoints } = await import('./js/render.js');
+    const u = Number(document.getElementById('spacing').value) / 3;
+    const ex = EXAMPLES.find((e) => e.id === ${JSON.stringify(id)});
+    return modelUnits(ex).filter((m) => m.kind !== 'dot').map((m) => samplePoints(m.compiled, 20).map((p) => [${ox} + p.x * u, ${oy} - p.y * u]));
+  })()`);
+  await evaluate(`localStorage.removeItem('gregg.writer.v1')`);
+  for (const st of await modelPts('word-aim', 200, 300)) await pen(st);
+  await sleep(200);
+  ls = await lessonText();
+  check(/matches/.test(ls.status) && Number(await evaluate(`document.querySelector('#lesson-panel .score').textContent`)) >= 85 && await evaluate(`document.querySelectorAll('#check .check-path.ok').length >= 1`),
+    `a good "aim" on the pad is scored, with the green pattern under it (${ls.status})`);
+  await evaluate(`document.querySelector('#lesson-panel .strip-label[data-id="word-knee"]').nextElementSibling.dispatchEvent(new MouseEvent('click'))`);
+  await sleep(150);
+  check(await evaluate(`/write “knee”/.test(document.querySelector('#lesson-panel .lesson-try').textContent) && document.querySelector('#lesson-panel .strip-label.selected').textContent === 'knee'`) && await evaluate(`document.querySelector('#lesson-panel .score').textContent`) === '–',
+    'tapping "knee" at actual size tries it instead, on a clean pad');
+  await click('#lesson-panel .lesson-fig');
+  await sleep(150);
+  check(Number(await evaluate(`document.querySelector('#lesson-panel .score').textContent`)) >= 85, 'tapping "aim" again brings back its ink and score');
+  await evaluate(`document.getElementById('clear').click()`);
+
+  await lessonNext();
+  await lessonNext();
+  await sleep(200);
+  ls = await lessonText();
+  check(/Write k/.test(ls.title) && ls.next === 'Skip ▶' && /80 or more passes/.test(ls.status), `step 3 asks for k and can be skipped (${ls.title}, ${ls.next})`);
+  await evaluate(`localStorage.removeItem('gregg.writer.v1')`);
+  await pen(kPts);
+  await sleep(200);
+  ls = await lessonText();
+  check(/Passed/.test(ls.status) && ls.next === 'Next ▶', `a good k passes the write step (${ls.status})`);
+  check(await evaluate(`JSON.parse(localStorage.getItem('gregg.lessons.v1')).done['unit-1'].includes('write:letter-k')`), 'the passed step is saved');
+  check(await evaluate(`document.querySelector('#lesson-panel .lesson-tabs button.active small').textContent.startsWith('1/')`), 'the unit tab counts the step');
+  for (let i = 0; i < 4; i++) await lessonNext();
+  await sleep(200);
+  ls = await lessonText();
+  check(/Step 7 of/.test(ls.counter) && ls.title === 'What does this say?' && await evaluate(`document.querySelectorAll('#lesson-panel .choice').length === 4`), `step 7 is a reading question (${ls.counter})`);
+  await evaluate(`[...document.querySelectorAll('#lesson-panel .choice')].find((b) => b.textContent === 'k').click()`);
+  await sleep(100);
+  check(await evaluate(`document.querySelectorAll('#lesson-panel .choice.wrong').length === 1`) && /Try again/.test((await lessonText()).status), 'a wrong pick is marked and can be retried');
+  await evaluate(`[...document.querySelectorAll('#lesson-panel .choice')].find((b) => b.textContent === 'g').click()`);
+  await sleep(100);
+  check(await evaluate(`document.querySelectorAll('#lesson-panel .choice.correct').length === 1 && document.querySelector('#lesson-panel .ex-meaning p') !== null`), 'the right pick is marked and its meaning shown');
+  check(await evaluate(`document.querySelectorAll('#lesson-panel .lesson-actual .strip-label').length === 1 && /write “g”/.test(document.querySelector('#lesson-panel .lesson-try')?.textContent)`),
+    'once answered, the outline is shown at actual size and can be tried on the pad');
+  await evaluate(`location.reload()`);
+  await sleep(500);
+  await waitReady();
+  await sleep(300);
+  ls = await lessonText();
+  check(/Step 7 of/.test(ls.counter) && await evaluate(`document.querySelectorAll('#lesson-panel .choice.correct').length === 1`), `after a reload the lesson resumes at the same step, answered (${ls.counter})`);
+  await click('#lesson-panel .lesson-tabs button[data-unit="2"]');
+  await sleep(200);
+  ls = await lessonText();
+  check(ls.tab === '2' && /^Unit 2 · Manual pp\. 7–11 · Step 1 of/.test(ls.counter) && ls.title === 'Circles between strokes', `the Unit 2 tab opens Unit 2 (${ls.counter})`);
+  check((await attempts()) === lessonsAttemptsBefore, 'lessons did not overwrite practice attempts');
+
   // Reset clears everything (after confirming).
   await evaluate(`location.hash = '#pad'`);
   await sleep(200);
@@ -519,12 +612,12 @@ try {
   await waitReady();
   const after = await evaluate(`(() => {
     const p = JSON.parse(localStorage.getItem('gregg.practice.v2') || '{}');
-    return { attempts: Object.keys(p.attempts || {}).length, quiz: localStorage.getItem('gregg.quiz.v1'), writer: localStorage.getItem('gregg.writer.v1'), title: document.getElementById('ex-title').textContent };
+    return { attempts: Object.keys(p.attempts || {}).length, quiz: localStorage.getItem('gregg.quiz.v1'), writer: localStorage.getItem('gregg.writer.v1'), lessons: localStorage.getItem('gregg.lessons.v1'), title: document.getElementById('ex-title').textContent };
   })()`);
-  check(beforeReset >= 3 && after.attempts === 0 && after.quiz === null && after.writer === null && after.title === 'k',
-    `Reset clears practice, quiz history and writing size (${JSON.stringify(after)})`);
+  check(beforeReset >= 3 && after.attempts === 0 && after.quiz === null && after.writer === null && after.lessons === null && after.title === 'k',
+    `Reset clears practice, quiz history, lesson progress and writing size (${JSON.stringify(after)})`);
 
-  check(consoleErrors.length === 0, `no console errors${consoleErrors.length ? ': ' + consoleErrors.join(' | ') : ''}`);
+  check(consoleErrors.length === 0, `no console errors${consoleErrors.length ? `: ${consoleErrors.join(' | ')}` : ''}`);
   await snap();
   flushCoverage();
   ws.close();

@@ -5,7 +5,15 @@
 //   §12  At the beginning or end of a single straight stroke, the circle is written with
 //        RIGHT motion (clockwise).
 //   h    is a dot written above the vowel that follows it.
-// Circles BETWEEN two strokes (§14–18) are not implemented yet and throw.
+//   §14  Between strokes that meet at an angle (or a point), the circle goes OUTSIDE the angle.
+//   §15  Straight stroke and curve, or two same-motion curves, joined without an angle:
+//        the circle is inside the curve.
+//   §17  Between straight strokes in the same direction: right motion (clockwise).
+//   §18  Between opposite curves the circle is turned back on the first curve (inside the
+//        second curve, against the first).
+//   §19/§21  k+r, g+l, r+k and l+k are equal curves and are made a little flatter when joined.
+//   (§20 gr and kl keep their normal geometry.)
+// The angle threshold and the flattening factor are inferences (reference/manual-unit2.md).
 //
 // An outline is a list of tokens: a stroke id from data/strokes.js, 'a' or 'e' (circle)
 // or 'h' (dot). Geometry is in U with y up, like render.js.
@@ -15,6 +23,11 @@ import { compileStroke, tangent, bbox } from './render.js';
 // Diameters of joined circles in U (measured: a ≈ 0.8–1.05 U, e ≈ 0.4 U).
 export const JOIN_CIRCLE = { a: 0.95, e: 0.38 };
 const H_GAP = 0.35; // space between the h dot and the top of its circle, in U
+// Between two strokes, a turn of at least this many degrees counts as an angle (§14).
+export const ANGLE_THRESHOLD = 20;
+// §19/§21: equal curves joined directly are drawn this much flatter (bulge factor).
+export const JOINED_CURVE_FLATTEN = 0.75;
+const FLAT_PAIRS = new Set(['k r', 'g l', 'r k', 'l k']);
 
 const isCircle = (tok) => tok === 'a' || tok === 'e';
 const strokeAt = (outline, i) => {
@@ -31,6 +44,27 @@ export function circleRotation(stroke) {
   if (prim.type === 'arc') return -Math.sign(prim.bulge); // §11: inside the curve
   if (prim.type === 'line') return -1;                     // §12: right motion
   throw new Error(`no circle-joining rule for ${stroke.id}`);
+}
+
+const motion = (stroke) => Math.sign(stroke.primitives[0].bulge);
+const isCurve = (stroke) => stroke.primitives[0].type === 'arc';
+const turnDegrees = (a, b) => {
+  const d = (Math.atan2(b.y, b.x) - Math.atan2(a.y, a.x)) * (180 / Math.PI);
+  return ((((d + 180) % 360) + 360) % 360) - 180;
+};
+
+// Which rule places a circle between `prev` and `next` (stroke objects): returns
+// { section: 14 | 15 | 17 | 18, rotation, delta } with rotation +1 counter-clockwise,
+// -1 clockwise, and delta the turn in degrees from the end tangent of `prev` to the
+// start tangent of `next` (left / counter-clockwise positive).
+export function circleJoinRule(prev, next) {
+  const delta = turnDegrees(tangent(compileStroke(prev), 'end'), tangent(compileStroke(next), 'start'));
+  const curves = [prev, next].filter(isCurve);
+  if (Math.abs(delta) >= ANGLE_THRESHOLD) return { section: 14, rotation: -Math.sign(delta), delta };
+  if (curves.length === 0) return { section: 17, rotation: -1, delta };
+  if (curves.length === 1) return { section: 15, rotation: circleRotation(curves[0]), delta };
+  if (motion(prev) === motion(next)) return { section: 15, rotation: circleRotation(next), delta };
+  return { section: 18, rotation: circleRotation(next), delta };
 }
 
 // A full circle of radius r that leaves `p` heading along unit vector `t`, turning
@@ -60,46 +94,86 @@ export function circleFrom(p, t, s, r) {
   return { segments, center, r };
 }
 
-// Returns { segments, start, end } in the same shape as compileStroke().
+// The strokes of an outline, with §19/§21 flattening applied to directly joined equal curves.
+function outlineStrokes(outline) {
+  const strokes = outline.map((_, i) => strokeAt(outline, i));
+  strokes.forEach((s, i) => {
+    const n = strokes[i + 1];
+    if (!s || !n || !FLAT_PAIRS.has(`${outline[i]} ${outline[i + 1]}`)) return;
+    for (const k of [i, i + 1]) {
+      const st = strokes[k];
+      if (st.flattened) continue;
+      strokes[k] = { ...st, flattened: true, primitives: st.primitives.map((p) => ({ ...p, bulge: p.bulge * JOINED_CURVE_FLATTEN })) };
+    }
+  });
+  return strokes;
+}
+
+// Returns { segments, start, end, tokens, tokenOf, joins } in the same shape as
+// compileStroke(): tokenOf[k] is the index in `outline` of the token that segment k was
+// drawn for; joins lists the circles between two strokes with the rule that placed them.
 export function compileOutline(outline) {
   const segments = [];
+  const owners = [];
   const dots = [];
+  const dotOwners = [];
+  const joins = [];
+  const strokes = outlineStrokes(outline);
+  const plain = outline.map((_, i) => strokeAt(outline, i)); // the rule reads the unflattened forms
   let pen = { x: 0, y: 0 };
   let pendingDot = false;
+  let dotToken = -1;
 
   outline.forEach((tok, i) => {
     if (tok === 'h') {
       pendingDot = true;
+      dotToken = i;
       return;
     }
     if (isCircle(tok)) {
-      const prev = strokeAt(outline, i - 1);
-      const next = strokeAt(outline, i + 1);
-      if (prev && next) throw new Error(`circle between strokes is not implemented yet (${outline.join(' ')})`);
+      const prev = strokes[i - 1] ?? null;
+      const next = strokes[i + 1] ?? null;
       const adj = prev || next;
       if (!adj) throw new Error(`a circle needs a stroke to join (${outline.join(' ')})`);
-      const t = prev ? tangent(compileStroke(prev), 'end') : tangent(compileStroke(next), 'start');
-      const circle = circleFrom(pen, t, circleRotation(adj), JOIN_CIRCLE[tok] / 2);
+      let rotation;
+      let t;
+      if (prev && next) {
+        const rule = circleJoinRule(plain[i - 1], plain[i + 1]);
+        rotation = rule.rotation;
+        joins.push({ index: i, tok, ...rule });
+        t = tangent(compileStroke(prev), 'end');
+      } else {
+        rotation = circleRotation(adj);
+        t = prev ? tangent(compileStroke(prev), 'end') : tangent(compileStroke(next), 'start');
+      }
+      const circle = circleFrom(pen, t, rotation, JOIN_CIRCLE[tok] / 2);
       segments.push(...circle.segments);
+      owners.push(...circle.segments.map(() => i));
       if (pendingDot) {
         dots.push({ type: 'dot', p: { x: circle.center.x, y: circle.center.y + circle.r + H_GAP } });
+        dotOwners.push(dotToken);
         pendingDot = false;
       }
       return;
     }
-    const c = compileStroke(strokeAt(outline, i), pen);
+    const c = compileStroke(strokes[i], pen);
     segments.push(...c.segments);
+    owners.push(...c.segments.map(() => i));
     pen = c.end;
   });
   if (pendingDot) {
     // A dot on its own is the letter h / the brief form "a, an".
     if (outline.length !== 1) throw new Error(`h must be followed by a vowel circle (${outline.join(' ')})`);
     dots.push({ type: 'dot', p: pen });
+    dotOwners.push(dotToken);
   }
 
   const firstCubic = segments.find((s) => s.type === 'cubic');
   // The h dot is written first, so it leads the segment list.
-  return { segments: [...dots, ...segments], start: firstCubic ? firstCubic.p0 : pen, end: pen };
+  return {
+    segments: [...dots, ...segments], start: firstCubic ? firstCubic.p0 : pen, end: pen,
+    tokens: outline, tokenOf: [...dotOwners, ...owners], joins,
+  };
 }
 
 // ---------------------------------------------------------------- sentences
@@ -107,6 +181,7 @@ export function compileOutline(outline) {
 const movePoint = (p, dx, dy) => ({ x: p.x + dx, y: p.y + dy });
 export function translateCompiled(c, dx, dy) {
   return {
+    ...c,
     start: movePoint(c.start, dx, dy),
     end: movePoint(c.end, dx, dy),
     segments: c.segments.map((s) => (s.type === 'dot'

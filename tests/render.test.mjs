@@ -2,7 +2,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { STROKES, FAMILIES, STROKE_BY_ID } from '../app/data/strokes.js';
-import { compileStroke, cubicPoint, pathData, pathLength, samplePoints, tangent } from '../app/js/render.js';
+import { compileStroke, cubicPoint, pathData, pathLength, penStrokes, samplePoints, tangent } from '../app/js/render.js';
+import { compileExample } from '../app/js/join.js';
+import { EXAMPLES } from '../app/data/examples.js';
 
 const near = (a, b, tol, msg) => assert.ok(Math.abs(a - b) <= tol, `${msg}: ${a} vs ${b} (tol ${tol})`);
 const chord = (c) => ({ x: c.end.x - c.start.x, y: c.end.y - c.start.y });
@@ -104,6 +106,28 @@ test('circles are closed, the right size and written in their direction', () => 
   const a = pathLength(compileStroke(STROKE_BY_ID.a));
   const e = pathLength(compileStroke(STROKE_BY_ID.e));
   assert.ok(a / e > 2.2 && a / e < 3, `a/e circle ratio ≈ 2.6 (got ${(a / e).toFixed(2)})`);
+});
+
+test('penStrokes: a joined word is one stroke; a sentence has one per outline', () => {
+  const ex = (id) => EXAMPLES.find((e) => e.id === id);
+  assert.equal(penStrokes(compileExample(ex('word-hate'))).length, 1);
+
+  const sentence = ex('sentence-it-will-be-good');
+  const compiled = compileExample(sentence);
+  const runs = penStrokes(compiled);
+  assert.equal(runs.length, sentence.words.length, 'It · will · be · good · .');
+  assert.equal(runs.flatMap((r) => r.segments).length, compiled.segments.filter((s) => s.type !== 'dot').length, 'every segment is in a stroke');
+  for (const r of runs) {
+    assert.equal(r.start, r.segments[0].p0);
+    assert.equal(r.end, r.segments[r.segments.length - 1].p3);
+    for (let i = 1; i < r.segments.length; i++) {
+      const gap = Math.hypot(r.segments[i].p0.x - r.segments[i - 1].p3.x, r.segments[i].p0.y - r.segments[i - 1].p3.y);
+      assert.ok(gap < 1e-6, 'no pen lift inside a stroke');
+    }
+  }
+  for (let i = 1; i < runs.length; i++) {
+    assert.ok(Math.hypot(runs[i].start.x - runs[i - 1].end.x, runs[i].start.y - runs[i - 1].end.y) > 1e-6, 'strokes are split at pen lifts');
+  }
 });
 
 test('tangents and SVG path data are well formed', () => {

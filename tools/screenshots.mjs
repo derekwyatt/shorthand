@@ -261,11 +261,39 @@ try {
   }
   await settle();
   await shot('strokes.png');
+
+  // 5. Lessons: Unit 1, step 1 ("aim" and "knee"), "aim" copied twice on the pad.
+  await evaluate(`location.hash = '#learn'`);
+  await sleep(400);
+  await evaluate(`document.querySelector('#lesson-panel .lesson-tabs button[data-unit="1"]').click()`);
+  await sleep(300);
+  const lessonModel = await evaluate(`(async () => {
+    const { EXAMPLES } = await import('./data/examples.js');
+    const { modelUnits } = await import('./js/assess.js');
+    const { samplePoints } = await import('./js/render.js');
+    const u = Number(document.getElementById('spacing').value) / 3;
+    const ex = EXAMPLES.find((e) => e.id === 'word-aim');
+    return modelUnits(ex).filter((m) => m.kind !== 'dot').map((m) => samplePoints(m.compiled, 24).map((p) => [p.x * u, -p.y * u]));
+  })()`);
+  for (let row = 0; row < 2; row++) {
+    for (const stroke of lessonModel) {
+      const w = wobbler();
+      const s = between(0.95, 1.08);
+      await pen(stroke.map(([x, y], i, a) => [80 + x * s + w(i / (a.length - 1), 0), 2 * (row + 1) * ls + y * s + w(i / (a.length - 1), 1)]));
+    }
+    await sleep(150);
+  }
+  await settle();
+  // Scroll the panel to the figures, so the actual-size strip and the score are in view.
+  await evaluate(`(() => { const p = document.getElementById('lesson-panel'); p.scrollTop = document.querySelector('#lesson-panel .lesson-figs').offsetTop - p.offsetTop - 40; })()`);
+  await sleep(200);
+  console.log('lesson', await evaluate(`document.querySelector('#lesson-panel .lesson-status').textContent`));
+  await shot('lessons.png');
   ws.close();
 
   // Optional lossless/near-lossless optimisation.
   const has = (cmd) => spawnSync('which', [cmd]).status === 0;
-  const files = ['practice.png', 'line-stats.png', 'quiz.png', 'strokes.png'].map((f) => join(outDir, f));
+  const files = ['practice.png', 'line-stats.png', 'quiz.png', 'strokes.png', 'lessons.png'].map((f) => join(outDir, f));
   if (has('oxipng')) for (const f of files) spawnSync('oxipng', ['-o', '4', '--strip', 'safe', f]);
   else if (has('pngquant')) for (const f of files) spawnSync('pngquant', ['--quality', '80-95', '--force', '--ext', '.png', f]);
   for (const f of files) {

@@ -8,6 +8,9 @@ import { cubicPoint, pathData } from '../app/js/render.js';
 
 const words = EXAMPLES.filter((e) => e.kind === 'word');
 const byTitle = (t) => words.find((w) => w.title === t);
+// Words of one consonant stroke, with circles only at its ends (Manual §11–12).
+const consonants = (outline) => outline.filter((t) => !['a', 'e', 'h'].includes(t));
+const single = words.filter((w) => consonants(w.outline).length === 1);
 
 // The 4 cubic segments of each circle, in order, from a compiled outline.
 function circles(example) {
@@ -69,7 +72,7 @@ test('circles close on the joint and have the right size', () => {
 
 test('§11: on curves the circle sits inside the curve', () => {
   // k, g are convex upward, so "inside" is below the stroke; r, l are convex downward, so above.
-  for (const w of words) {
+  for (const w of single) {
     const curve = w.outline.find((t) => ['k', 'g', 'r', 'l'].includes(t));
     if (!curve) continue;
     const { compiled, circles: cs } = circles(w);
@@ -87,7 +90,7 @@ test('§11: on curves the circle sits inside the curve', () => {
 });
 
 test('§12: on straight strokes the circle is written clockwise', () => {
-  for (const w of words) {
+  for (const w of single) {
     if (!w.outline.some((t) => ['m', 't', 'd'].includes(t))) continue;
     for (const { segs } of circles(w).circles) {
       assert.ok(signedArea(polygon(segs)) < 0, `${w.title}: circle is clockwise`);
@@ -101,7 +104,7 @@ test('§12: on straight strokes the circle is written clockwise', () => {
 });
 
 test('§11 rotation follows the curve: k/g clockwise, r/l counter-clockwise', () => {
-  for (const w of words) {
+  for (const w of single) {
     const curve = w.outline.find((t) => ['k', 'g', 'r', 'l'].includes(t));
     if (!curve) continue;
     for (const { segs } of circles(w).circles) {
@@ -122,4 +125,52 @@ test('h is a dot above its vowel circle, written first', () => {
     assert.ok(dot.y > Math.max(...pts.map((p) => p.y)), `${w.title}: dot is above the circle`);
     assert.ok(Math.abs(dot.x - c.x) < 0.01, `${w.title}: dot is centred over the circle`);
   }
+});
+
+test('§14–18: every Unit 2 word is joined by the rule of the section it is printed under', () => {
+  // reference/manual-unit2.md: the angle threshold is chosen so that this holds.
+  let checked = 0;
+  for (const w of words.filter((x) => x.level === 7)) {
+    const section = Number(w.meaning[1].match(/§(\d+)/)[1]);
+    if (![14, 15, 17, 18].includes(section)) continue;
+    const { joins } = compileOutline(w.outline);
+    assert.ok(joins.length >= 1, `${w.title}: has a circle between strokes`);
+    assert.equal(joins[0].section, section, `${w.title}: first joined circle follows §${section} (turn ${joins[0].delta.toFixed(0)}°)`);
+    checked++;
+  }
+  assert.ok(checked >= 30, `checked ${checked} words`);
+});
+
+test('§14: the circle goes outside the angle; §17: right motion between straight strokes', () => {
+  const join = (title) => compileOutline(byTitle(title).outline).joins[0];
+  // A left turn (make, gate) puts the circle below, written clockwise; a right turn (rain, team) above.
+  for (const t of ['make', 'gate', 'kick', 'met']) assert.equal(join(t).rotation, -1, `${t}: clockwise`);
+  for (const t of ['rain', 'team', 'rear', 'tale']) assert.equal(join(t).rotation, 1, `${t}: counter-clockwise`);
+  for (const t of ['deed', 'mean', 'minimum']) assert.deepEqual([join(t).section, join(t).rotation], [17, -1], t);
+  // §18: after r or l the circle hangs below (clockwise, inside k/g); after k it sits above.
+  for (const t of ['wreck', 'rag', 'lake']) assert.equal(join(t).rotation, -1, t);
+  assert.equal(join('kill').rotation, 1, 'kill');
+});
+
+test('§19/§21: k-r, g-l, r-k and l-k are flatter when joined; §20 g-r and k-l are not', () => {
+  const bulges = (outline) => compileOutline(outline).segments.filter((s) => s.type === 'cubic').map((s) => {
+    const chord = { x: s.p3.x - s.p0.x, y: s.p3.y - s.p0.y };
+    const mid = cubicPoint(s, 0.5);
+    const L = Math.hypot(chord.x, chord.y);
+    return Math.abs((chord.x * (mid.y - s.p0.y) - chord.y * (mid.x - s.p0.x)) / L) / L;
+  });
+  const [k] = bulges(['k']);
+  const [g] = bulges(['g']);
+  const [kr] = bulges(['k', 'r']);
+  const [gr] = bulges(['g', 'r']);
+  assert.ok(kr < k * 0.9, `k is flatter in kr (${kr.toFixed(3)} vs ${k.toFixed(3)})`);
+  assert.ok(Math.abs(gr - g) < 1e-9, 'g keeps its curve in gr');
+});
+
+test('Unit 3 blends join like any other stroke', () => {
+  const join = (title) => compileOutline(byTitle(title).outline).joins[0];
+  assert.equal(join('needed').section, 14, 'needed: n e ted, outside the angle');
+  assert.equal(join('remain').rotation, 1, 'remain: the circle sits above, outside the angle');
+  assert.equal(join('minimum').section, 17, 'minimum: men e men, straight strokes in line');
+  for (const t of ['added', 'today', 'meant', 'mend']) assert.ok(compileOutline(byTitle(t).outline).segments.length > 0, t);
 });

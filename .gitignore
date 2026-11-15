@@ -1,3 +1,7 @@
 node_modules/
 coverage/
 .DS_Store
+
+# Local copy of the 1929 manual scan (from https://greggshorthand.github.io); not committed
+/1929 - Anniversary Manual
+*.pdf

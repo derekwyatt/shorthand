@@ -6,8 +6,9 @@ A browser app for practising Gregg shorthand by hand. You copy an outline onto a
 
 ## Features
 
-- Three views: Practice, Quiz and Strokes.
-- Six levels of examples: alphabet strokes, brief forms, two levels of circle words, short sentences and long sentences.
+- Four views: Lessons, Practice, Quiz and Strokes.
+- Step-by-step lessons for Units 1–3 of the 1929 manual: read each rule, watch its outlines, write them on the pad until they pass, and name outlines by sight.
+- Eight levels of examples: alphabet strokes, brief forms, two levels of circle words, short sentences, long sentences, joined words (Unit 2) and blends with the frequent-word drill (Unit 3).
 - Write the same example many times; every repeat is scored separately, with a running count, best score and recurring problems.
 - Per-line statistics: once you have written two or more lines, numbered buttons on the pad show the stats for one line.
 - A real-time guide: a faint preview of the next outline, live warnings while you write, and a green/red overlay showing the model under what you wrote.
@@ -50,6 +51,7 @@ HOST=127.0.0.1 npm start
 
 ### Views
 
+- **Lessons** (`#learn`): shares the pad. One tab per unit of the manual (Units 1–3), each a sequence of steps. A *read* step quotes a rule and animates its outlines enlarged (tap a figure to replay it), then shows the same outlines at actual size on rules spaced like the pad's, so you can see how big to write them. Every outline a lesson shows can be tried on the pad: tap it (enlarged or actual size) and what you write is scored and drawn over the model in green and red, as in Practice; each outline keeps its own ink while the step is open. A *write* step shows an example to copy and scores the pad like Practice; a repeat scoring 80 or more passes it. A *choose* step shows an outline and asks what it says; a wrong pick can be retried, and once it is answered the outline is shown at actual size to try on the pad. Steps can be skipped; each tab shows how many exercises are done, and the unit summary lists the skipped ones. Progress is kept in localStorage; the strokes written in a lesson are not.
 - **Practice** (`#pad`, the default): the left panel shows the example to copy, enlarged and at actual size on ruled lines, with its meaning and source. Pick a level from the tabs, move with Prev/Next (or the left and right arrow keys), and use Replay to watch the stroke order. Write on the pad on the right.
 - **Quiz** (`#quiz`): shares the pad. Choose the length (5, 10 or 20 questions), the levels and the question types, then answer. Read questions ask what an outline says (four choices). Write questions ask you to write a word, letter or sentence and score it. Look-alike series ask you to write each member of a family of similar strokes (for example n, m or t, d) and show the results at the end. Passing is a score of 80 or more. The last 20 results are kept.
 - **Strokes** (`#strokes`): every stroke family at one scale. A green dot is where the pen starts and a red arrow is where it ends. Tap a stroke to replay it, or use Replay all.
@@ -57,6 +59,8 @@ HOST=127.0.0.1 npm start
 | Quiz | Strokes |
 | --- | --- |
 | ![Quiz view: a read question answered correctly, with the right choice marked green](docs/screenshots/quiz.png) | ![Strokes view: the stroke gallery, grouped into families, each stroke with its start dot and end arrow](docs/screenshots/strokes.png) |
+
+![Lessons view: Unit 1, step 1, "aim" and "knee" enlarged and at actual size, with two copies of "aim" on the pad scored 100](docs/screenshots/lessons.png)
 
 ### Toolbar (Practice)
 
@@ -129,6 +133,7 @@ app/
     repeats.js        groups pad strokes into repeats and lines; aggregates scores
     assist.js         real-time guide, live warnings, green/red check overlay
     practice.js       the example panel (art, meaning, score, critiques)
+    lessons.js        the Lessons view (Units 1–3, step by step)
     quiz.js           quiz UI and history
     quizgen.js        seeded quiz generation (no DOM)
     render.js         stroke primitives to Bezier geometry, SVG and animation
@@ -137,7 +142,8 @@ app/
     gallery.js        the Strokes view
   data/
     strokes.js        the stroke table (geometry in U) and look-alike families
-    examples.js       the six levels of examples
+    examples.js       the eight levels of examples
+    lessons.js        the lesson steps for Units 1–3
 tools/
   dev-server.mjs      static server for app/ with live reload and /api/quiz
   coverage.mjs        runs unit + Chrome tests under c8 (npm run coverage)
@@ -146,6 +152,7 @@ tests/                unit tests (*.test.mjs), the Chrome end-to-end script
                       (inkpad.cdp.mjs) and fixtures
 docs/
   ARCHITECTURE.md     module map, data flow, formats
+reference/            transcriptions of the manual's Units 2 and 3 and stroke-geometry notes
   screenshots/        images used in this README
 ```
 
@@ -157,7 +164,9 @@ Everything stays in your browser's localStorage. Nothing is sent anywhere: the a
 
 ## Credits
 
-Outline forms and the rules for joining circles follow the Gregg Shorthand Manual (1929). Brief forms come from the Gregg Simplified chart. Each example lists its source in the app.
+Outline forms and the rules for joining circles follow the *Gregg Shorthand Manual, Anniversary Edition* (1929). Brief forms come from the Gregg Simplified chart. Each example lists its source in the app.
+
+The manual is in the US public domain. The scan used to transcribe Units 1–3 (see `reference/`) was downloaded from [greggshorthand.github.io](https://greggshorthand.github.io) ([Annivman.pdf](https://greggshorthand.github.io/Annivman.pdf)). The PDF itself is not included in the repository.
 
 ## License
 

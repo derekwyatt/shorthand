@@ -8,15 +8,15 @@ import { compileExample } from '../app/js/join.js';
 const atLevel = (n) => EXAMPLES.filter((e) => e.level === n);
 const key = (e) => e.outline.join(' ');
 
-test('six levels, every example has one, and the list is ordered by level', () => {
-  assert.deepEqual(LEVELS.map((l) => l.id), [1, 2, 3, 4, 5, 6]);
+test('eight levels, every example has one, and the list is ordered by level', () => {
+  assert.deepEqual(LEVELS.map((l) => l.id), [1, 2, 3, 4, 5, 6, 7, 8]);
   for (const l of LEVELS) assert.ok(l.name && l.description, `level ${l.id}`);
-  for (const e of EXAMPLES) assert.ok(Number.isInteger(e.level) && e.level >= 1 && e.level <= 6, e.id);
+  for (const e of EXAMPLES) assert.ok(Number.isInteger(e.level) && e.level >= 1 && e.level <= 8, e.id);
   for (let i = 1; i < EXAMPLES.length; i++) assert.ok(EXAMPLES[i - 1].level <= EXAMPLES[i].level);
 });
 
 test('level sizes and unique ids', () => {
-  assert.deepEqual([1, 2, 3, 4].map((n) => atLevel(n).length), [28, 22, 34, 26]);
+  assert.deepEqual([1, 2, 3, 4, 7, 8].map((n) => atLevel(n).length), [28, 22, 33, 26, 61, 44]);
   assert.ok(atLevel(5).length >= 30);
   assert.ok(atLevel(6).length >= 30);
   assert.equal(new Set(EXAMPLES.map((e) => e.id)).size, EXAMPLES.length);
@@ -38,6 +38,21 @@ test('circle-word outlines are unique and never equal a brief form', () => {
     seen.add(key(e));
     assert.ok(!briefs.has(key(e)), `${e.id} equals a brief form`);
   }
+});
+
+test('Unit 2 and Unit 3 examples cite a manual page and have unique outlines in their level', () => {
+  for (const n of [7, 8]) {
+    const seen = new Map();
+    for (const e of atLevel(n)) {
+      assert.match(e.source, /^Gregg Shorthand Manual \(1929\), p\. \d+$/, e.id);
+      assert.ok(['word', 'brief'].includes(e.kind), e.id);
+      assert.ok(!seen.has(key(e)), `${e.id} has the outline of ${seen.get(key(e))}`);
+      seen.set(key(e), e.id);
+    }
+  }
+  // Unit 3 brief forms (§29) are their own kind of example.
+  assert.deepEqual(atLevel(8).filter((e) => e.kind === 'brief').map((e) => e.title),
+    ['when', 'any', 'were', 'where / aware', 'my', 'could', 'come', 'little', 'country']);
 });
 
 test('sentence levels follow the word count', () => {

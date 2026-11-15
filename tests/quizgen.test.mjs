@@ -1,13 +1,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { generateQuiz } from '../app/js/quizgen.js';
-import { EXAMPLES } from '../app/data/examples.js';
+import { EXAMPLES, LEVELS } from '../app/data/examples.js';
 import { FAMILIES } from '../app/data/strokes.js';
 
 const BY_ID = new Map(EXAMPLES.map((e) => [e.id, e]));
-const ALL = [1, 2, 3, 4, 5, 6];
+const ALL = LEVELS.map((l) => l.id);
 const COMBOS = [
-  {}, { levels: [1] }, { levels: [2] }, { levels: [3, 4] }, { levels: [5] }, { levels: [5, 6] }, { levels: [2, 3, 6] },
+  {}, { levels: [1] }, { levels: [2] }, { levels: [3, 4] }, { levels: [5] }, { levels: [5, 6] }, { levels: [2, 3, 6] }, { levels: [7] }, { levels: [8] }, { levels: [7, 8] },
   { types: ['read'] }, { types: ['write'] }, { types: ['series'] }, { types: ['series'], levels: [1], n: 3 }, { levels: [1], n: 12 }, { levels: [1], types: ['read'] }, { n: 5 }, { n: 20 }, { n: 99 }, { n: 0 },
 ];
 const poolSize = (levels = ALL) => EXAMPLES.filter((e) => levels.includes(e.level)).length;
