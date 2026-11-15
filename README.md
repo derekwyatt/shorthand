@@ -2,6 +2,8 @@
 
 A browser app for practising Gregg shorthand by hand. You copy an outline onto a ruled pad with an Apple Pencil (or a mouse), and the app compares your pen path with the model outline and tells you what is off: wrong slant, wrong length, wrong curve, a circle turning the wrong way or sitting on the wrong side. It is designed for an iPad but runs in any modern browser. There is no build step and no runtime dependencies.
 
+![Practice view: three repeats of "It will be good." on the pad, all scored correct, with the green check overlay under the ink and the per-line picker column on the left](docs/screenshots/practice.png)
+
 ## Features
 
 - Three views: Practice, Quiz and Strokes.
@@ -52,6 +54,10 @@ HOST=127.0.0.1 npm start
 - **Quiz** (`#quiz`): shares the pad. Choose the length (5, 10 or 20 questions), the levels and the question types, then answer. Read questions ask what an outline says (four choices). Write questions ask you to write a word, letter or sentence and score it. Look-alike series ask you to write each member of a family of similar strokes (for example n, m or t, d) and show the results at the end. Passing is a score of 80 or more. The last 20 results are kept.
 - **Strokes** (`#strokes`): every stroke family at one scale. A green dot is where the pen starts and a red arrow is where it ends. Tap a stroke to replay it, or use Replay all.
 
+| Quiz | Strokes |
+| --- | --- |
+| ![Quiz view: a read question answered correctly, with the right choice marked green](docs/screenshots/quiz.png) | ![Strokes view: the stroke gallery, grouped into families, each stroke with its start dot and end arrow](docs/screenshots/strokes.png) |
+
 ### Toolbar (Practice)
 
 - **Undo**: removes the last stroke (or restores a cleared pad). Cmd/Ctrl+Z does the same.
@@ -69,6 +75,8 @@ Write the example several times on the same pad. For letters, each stroke is one
 ### Statistics for one line
 
 When the pad holds two or more lines of writing, a numbered button appears next to each line in a left column of the pad. Tap a number to see the score and critiques for that line only. Tap the same number again to go back to all lines. Changing to another example clears the pick.
+
+![Line 2 picked: the panel shows that line's score and critiques only, and the overlay marks its mistakes in red](docs/screenshots/line-stats.png)
 
 ### Guide
 
@@ -102,6 +110,12 @@ npm run coverage
 
 Runs the unit tests and the Chrome test together and writes a merged coverage report with c8 into `coverage/`. It fails if line coverage across `app/js/` and `app/data/` drops below 80%.
 
+```text
+npm run screenshots
+```
+
+Regenerates the README screenshots in `docs/screenshots/` by writing on the pad in headless Chrome. It has the same requirements as the end-to-end test.
+
 ## Project layout
 
 ```text
@@ -127,10 +141,12 @@ app/
 tools/
   dev-server.mjs      static server for app/ with live reload and /api/quiz
   coverage.mjs        runs unit + Chrome tests under c8 (npm run coverage)
+  screenshots.mjs     regenerates docs/screenshots/ (npm run screenshots)
 tests/                unit tests (*.test.mjs), the Chrome end-to-end script
                       (inkpad.cdp.mjs) and fixtures
 docs/
   ARCHITECTURE.md     module map, data flow, formats
+  screenshots/        images used in this README
 ```
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for how the pieces fit together.
