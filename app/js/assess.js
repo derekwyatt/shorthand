@@ -189,6 +189,38 @@ export function cleanStrokes(us) {
 }
 export const isDot = (s) => extentOf(s.pts) < DOT_MAX;
 
+// Hand jitter, smoothed away before measuring: the path is resampled every SMOOTH_STEP U
+// and averaged over ±SMOOTH_RADIUS samples. Without this a short line (n, t) wobbles enough
+// to count as a curve, and a small e circle can seem to turn the wrong way. The first and
+// last points stay where the pen touched down and lifted.
+const SMOOTH_STEP = 0.04;
+const SMOOTH_RADIUS = 2;
+export function smoothPath(pts) {
+  if (pts.length < 3) return pts;
+  const even = [pts[0]];
+  let carry = 0;
+  for (let i = 1; i < pts.length; i++) {
+    const a = pts[i - 1], b = pts[i];
+    const d = dist(a, b);
+    let at = SMOOTH_STEP - carry;
+    while (at <= d) {
+      const k = at / d;
+      even.push({ x: a.x + (b.x - a.x) * k, y: a.y + (b.y - a.y) * k, t: a.t + (b.t - a.t) * k });
+      at += SMOOTH_STEP;
+    }
+    carry = d - (at - SMOOTH_STEP);
+  }
+  even.push(pts[pts.length - 1]);
+  if (even.length < 2 * SMOOTH_RADIUS + 3) return even;
+  return even.map((p, i) => {
+    if (i === 0 || i === even.length - 1) return p;
+    const r = Math.min(SMOOTH_RADIUS, i, even.length - 1 - i);
+    let x = 0, y = 0;
+    for (let j = i - r; j <= i + r; j++) { x += even[j].x; y += even[j].y; }
+    return { x: x / (2 * r + 1), y: y / (2 * r + 1), t: p.t };
+  });
+}
+
 // A loop at the start of a path: the first self-crossing, or (if the writer closed the
 // circle without crossing) the closest return to the starting point.
 function findStartLoop(pts, expectedDiameter) {
@@ -520,8 +552,6 @@ function fitTransform(pairs) {
   return { s, tx: um.x - s * mm.x, ty: um.y - s * mm.y };
 }
 
-// strokes: pad strokes ({points:[{x,y,t}]}) or exported ones ({points:[[x,y,t,p]]}), in px.
-// unitPx: pixels per U on the pad (lineSpacing / U_PER_LINE).
 // How big a long stroke is against the pad's ruling (at the example's size), so a learner
 // who keeps a long stroke inside part of a line space knows where to start and stop it.
 function longStrokeSize(cons, name) {
@@ -535,9 +565,11 @@ function longStrokeSize(cons, name) {
   return `${name} is a long stroke, about ${run.toFixed(1)} line spaces long.`;
 }
 
+// strokes: pad strokes ({points:[{x,y,t}]}) or exported ones ({points:[[x,y,t,p]]}), in px.
+// unitPx: pixels per U on the pad (lineSpacing / U_PER_LINE).
 export function assessAttempt(example, strokes, unitPx, { scale = 1 } = {}) {
   const units = modelUnits(example);
-  const user = cleanStrokes(toUserStrokes(strokes, unitPx));
+  const user = cleanStrokes(toUserStrokes(strokes, unitPx)).map((s) => (isDot(s) ? s : { ...s, pts: smoothPath(s.pts) }));
   const userDots = user.filter(isDot);
   const userMain = user.filter((s) => !isDot(s));
   const mMain = units.filter((u) => u.kind === 'outline');
@@ -552,7 +584,9 @@ export function assessAttempt(example, strokes, unitPx, { scale = 1 } = {}) {
   // doesn't change as more of the example is written.
   const fit = fitTransform(matched.map((p) => ({ m: p.m.start, u: p.u.pts[0], mLen: pathLen(samplePoints(p.m.compiled, 12)), uLen: pathLen(p.u.pts) })));
   const lenScale = scale;
-  const ratios = matched.map((p) => pathLen(p.u.pts) / pathLen(samplePoints(p.m.compiled, 12))).sort((a, b) => a - b);
+  // Size from each outline's extent (bounding-box diagonal), which hand jitter barely
+  // changes, unlike the length of the path.
+  const ratios = matched.map((p) => extentOf(p.u.pts) / extentOf(samplePoints(p.m.compiled, 12))).sort((a, b) => a - b);
   const sizeRatio = ratios.length ? ratios[(ratios.length - 1) >> 1] : null; // median, at the writer's actual size
 
   const results = [];

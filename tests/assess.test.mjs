@@ -278,3 +278,14 @@ test('near a letter boundary the intended letter gets the benefit of the doubt',
   // Clearly n-sized, it does read as n.
   assert.match(texts(assessAttempt(e, perfect(e, { scale: 0.5 }), UNIT, { scale: 1.2 })), /reads as n/);
 });
+
+test('hand jitter is smoothed away: a wobbly knee is still n + e, at its real size', () => {
+  const e = ex('word-knee');
+  let seed = 11;
+  const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647 - 0.5);
+  // Up to ±0.05 U of wobble on every point (about 1.3 px at 80 px line spacing).
+  const wobbly = perfect(e, { transform: (p) => ({ x: p.x + rnd() * 0.1, y: p.y + rnd() * 0.1 }) });
+  const r = assessAttempt(e, wobbly, UNIT);
+  assert.ok(r.score >= 90, `${r.score}: ${texts(r)}`);
+  assert.ok(r.sizeRatio > 0.85 && r.sizeRatio < 1.15, `size ${r.sizeRatio}`);
+});
