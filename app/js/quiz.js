@@ -2,7 +2,7 @@
 import { EXAMPLES, LEVELS } from '../data/examples.js';
 import { compileExample } from './join.js';
 import { bbox, renderCompiledSVG, animateStroke, cubicPoint, pathData } from './render.js';
-import { assessAttempt } from './assess.js';
+import { assessAttempt, PASS_SCORE } from './assess.js';
 import { generateQuiz } from './quizgen.js';
 import { actualSizeStrip } from './practice.js';
 import { plateFor } from '../data/plates.js';
@@ -11,7 +11,6 @@ import { getWriterScale, learnWriterScale } from './writer.js';
 const STORE_KEY = 'gregg.quiz.v1';
 const KEEP = 20;
 const SHOW_RECENT = 5;
-const PASS_SCORE = 80;
 const LENGTHS = [5, 10, 20];
 const LEVEL_OPTIONS = LEVELS.map((l) => [String(l.id), `${l.id} · ${l.name}`]);
 const TYPE_OPTIONS = [['read', 'Read'], ['write', 'Write'], ['series', 'Look-alike series']];

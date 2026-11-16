@@ -264,3 +264,17 @@ test('the learned writer size is capped by the ruling: the tallest strokes fit i
   const big = assessAttempt(e, perfect(e, { scale: 1.5 }), UNIT, { scale: WRITER_MAX });
   assert.match(texts(big), /too big for this ruling/);
 });
+
+test('near a letter boundary the intended letter gets the benefit of the doubt', async () => {
+  const { PASS_SCORE } = await import('../app/js/assess.js');
+  const e = ex('word-aim');
+  const rot = (deg) => (p) => ({ x: p.x * Math.cos(deg / 57.3) - p.y * Math.sin(deg / 57.3), y: p.x * Math.sin(deg / 57.3) + p.y * Math.cos(deg / 57.3) });
+  // m slanted up 18°: a slanted m (warned), not d.
+  const slanted = assessAttempt(e, perfect(e, { transform: rot(18) }), UNIT);
+  assert.ok(slanted.score >= PASS_SCORE && !/reads as/.test(texts(slanted)), `${slanted.score}: ${texts(slanted)}`);
+  // Written a bit small for the learned size: a short m, not n; the a circle is still a.
+  const small = assessAttempt(e, perfect(e, { scale: 0.75 }), UNIT, { scale: 1.2 });
+  assert.ok(small.score >= PASS_SCORE && !/reads as/.test(texts(small)), `${small.score}: ${texts(small)}`);
+  // Clearly n-sized, it does read as n.
+  assert.match(texts(assessAttempt(e, perfect(e, { scale: 0.5 }), UNIT, { scale: 1.2 })), /reads as n/);
+});

@@ -576,7 +576,7 @@ try {
   await lessonNext();
   await sleep(200);
   ls = await lessonText();
-  check(/Write k/.test(ls.title) && ls.next === 'Skip ▶' && /80 or more passes/.test(ls.status), `step 3 asks for k and can be skipped (${ls.title}, ${ls.next})`);
+  check(/Write k/.test(ls.title) && ls.next === 'Skip ▶' && /70 or more passes/.test(ls.status), `step 3 asks for k and can be skipped (${ls.title}, ${ls.next})`);
   await evaluate(`localStorage.removeItem('gregg.writer.v1')`);
   await pen(kPts);
   await sleep(200);

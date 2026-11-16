@@ -14,6 +14,13 @@ import { samplePoints, tangent, cubicPoint } from './render.js';
 import { WRITER_MAX } from './writer.js';
 
 const DEG = 180 / Math.PI;
+
+// A repeat (or a quiz answer, or a lesson's write step) passes at this score.
+export const PASS_SCORE = 70;
+// How much closer another letter must be before an outline "reads as" it. Within this
+// margin the intended letter gets the benefit of the doubt, and only the length or angle
+// is critiqued: a slightly short m is a short m, not an n.
+const READS_AS_MARGIN = 1.0;
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 const sub = (a, b) => ({ x: a.x - b.x, y: a.y - b.y });
 const cross = (a, b) => a.x * b.y - a.y * b.x;
@@ -125,14 +132,25 @@ export function modelUnits(example) {
 // hooks and blends are not taught yet).
 const CANDIDATES = STROKES.filter((s) => s.primitives.length === 1 && ['line', 'arc'].includes(s.primitives[0].type) && !s.verify);
 
-function classify(f, scale) {
+// How far a stroke's features are from letter `s` (0 = exactly it).
+function strokeCost(f, s, scale) {
+  const p = s.primitives[0];
+  return (wrap(f.angle - p.angle) / 20) ** 2
+    + (Math.log(f.length / (p.length * scale)) / Math.log(1.45)) ** 2
+    + ((f.bulge - (p.bulge ?? 0)) / 0.09) ** 2;
+}
+
+// The letter the stroke reads as. `expected`, if given, wins unless another letter is
+// clearer by READS_AS_MARGIN.
+function classify(f, scale, expected = null) {
   let best = null;
   for (const s of CANDIDATES) {
-    const p = s.primitives[0];
-    const cost = (wrap(f.angle - p.angle) / 20) ** 2
-      + (Math.log(f.length / (p.length * scale)) / Math.log(1.45)) ** 2
-      + ((f.bulge - (p.bulge ?? 0)) / 0.09) ** 2;
+    const cost = strokeCost(f, s, scale);
     if (!best || cost < best.cost) best = { stroke: s, cost };
+  }
+  if (expected && best.stroke.id !== expected.id && CANDIDATES.includes(expected)) {
+    const cost = strokeCost(f, expected, scale);
+    if (cost - best.cost <= READS_AS_MARGIN) return { stroke: expected, cost };
   }
   return best;
 }
@@ -253,7 +271,7 @@ function assessOutline(model, user, scale) {
   } else {
     const prim = cons.primitives[0];
     const exp = { angle: prim.angle, length: prim.length * scale, bulge: prim.bulge ?? 0 };
-    best = classify(f, scale);
+    best = classify(f, scale, cons);
 
     const dAng = wrap(f.angle - exp.angle);
     if (Math.abs(dAng) > 110) {
@@ -301,8 +319,9 @@ function assessOutline(model, user, scale) {
     const b = bboxOf(L.loop);
     const d = ((b.maxX - b.minX) + (b.maxY - b.minY)) / 2;
     const split = Math.sqrt(JOIN_CIRCLE.a * JOIN_CIRCLE.e) * scale;
-    if (c.tok === 'a' && d < split) add('error', 'The circle is too small: it reads as e (small circle), not a (large circle).', 25);
-    else if (c.tok === 'e' && d > split) add('error', 'The circle is too large: it reads as a (large circle), not e (small circle).', 25);
+    // As with letters, the intended circle gets the benefit of the doubt near the split.
+    if (c.tok === 'a' && d < split * 0.85) add('error', 'The circle is too small: it reads as e (small circle), not a (large circle).', 25);
+    else if (c.tok === 'e' && d > split * 1.15) add('error', 'The circle is too large: it reads as a (large circle), not e (small circle).', 25);
     else {
       const ratio = d / (JOIN_CIRCLE[c.tok] * scale);
       if (ratio > 1.6) add('warn', `The ${c.tok} circle is about ${ratio.toFixed(1)}× the size in the example.`, 5);

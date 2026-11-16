@@ -9,7 +9,7 @@
 // paraphrase. Every example id must exist in data/examples.js (tests/lessons.test.mjs).
 import { EXAMPLES } from './examples.js';
 
-export const PASS_SCORE = 80;
+export { PASS_SCORE } from '../js/assess.js';
 
 // `plates`: section plates (data/plates.js) shown with the rule, e.g. a table of the manual.
 const read = (title, ref, text, show = [], plates = []) => ({ type: 'read', title, ref, text, show, plates });

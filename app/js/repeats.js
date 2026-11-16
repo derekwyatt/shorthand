@@ -1,7 +1,7 @@
 // Repeats: the learner writes the example many times on the pad. Letters: every stroke is
 // one repeat. Everything else: every line of writing is one repeat. Each repeat is
 // assessed separately with assessAttempt (assess.js).
-import { assessAttempt, toUserStrokes, guideUnits, DOT_MAX } from './assess.js';
+import { assessAttempt, toUserStrokes, guideUnits, DOT_MAX, PASS_SCORE } from './assess.js';
 import { bbox } from './render.js';
 
 const BOUNCE = 0.15; // U: a smaller stroke is a pen bounce (except the h dot)
@@ -113,7 +113,7 @@ export function assessRepeats(example, strokes, { unitPx, lineSpacing, scale = 1
     strokes: strokes.length,
     count: repeats.length,
     completedCount: done.length,
-    correctCount: scores.filter((s) => s >= 80).length,
+    correctCount: scores.filter((s) => s >= PASS_SCORE).length,
     best: scores.length ? Math.max(...scores) : null,
     score: scores.length ? Math.round(mean(scores)) : 0,
     complete: done.length > 0,

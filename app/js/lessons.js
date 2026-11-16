@@ -180,7 +180,8 @@ export function createLessons({ panel, pad, assist, unitPx }) {
   const bar = el('div', { className: 'lesson-bar' }, el('span'));
   const body = el('div', { className: 'lesson-body' });
   const nav = el('div', { className: 'ex-nav lesson-nav' });
-  panel.replaceChildren(tabs, heading, bar, body, nav);
+  // Navigation sits at the top, below the unit tabs, and stays there as the step scrolls.
+  panel.replaceChildren(tabs, nav, heading, bar, body);
 
   function renderTabs() {
     tabs.replaceChildren(...LESSONS.map((l) => {
