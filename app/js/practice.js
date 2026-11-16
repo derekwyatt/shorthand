@@ -2,20 +2,81 @@
 // ruled lines, with its meaning underneath.
 import { U_PER_LINE } from '../data/strokes.js';
 import { LEVELS } from '../data/examples.js';
-import { compileExample } from './join.js';
+import { plateFor } from '../data/plates.js';
+import { compileExample, translateCompiled } from './join.js';
 import { bbox, renderCompiledSVG, animateStroke } from './render.js';
 
+
+const STRIP_GAP = 2.5; // U between outlines in an actual-size strip
+const SVG_NS = 'http://www.w3.org/2000/svg';
+
+// Examples at actual size, side by side, each resting on a rule: how they look on the pad at
+// `lineSpacing`. `labels` names each one under its outline; `onPick(example)` makes each
+// outline's column tappable.
+export function actualSizeStrip(examples, { lineSpacing: ls, labels = true, onPick = null }) {
+  const unit = ls / U_PER_LINE;
+  const placed = [];
+  let x = 0;
+  for (const example of examples) {
+    const c = compileExample(example);
+    const b = bbox(c);
+    placed.push({ example, c: translateCompiled(c, x - b.minX, -b.minY), from: x, to: x + b.maxX - b.minX, h: b.maxY - b.minY });
+    x += b.maxX - b.minX + STRIP_GAP;
+  }
+  const inkH = Math.max(...placed.map((p) => p.h)) * unit;
+  // The lowest point rests on a rule, with just enough ruled space above the ink and room
+  // for the labels (or one more rule) below.
+  const baselineY = Math.max(1, Math.ceil((0.35 * ls + inkH) / ls)) * ls;
+  const height = baselineY + Math.max(0.8 * ls, 26);
+  const width = (x - STRIP_GAP) * unit + 32;
+  const origin = { x: 16, y: baselineY };
+  const compiled = { segments: placed.flatMap((p) => p.c.segments), start: placed[0].c.start, end: placed[placed.length - 1].c.end };
+  const label = labels ? `Actual size: ${examples.map((e) => e.title).join(', ')}` : 'An outline at actual size';
+  const svg = renderCompiledSVG(compiled, { unit, width, height, origin, strokeWidth: 2.2, label });
+  const svgEl = (name, attrs) => {
+    const node = document.createElementNS(SVG_NS, name);
+    for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, v);
+    return node;
+  };
+  for (const p of placed) {
+    if (labels) {
+      const text = svgEl('text', { x: origin.x + ((p.from + p.to) / 2) * unit, y: baselineY + Math.max(0.55 * ls, 18), 'text-anchor': 'middle', class: 'strip-label' });
+      text.textContent = p.example.title;
+      text.dataset.id = p.example.id;
+      svg.append(text);
+    }
+    if (onPick) {
+      // A tap anywhere over the outline's column picks it.
+      const hit = svgEl('rect', { x: origin.x + p.from * unit - 8, y: 0, width: (p.to - p.from) * unit + 16, height, fill: 'transparent', class: 'strip-hit' });
+      hit.addEventListener('click', () => onPick(p.example));
+      svg.append(hit);
+    }
+  }
+  const box = Object.assign(document.createElement('div'), { className: 'ex-actual lesson-actual' });
+  box.style.height = `${height}px`;
+  box.append(svg);
+  return box;
+}
 
 export function createExamplePanel({ art, title, meaning, source, counter, score, verdict, hint, critiques }) {
   let current = null; // { example, index, total, lineSpacing }
   let svgs = [];
 
-  // Two views of the same outline: enlarged (shape and direction) and actual size on
-  // ruled lines (how big to write it on the pad).
+  // Views of the same outline: enlarged (shape and direction), as printed in the manual
+  // (when it prints it), and actual size on ruled lines (how big to write it on the pad).
   const big = Object.assign(document.createElement('div'), { className: 'ex-big' });
+  const plate = Object.assign(document.createElement('div'), { className: 'ex-plate' });
   const actual = Object.assign(document.createElement('div'), { className: 'ex-actual' });
   const caption = (text) => Object.assign(document.createElement('div'), { className: 'ex-caption', textContent: text });
-  art.replaceChildren(caption('Enlarged: green dot = start, red arrow = end'), big, caption('Actual size: write it this big'), actual);
+  art.replaceChildren(caption('Enlarged: green dot = start, red arrow = end'), big, plate, caption('Actual size: write it this big'), actual);
+
+  function showPlate(example) {
+    const p = plateFor(example.id);
+    plate.replaceChildren(...(p ? [
+      caption(`In the manual, p. ${p.page}`),
+      Object.assign(document.createElement('img'), { src: p.src, className: 'plate', alt: `The manual's printed outline for ${example.title}, page ${p.page}` }),
+    ] : []));
+  }
 
   function draw({ animate }) {
     if (!current) return;
@@ -60,6 +121,7 @@ export function createExamplePanel({ art, title, meaning, source, counter, score
       title.textContent = example.title;
       meaning.replaceChildren(...example.meaning.map((line) => Object.assign(document.createElement('p'), { textContent: line })));
       source.textContent = `Source: ${example.source}`;
+      showPlate(example);
       draw({ animate });
     },
     replay() {

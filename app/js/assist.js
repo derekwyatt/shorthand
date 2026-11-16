@@ -4,9 +4,11 @@
 //   - live warnings while writing (wrong starting direction, circle turning the wrong
 //     way, stroke running too long);
 //   - a short note after each stroke, about the part that stroke matched;
-//   - the correct pattern drawn thinly under each written part: green if right, red if not.
+//   - the correct pattern drawn thinly under each written part: green if right, red if not;
+//   - the whole example on the top rule, at the size it is judged at.
 import { guideUnits, cleanStrokes, toUserStrokes, isDot, angleText, strokeName, DOT_MAX } from './assess.js';
-import { pathData, pathLength } from './render.js';
+import { pathData, pathLength, bbox } from './render.js';
+import { compileExample } from './join.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const DEG = 180 / Math.PI;
@@ -22,7 +24,11 @@ function extent(pts) {
   return Math.hypot(maxX - minX, maxY - minY);
 }
 
-export function createAssist({ overlay, check, hint, unitPx, enabled, nextIndex: nextIndexFor }) {
+const MODEL_LEFT = 16; // px from the pad's left edge
+
+// `model`: the layer for the whole example; `modelOf()` returns { example, scale, lineSpacing }
+// (example null when nothing is being practised).
+export function createAssist({ overlay, check, hint, model, modelOf, unitPx, enabled, nextIndex: nextIndexFor }) {
   let units = [];
   let multiOutline = false;
   let live = null;
@@ -36,6 +42,30 @@ export function createAssist({ overlay, check, hint, unitPx, enabled, nextIndex:
   }
   function quiet() { clearTimeout(hintTimer); hint.className = 'hint'; }
   function clearGuide() { overlay.replaceChildren(); }
+
+  // The example resting on the first rule that has room above it for the whole outline.
+  function drawModel() {
+    if (!model) return;
+    const { example, scale = 1, lineSpacing } = modelOf?.() ?? {};
+    if (!example || !enabled()) { model.replaceChildren(); return; }
+    const compiled = compileExample(example);
+    const box = bbox(compiled);
+    const u = unitPx() * scale;
+    const baseline = Math.max(1, Math.ceil(((box.maxY - box.minY) * u + 4) / lineSpacing)) * lineSpacing;
+    const origin = { x: MODEL_LEFT - box.minX * u, y: baseline + box.minY * u };
+    const path = document.createElementNS(SVG_NS, 'path');
+    path.setAttribute('d', pathData(compiled, u, origin));
+    path.setAttribute('class', 'model-path');
+    const dots = compiled.segments.filter((s) => s.type === 'dot').map((s) => {
+      const c = document.createElementNS(SVG_NS, 'circle');
+      c.setAttribute('cx', origin.x + s.p.x * u);
+      c.setAttribute('cy', origin.y - s.p.y * u);
+      c.setAttribute('r', 2.8);
+      c.setAttribute('class', 'model-dot');
+      return c;
+    });
+    model.replaceChildren(path, ...dots);
+  }
 
   function drawGuide(unit, at) {
     const u = unitPx();
@@ -66,6 +96,7 @@ export function createAssist({ overlay, check, hint, unitPx, enabled, nextIndex:
       live = null;
       clearGuide();
       quiet();
+      drawModel();
     },
 
     strokeStart(stroke, padStrokes) {
@@ -171,8 +202,10 @@ export function createAssist({ overlay, check, hint, unitPx, enabled, nextIndex:
         }
       }
       check.replaceChildren(...nodes);
+      drawModel(); // the writer's size may have been re-learned
     },
 
-    reset() { clearGuide(); quiet(); live = null; },
+    reset() { clearGuide(); quiet(); live = null; drawModel(); },
+    drawModel,
   };
 }

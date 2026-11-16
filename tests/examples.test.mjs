@@ -57,7 +57,7 @@ test('Unit 2 and Unit 3 examples cite a manual page and have unique outlines in 
 
 test('sentence levels follow the word count', () => {
   for (const e of EXAMPLES.filter((x) => x.kind === 'sentence')) {
-    const count = e.words.filter((w) => w.text !== '.').length;
+    const count = e.title.split(' ').length; // a joined phrase is still two words
     assert.equal(e.level, count <= 4 ? 5 : 6, e.title);
     assert.ok(count >= 2 && count <= 8, e.title);
     assert.match(e.title, /^[A-Z][a-z ]+\.$/);

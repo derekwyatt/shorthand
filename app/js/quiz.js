@@ -4,6 +4,8 @@ import { compileExample } from './join.js';
 import { bbox, renderCompiledSVG, animateStroke, cubicPoint, pathData } from './render.js';
 import { assessAttempt } from './assess.js';
 import { generateQuiz } from './quizgen.js';
+import { actualSizeStrip } from './practice.js';
+import { plateFor } from '../data/plates.js';
 import { getWriterScale, learnWriterScale } from './writer.js';
 
 const STORE_KEY = 'gregg.quiz.v1';
@@ -180,7 +182,8 @@ export function createQuiz({ panel, pad, assist, unitPx }) {
   async function fetchQuiz() {
     const query = new URLSearchParams({ n: options.n, levels: options.levels.join(','), types: options.types.join(',') });
     try {
-      const res = await fetch(`/api/quiz?${query}`);
+      // The dev server's quiz API; elsewhere (GitHub Pages, offline) the quiz is made here.
+      const res = await fetch(`api/quiz?${query}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       if (!Array.isArray(data?.questions)) throw new Error('not a quiz');
@@ -250,12 +253,19 @@ export function createQuiz({ panel, pad, assist, unitPx }) {
       }
       status.className = `quiz-result ${correct ? 'good' : 'bad'}`;
       status.textContent = correct ? 'Correct' : `Not quite: it says “${example.title}”`;
-      reveal.replaceChildren(...meaningLines(example));
+      // The manual's printed outline (it names the word, so only after answering).
+      const plate = plateFor(example.id);
+      reveal.replaceChildren(...meaningLines(example), ...(plate ? [
+        el('div', { className: 'ex-caption', textContent: `In the manual, p. ${plate.page}` }),
+        el('div', { className: 'ex-plate' }, el('img', { src: plate.src, className: 'plate', alt: `The manual's printed outline for ${example.title}, page ${plate.page}` })),
+      ] : []));
       panel.append(nextButton());
     }
 
     choices.append(...question.choices.filter((id) => BY_ID.has(id)).map((id) => choiceButton(id, lock)));
-    panel.replaceChildren(header(), el('div', { className: 'quiz-prompt', textContent: question.prompt }), enlarged(example, !answer), choices, status, reveal);
+    // The outline on ruled lines too, unlabelled: its size against the rules tells similar strokes apart.
+    const ruled = [el('div', { className: 'ex-caption', textContent: 'On the pad, at actual size' }), actualSizeStrip([example], { lineSpacing: pad.lineSpacing, labels: false })];
+    panel.replaceChildren(header(), el('div', { className: 'quiz-prompt', textContent: question.prompt }), enlarged(example, !answer), ...ruled, choices, status, reveal);
     if (answer) lock(answer.chosenId);
   }
 

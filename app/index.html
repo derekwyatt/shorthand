@@ -4,6 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <title>Gregg Trainer: Ink pad</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="theme-color" content="#2b2f36">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Gregg">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <link rel="stylesheet" href="css/app.css">
   <script type="module" src="js/main.js"></script>
 </head>
@@ -29,6 +37,9 @@
     <div class="tools for-strokes">
       <button id="replay-all" type="button">Replay all</button>
     </div>
+    <button id="backup" type="button" title="Save all progress to a file (lessons, practice, quiz history, writing size)">Back up</button>
+    <button id="restore" type="button" title="Load progress from a backup file, replacing what is here">Restore</button>
+    <input id="restore-file" type="file" accept="application/json,.json" hidden>
     <button id="reset-all" class="danger" type="button" title="Clear all practice, scores, quiz history and your learned writing size">Reset</button>
   </header>
   <main id="practice" class="practice view" data-view="pad quiz learn">
@@ -66,6 +77,7 @@
     <aside id="quiz-panel" class="example-panel quiz-panel" aria-label="Quiz" hidden></aside>
     <aside id="lesson-panel" class="example-panel lesson-panel" aria-label="Lesson"></aside>
     <div id="page" class="page">
+      <svg id="model" class="guide-layer" aria-hidden="true"></svg>
       <svg id="guide" class="guide-layer" aria-hidden="true"></svg>
       <svg id="check" class="guide-layer" aria-hidden="true"></svg>
       <canvas id="ink"></canvas>

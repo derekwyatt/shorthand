@@ -18,11 +18,26 @@ The app is plain ES modules loaded by `app/index.html`; there is no bundler. Mod
 | `app/js/render.js` | Stroke primitives to cubic Bezier geometry (U, y up); SVG output and animation. |
 | `app/js/join.js` | Joins consonant strokes, vowel circles and the h dot into one outline (Manual §11–12 for circles at the ends, §14–22 for circles between strokes and joined curves). |
 | `app/js/writer.js` | Learned writing-size scale, kept in localStorage. |
+| `app/js/backup.js` | Progress backup and restore: `exportProgress()`, `importProgress()` and `backupFileName()` (no DOM). `main.js` wires the Back up and Restore buttons. |
 | `app/js/gallery.js` | The Strokes view. |
 | `app/data/strokes.js` | The stroke table and look-alike families. |
 | `app/data/examples.js` | All practice examples, grouped in eight levels. |
 | `app/data/lessons.js` | The lesson steps for Manual Units 1–3; they refer to examples by id. |
+| `app/data/plates.js` | Which examples have a printed plate (`plateFor()`), with its page, and the section plates used by lessons (`sectionPlate()`). |
+| `tools/plates.mjs` | Cuts `app/plates/*.png` from the scan using `tools/plates.json`. |
 | `tools/dev-server.mjs` | Static server for `app/` with live reload and `/api/quiz`. |
+| `app/sw.js` | Service worker for offline use. Registered by `main.js`. |
+| `tools/precache.mjs` | Writes `app/precache.js`, the list of files `sw.js` saves. |
+
+## Plates
+
+`app/plates/<id>.png` are images of the manual's own printed outlines, cut from the 1929 scan by `tools/plates.mjs` (`npm run plates`). `tools/plates.json` lists one crop per image: `id`, printed `page` and `box`, in 80-dpi page pixels of the printed page. The PDF page is the printed page plus 16. Each page is rendered at 300 dpi with `pdftoppm`, cleaned (light pixels set to white), trimmed to the ink with some padding, and written as an 8-bit grayscale PNG.
+
+`plateFor(exampleId)` returns `{ src, page }` or `null` when the manual does not print the example. The example panel (`practice.js`) shows it under the drawn outline; read questions show it only after they are answered. `ALIASES` lets an example use another's plate (brief forms use the alphabet row of their letter).
+
+Section plates (`SECTION_PLATES`) are whole figures or tables. A lesson read step lists them in its `plates` array and `lessons.js` shows them with the rule; read steps also show the plates of their `show` examples.
+
+To add a plate: add a crop to `tools/plates.json`, run `npm run plates <id> --sheet sheet.html` and check the result by eye, then add the id and its page to `PAGES` in `data/plates.js` (or an alias, or a section plate and a lesson `plates` entry). `tests/plates.test.mjs` checks that crops, images and pages agree, and that level 7 and 8 examples citing a manual page have a plate on that page.
 
 ## Data flow
 
@@ -68,7 +83,7 @@ Undo and Clear also call `onChange(null)`, so the same path re-evaluates the pad
 5. Dots are matched by position; the h dot must be above the circle. Missing parts score zero for that unit; extra strokes subtract 8 each. Outlines weigh 1, dots 0.25.
 6. The result has `score` (0 to 100), `complete`, `critiques`, per-unit results, and a `sizeRatio` (how big the writer wrote relative to the example).
 
-`scale` is the learned writer scale from `writer.js` (clamped to 0.6 to 2.2). It is updated from each newly completed repeat, moving a quarter of the way in log space, so short and long letters are judged against your own size.
+`scale` is the learned writer scale from `writer.js`, clamped to 0.6 to `WRITER_MAX` (1.2). The upper limit comes from the ruling: at 1.2 the tallest strokes (b, v, j, 0.87 of a line space at the example size) still fit in about one line space. To write bigger, widen the line spacing. An attempt written well above that size gets a note saying so. It is updated from each newly completed repeat, moving a quarter of the way in log space, so short and long letters are judged against your own size.
 
 ## Repeat grouping
 
@@ -93,6 +108,8 @@ Everything is in localStorage. All keys start with `gregg.`, and Reset removes e
 | `gregg.quiz.v1` | `quiz.js` | The last 20 quiz results (an array). |
 | `gregg.lessons.v1` | `lessons.js` | `{ unit, at, done }`: the open unit, the current step per unit, and per unit the keys of the steps done (`read:<title>`, `write:<example id>`, `choose:<example id>`). |
 | `gregg.writer.v1` | `writer.js` | `{ scale, updated }`. |
+
+Back up writes every `gregg.` key to a JSON file `{ app: 'gregg-trainer', format: 1, exportedAt, data }`, where `data` maps each key to its raw stored string. Restore validates the file (app and format, only `gregg.` keys, string values that parse as JSON), then removes all existing `gregg.` keys and writes the file's, so a new key needs no backup code. Invalid files are rejected before anything is changed. Back up uses the share sheet when files can be shared (iPad), otherwise a download.
 
 If storage is full or unavailable the app keeps working but nothing survives a reload.
 
@@ -136,17 +153,25 @@ If storage is full or unavailable the app keeps working but nothing survives a r
 ```
 
 - `points` entries are `[x, y, t, p]`: x and y in CSS pixels (y down, rounded to 0.01), `t` in milliseconds since the pad was created (rounded to 0.1), `p` pressure from 0 to 1 as reported by the device.
-- `example.words` is present for sentence examples (a list of `{ text, tokens, brief }`).
+- `example.words` is present for sentence examples (a list of `{ text, tokens, brief, phrase }`). A phrase (Manual §4, `PHRASES` in `examples.js`) is two words written as one joined outline, so it is one entry and scored as one shape.
 - `assessment` is `null` if scoring failed.
 - The export covers the current example only. The file is named `gregg-<example id>-<yyyymmdd-hhmmss>.json`. `InkPad.strokesFromJSON()` reads the `strokes` array back, and `assessAttempt()` accepts exported strokes directly (see `tests/fixtures/word-hate-1.json`).
 
+## Offline and GitHub Pages
+
+`.github/workflows/pages.yml` runs the unit tests and `node tools/precache.mjs --check` on every push to `main`, then publishes `app/` as it is (no build) to GitHub Pages, under `/shorthand/`. Every URL the app uses for its own files is relative, so it works under that sub-path; `tests/offline.test.mjs` checks this for `index.html` and the manifest.
+
+`app/sw.js` makes the app work offline. On install it saves every file listed in `app/precache.js` (generated from the contents of `app/` by `npm run precache`) into the cache `gregg-v1`. Each request for the app's own files is then answered from the network if it responds within 3 seconds, refreshing the saved copy, and otherwise from the cache; a page load of any URL falls back to the cached app. It ignores other origins, non-GET requests, the dev server's live reload and `/api/`. The end-to-end test reloads the page with the network off and checks that a lesson and a plate still load.
+
+`app/manifest.webmanifest` and the Apple meta tags in `index.html` let the app be added to the Home Screen and open full-screen. The icons in `app/icons/` show the phrase *it will* drawn by the app's own renderer.
+
 ## Dev server
 
-`tools/dev-server.mjs` serves `app/` (blocking paths outside it), injects a small Server-Sent Events script into HTML pages for live reload, and implements `GET /api/quiz?n=&levels=&types=&seed=` by calling `generateQuiz()`. `quiz.js` calls `/api/quiz` first and falls back to running `generateQuiz()` in the browser, so a plain static server works too. `PORT` defaults to 8000 and `HOST` to `0.0.0.0`.
+`tools/dev-server.mjs` serves `app/` (blocking paths outside it), injects a small Server-Sent Events script into HTML pages for live reload, and implements `GET /api/quiz?n=&levels=&types=&seed=` by calling `generateQuiz()`. `quiz.js` calls `api/quiz` (relative, so on Pages it simply 404s) first and falls back to running `generateQuiz()` in the browser, so a plain static server works too. `PORT` defaults to 8000 and `HOST` to `0.0.0.0`.
 
 ## Adding an example
 
-Examples live in `app/data/examples.js`. Each has `id`, `kind` (`letter`, `brief`, `word` or `sentence`), `level` (1 to 8), `title`, `outline` (a list of tokens), `meaning` (a list of strings) and `source`. Sentences also have `words`, a list of `{ text, tokens, brief }`.
+Examples live in `app/data/examples.js`. Each has `id`, `kind` (`letter`, `brief`, `word` or `sentence`), `level` (1 to 8), `title`, `outline` (a list of tokens), `meaning` (a list of strings) and `source`. Sentences also have `words`, a list of `{ text, tokens, brief, phrase }`.
 
 An outline token is a stroke id from `app/data/strokes.js`, `a` or `e` (vowel circles), or `h` (the dot). Strokes marked `verify` in the stroke table are deliberately left out of examples until they are checked against the sources.
 
@@ -156,7 +181,7 @@ To add a word:
 2. Add an entry to `WORDS` (level 3, from the Manual) or `WORDS_3B` / `WORDS_4` (built by the same rules), as `[word, outline, rule, note]`; or to `WORDS_7` / `WORDS_8` (Manual Units 2 and 3, transcribed in `reference/`), as `[title, outline, rule, page, note]`. Use `R11` or `R12` for the rule text, and `H` as the note for words starting with h. The `source` is set by the list you add to.
 3. To use the word in sentences, it is picked up automatically from those lists by `WORD_TOKENS`.
 
-To add a sentence, add it to `SENTENCES`. Every word must be a brief form (in the `BRIEF` map) or a word in the word lists, otherwise `sentenceExample()` throws at load time. The level is 5 for sentences of up to four words (not counting the period) and 6 for longer ones. A period mark is appended automatically.
+To add a sentence, add it to `SENTENCES`. Every word must be a brief form (in the `BRIEF` map) or a word in the word lists, otherwise `sentenceExample()` throws at load time. A pair of words in `PHRASES` (the manual's §4 examples: I will, he can, it will, in the) becomes one joined outline. The level is 5 for sentences of up to four words (not counting the period, and counting a phrase as two words) and 6 for longer ones. A period mark is appended automatically.
 
 To add a brief form, add an entry to `BRIEF_STROKES` that matches the stroke's `briefForms` in the stroke table exactly (a mismatch throws), and add the word to `BRIEF` if sentences should use it.
 

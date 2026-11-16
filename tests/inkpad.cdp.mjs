@@ -419,8 +419,17 @@ try {
   }))()`);
   check(sent.title === 'It will be good.' && /Level 5 · Short sentences · 1 of \d+/.test(sent.counter) && sent.active === '5',
     `Level 5 button shows a sentence (${sent.title}, ${sent.counter})`);
-  check(sent.ink === 5 && sent.starts === 5 && sent.arrows === 5,
+  check(sent.ink === 4 && sent.starts === 4 && sent.arrows === 4, // "It will" is one phrase
     `every stroke of the sentence has its own start mark and end arrow (${sent.ink} strokes, ${sent.starts} starts, ${sent.arrows} arrows)`);
+  const model = await evaluate(`(() => {
+    const p = document.querySelector('#model .model-path');
+    if (!p) return null;
+    const b = p.getBBox();
+    const ls = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--line-spacing'));
+    return { top: b.y, bottom: b.y + b.height, ls };
+  })()`);
+  check(model && model.top >= 0 && Math.abs(model.bottom - model.ls) < 3,
+    `the whole example is drawn resting on the top rule (${JSON.stringify(model)})`);
 
   // Quiz mode. The static server has no /api/quiz; the page stubs fetch with a short quiz
   // (the length buttons only offer 5/10/20) built by the same generator.
@@ -599,6 +608,11 @@ try {
   check(ls.tab === '2' && /^Unit 2 · Manual pp\. 7–11 · Step 1 of/.test(ls.counter) && ls.title === 'Circles between strokes', `the Unit 2 tab opens Unit 2 (${ls.counter})`);
   check((await attempts()) === lessonsAttemptsBefore, 'lessons did not overwrite practice attempts');
 
+  // Back up / Restore buttons exist and the export sees the saved progress.
+  check(await evaluate(`!!document.getElementById('backup') && !!document.getElementById('restore') && !!document.getElementById('restore-file')`), 'Back up and Restore buttons exist');
+  const backupKeys = await evaluate(`import('/js/backup.js').then((m) => Object.keys(m.exportProgress(localStorage).data))`);
+  check(backupKeys.includes('gregg.practice.v2'), `the backup includes the practice progress (${backupKeys})`);
+
   // Reset clears everything (after confirming).
   await evaluate(`location.hash = '#pad'`);
   await sleep(200);
@@ -620,6 +634,29 @@ try {
   check(consoleErrors.length === 0, `no console errors${consoleErrors.length ? `: ${consoleErrors.join(' | ')}` : ''}`);
   await snap();
   flushCoverage();
+
+  // Offline: once the service worker has saved the app, it loads with no network.
+  const cached = await evaluate(`(async () => {
+    await navigator.serviceWorker.ready;
+    const cache = await caches.open('gregg-v1');
+    return { page: !!(await cache.match('./')), plate: !!(await cache.match('plates/letter-k.png')), count: (await cache.keys()).length };
+  })()`);
+  check(cached.page && cached.plate && cached.count >= 150, `the service worker saves the whole app (${JSON.stringify(cached)})`);
+  await send('Network.enable');
+  await send('Network.emulateNetworkConditions', { offline: true, latency: 0, downloadThroughput: -1, uploadThroughput: -1 });
+  await send('Page.reload');
+  await sleep(500);
+  await waitReady();
+  const offline = await evaluate(`(async () => {
+    location.hash = '#learn';
+    await new Promise((r) => setTimeout(r, 300));
+    const img = new Image();
+    img.src = 'plates/letter-k.png';
+    await img.decode().catch(() => {});
+    return { online: navigator.onLine, lesson: !!document.querySelector('#lesson-panel .lesson-body, #lesson-panel h2'), plate: img.naturalWidth };
+  })()`);
+  check(offline.lesson && offline.plate > 0, `the app and its plates load offline (${JSON.stringify(offline)})`);
+  await send('Network.emulateNetworkConditions', { offline: false, latency: 0, downloadThroughput: -1, uploadThroughput: -1 });
   ws.close();
 } catch (err) {
   console.log('FAIL ', err.message);

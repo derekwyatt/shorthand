@@ -54,7 +54,8 @@ body {
 }
 
 .toolbar button:active { background: #6a7484; }
-.toolbar button.danger { margin-left: auto; min-width: 80px; background: #8e2b2b; }
+#backup { margin-left: auto; }
+.toolbar button.danger { margin-left: 0; min-width: 80px; background: #8e2b2b; }
 .toolbar button.danger:active { background: #b23a3a; }
 
 .tools { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
@@ -242,6 +243,9 @@ body.view-pad .page { --gutter: 48px; }
 
 /* Real-time assistance on the pad. */
 .guide-layer { position: absolute; inset: 0 0 0 var(--gutter); width: calc(100% - var(--gutter)); height: 100%; pointer-events: none; }
+/* The whole example on the top rule, at the size it is judged at. */
+.model-path { fill: none; stroke: rgba(46, 157, 79, 0.45); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.model-dot { fill: rgba(46, 157, 79, 0.6); }
 .guide-path { fill: none; stroke: rgba(46, 157, 79, 0.28); stroke-width: 7; stroke-linecap: round; stroke-linejoin: round; }
 .hint {
   position: absolute; left: 50%; top: 12px; transform: translate(-50%, -8px);
@@ -373,6 +377,15 @@ body:not(.view-learn) .lesson-panel { display: none; }
 }
 .lesson-fig svg { display: block; max-width: 100%; height: auto; }
 .lesson-fig figcaption { font-size: 15px; font-weight: 600; color: #444; }
+/* Plates: the manual's own printed outlines, cut from the scan (grayscale on white). */
+.plate { display: block; max-width: 100%; height: auto; mix-blend-mode: multiply; }
+.ex-plate:empty { display: none; }
+.ex-plate { display: flex; justify-content: center; padding: 6px; border-radius: 8px; background: #fff; }
+.ex-plate .plate { max-height: 64px; }
+.lesson-fig .plate { max-height: 40px; margin: 2px 0; }
+.lesson-plate { margin: 0; padding: 6px; border-radius: 8px; background: #fff; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.lesson-plate .plate { max-height: 320px; }
+.lesson-plate figcaption { font-size: 13px; color: #666; text-align: center; }
 .lesson-fig.selected { box-shadow: 0 0 0 3px #1565c0 inset; }
 .lesson-actual { overflow-x: auto; overflow-y: hidden; }
 .lesson-actual svg { display: block; }

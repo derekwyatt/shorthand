@@ -1,7 +1,8 @@
 // Repeats: the learner writes the example many times on the pad. Letters: every stroke is
 // one repeat. Everything else: every line of writing is one repeat. Each repeat is
 // assessed separately with assessAttempt (assess.js).
-import { assessAttempt, toUserStrokes, DOT_MAX } from './assess.js';
+import { assessAttempt, toUserStrokes, guideUnits, DOT_MAX } from './assess.js';
+import { bbox } from './render.js';
 
 const BOUNCE = 0.15; // U: a smaller stroke is a pen bounce (except the h dot)
 const LINE_JOIN = 0.6; // of the line spacing: how close a stroke is to a line's writing
@@ -13,14 +14,14 @@ const isLetter = (example) => example.kind === 'letter';
 // Size (bbox diagonal, U) and centroid y (px, y down) of one pad stroke.
 function measure(stroke, unitPx) {
   const [u] = toUserStrokes([stroke], unitPx);
-  if (!u) return { size: 0, y: 0, t: 0 };
+  if (!u) return { size: 0, y: 0, bottom: 0, t: 0 };
   let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity, sumY = 0;
   for (const p of u.pts) {
     minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x);
     minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y);
     sumY += p.y;
   }
-  return { size: Math.hypot(maxX - minX, maxY - minY), y: -(sumY / u.pts.length) * unitPx, t: u.pts[0].t };
+  return { size: Math.hypot(maxX - minX, maxY - minY), y: -(sumY / u.pts.length) * unitPx, bottom: -minY * unitPx, t: u.pts[0].t };
 }
 
 const mean = (xs) => xs.reduce((a, b) => a + b, 0) / xs.length;
@@ -126,8 +127,21 @@ export function assessRepeats(example, strokes, { unitPx, lineSpacing, scale = 1
 
 // Index of the outline the learner is about to write: 0 for letters; otherwise the
 // number of outlines already written on the line at `point`.
-export function repeatIndexFor(example, padStrokes, point, { unitPx, lineSpacing }) {
+// Which outline a new stroke starting at `point` (px) is: the next one of the line it
+// continues, or the first of a new line. A line's next outline is expected to start at its
+// own height above the line's writing line (the lowest ink), so a tall outline that starts
+// high, like b after "it will", still continues the line.
+export function repeatIndexFor(example, padStrokes, point, { unitPx, lineSpacing, scale = 1 }) {
   if (isLetter(example)) return 0;
-  const g = lineGroups(padStrokes, { unitPx, lineSpacing }).find((x) => x.big.length && Math.abs(groupY(x) - point.y) <= LINE_JOIN * lineSpacing);
-  return g ? g.big.length : 0;
+  const units = guideUnits(example);
+  let best = null;
+  for (const g of lineGroups(padStrokes, { unitPx, lineSpacing })) {
+    if (!g.big.length || g.big.length >= units.length) continue;
+    const next = units[g.big.length].compiled;
+    const rise = next.start.y - bbox(next).minY; // U above the outline's lowest point
+    const base = Math.max(...g.big.map((m) => m.bottom));
+    const d = Math.abs(base - rise * scale * unitPx - point.y);
+    if (d <= LINE_JOIN * lineSpacing && (!best || d < best.d)) best = { d, index: g.big.length };
+  }
+  return best ? best.index : 0;
 }

@@ -3,7 +3,12 @@
 // (t vs d, k vs g, n vs m) are judged against how big *you* write, consistently across
 // the whole attempt.
 const KEY = 'gregg.writer.v1';
-const MIN = 0.6, MAX = 2.2;
+// The pad's ruling sets the largest size: the tallest strokes (b, v, j ≈ 0.87 of a line
+// space at the example size) should stay within about one line space, so a writer whose
+// short strokes run large is told so instead of being expected to write b through the
+// next line. To write bigger, widen the line spacing.
+export const WRITER_MAX = 1.2;
+const MIN = 0.6, MAX = WRITER_MAX;
 const RATE = 0.25; // how far one finished attempt moves the estimate (in log space)
 
 const clamp = (v) => Math.min(MAX, Math.max(MIN, v));

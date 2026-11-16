@@ -94,7 +94,7 @@ test('a missing h dot and a missing word are reported', () => {
 
   const s = ex('sentence-it-will-be-good');
   const strokes = perfect(s);
-  strokes.splice(2, 1); // drop "be"
+  strokes.splice(1, 1); // drop "be" ("It will" is one phrase)
   const r = assessAttempt(s, strokes, UNIT);
   assert.match(texts(r), /Missing: “be”/);
   assert.ok(r.score < 90);
@@ -231,6 +231,36 @@ test('a partial sentence lines up with its first words, not a look-alike further
   const e = ex('sentence-it-will-be-good');
   const r = assessAttempt(e, perfect(e, { scale: 1.4 }).slice(0, 2), UNIT, { scale: 1.4 });
   const written = r.units.filter((u) => u.kind === 'outline' && u.user).map((u) => u.word);
-  assert.deepEqual(written, ['It', 'will']);
+  assert.deepEqual(written, ['It will', 'be']);
   assert.ok(r.check.every((c) => c.ok), texts(r));
+});
+
+test('a phrase (Manual §4) is one joined outline, scored as a whole', () => {
+  const e = ex('sentence-it-will-be-good');
+  assert.deepEqual(e.words.map((w) => w.text), ['It will', 'be', 'good', '.']);
+  assert.deepEqual(e.words[0].tokens, ['t', 'l']);
+  const r = assessAttempt(e, perfect(e), UNIT);
+  assert.ok(r.score >= 90, texts(r));
+  // Writing the two words apart, as before, is not the phrase.
+  const apart = ex('sentence-it-is-good');
+  assert.equal(apart.words[0].text, 'It');
+});
+
+test('a long stroke written too short is told how big it is against the ruling', () => {
+  const e = ex('letter-b');
+  const r = assessAttempt(e, perfect(e, { scale: 0.55 }), UNIT);
+  assert.match(texts(r), /b is a long stroke, about 0\.9 of a line space tall: start it just below the line above and finish on the line/);
+});
+
+test('the learned writer size is capped by the ruling: the tallest strokes fit in a line space', async () => {
+  const { WRITER_MAX } = await import('../app/js/writer.js');
+  const { U_PER_LINE, STROKES } = await import('../app/data/strokes.js');
+  const { compileOutline } = await import('../app/js/join.js');
+  const { bbox } = await import('../app/js/render.js');
+  const tallest = Math.max(...STROKES.filter((s) => s.size === 'long').map((s) => { const b = bbox(compileOutline([s.id])); return (b.maxY - b.minY) / U_PER_LINE; }));
+  assert.ok(tallest * WRITER_MAX <= 1.06, `tallest stroke at the largest writer size: ${(tallest * WRITER_MAX).toFixed(2)} line spaces`);
+
+  const e = ex('sentence-it-will-be-good');
+  const big = assessAttempt(e, perfect(e, { scale: 1.5 }), UNIT, { scale: WRITER_MAX });
+  assert.match(texts(big), /too big for this ruling/);
 });

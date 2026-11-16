@@ -7,10 +7,11 @@
 // are matched by position. Everything works in U (1 U = length of t), y up.
 //
 // No DOM: unit-tested in Node (tests/assess.test.mjs).
-import { STROKES, STROKE_BY_ID } from '../data/strokes.js';
+import { STROKES, STROKE_BY_ID, U_PER_LINE } from '../data/strokes.js';
 import { EXAMPLES } from '../data/examples.js';
 import { circleRotation, JOIN_CIRCLE, layoutWords } from './join.js';
 import { samplePoints, tangent, cubicPoint } from './render.js';
+import { WRITER_MAX } from './writer.js';
 
 const DEG = 180 / Math.PI;
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
@@ -267,7 +268,7 @@ function assessOutline(model, user, scale) {
 
     const r = f.length / exp.length;
     if (r > 1.45) add(r > 1.8 ? 'error' : 'warn', `Too long: about ${r.toFixed(1)}× the length of ${name}.`, Math.min(25, (Math.log(r) - Math.log(1.45)) * 80));
-    else if (r < 0.69) add(r < 0.55 ? 'error' : 'warn', `Too short: about ${r.toFixed(1)}× the length of ${name}.`, Math.min(25, (Math.log(1 / r) - Math.log(1.45)) * 80));
+    else if (r < 0.69) add(r < 0.55 ? 'error' : 'warn', `Too short: about ${r.toFixed(1)}× the length of ${name}.${cons.size === 'long' ? ` ${longStrokeSize(cons, name)}` : ''}`, Math.min(25, (Math.log(1 / r) - Math.log(1.45)) * 80));
 
     const bm = exp.bulge, bu = f.bulge;
     const side = (b, ang) => { const t = { x: Math.cos(ang / DEG), y: Math.sin(ang / DEG) }; return compass({ x: -t.y * Math.sign(b), y: t.x * Math.sign(b) }); };
@@ -502,6 +503,19 @@ function fitTransform(pairs) {
 
 // strokes: pad strokes ({points:[{x,y,t}]}) or exported ones ({points:[[x,y,t,p]]}), in px.
 // unitPx: pixels per U on the pad (lineSpacing / U_PER_LINE).
+// How big a long stroke is against the pad's ruling (at the example's size), so a learner
+// who keeps a long stroke inside part of a line space knows where to start and stop it.
+function longStrokeSize(cons, name) {
+  const { angle, length } = cons.primitives[0];
+  const rise = Math.abs(Math.sin(angle / DEG)) * length / U_PER_LINE;
+  const run = Math.abs(Math.cos(angle / DEG)) * length / U_PER_LINE;
+  if (rise >= run) {
+    const how = angle < 0 ? 'start it just below the line above and finish on the line' : 'start it on the line and finish just below the line above';
+    return `${name} is a long stroke, about ${rise.toFixed(1)} of a line space tall: ${how}.`;
+  }
+  return `${name} is a long stroke, about ${run.toFixed(1)} line spaces long.`;
+}
+
 export function assessAttempt(example, strokes, unitPx, { scale = 1 } = {}) {
   const units = modelUnits(example);
   const user = cleanStrokes(toUserStrokes(strokes, unitPx));
@@ -578,7 +592,9 @@ export function assessAttempt(example, strokes, unitPx, { scale = 1 } = {}) {
     for (const c of r.critiques) critiques.push({ ...c, text: r.unit.kind === 'outline' && sentence && !r.missing ? `“${r.unit.word}”: ${c.text}` : c.text });
   }
   for (const e of extras) critiques.push({ level: 'warn', text: isDot(e) ? 'There is an extra dot.' : 'There is an extra stroke that doesn\'t belong to the example.' });
-  if (sizeRatio && matched.length >= 2 && (sizeRatio / scale > 1.45 || sizeRatio / scale < 0.7)) {
+  if (sizeRatio && sizeRatio > WRITER_MAX * 1.15) {
+    critiques.push({ level: 'info', text: `You wrote about ${sizeRatio.toFixed(1)}× the example's size, which is too big for this ruling: at that size the long strokes (b, v, j) would run past the next line. Write t about a third of a line space tall, or widen the line spacing.` });
+  } else if (sizeRatio && matched.length >= 2 && (sizeRatio / scale > 1.45 || sizeRatio / scale < 0.7)) {
     critiques.push({ level: 'info', text: `You wrote about ${sizeRatio.toFixed(1)}× the example's size. Fine if it's your natural size: the app learns it as you finish attempts.` });
   }
 

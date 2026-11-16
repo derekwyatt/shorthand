@@ -6,16 +6,14 @@
 // read steps also show their outlines at actual size, on ruled lines like the pad's.
 // Progress (current step and steps done) is kept in localStorage; strokes are not.
 import { LESSONS, PASS_SCORE, stepKey, exampleFor, isTask } from '../data/lessons.js';
-import { U_PER_LINE } from '../data/strokes.js';
-import { compileExample, translateCompiled } from './join.js';
+import { plateFor, sectionPlate } from '../data/plates.js';
+import { compileExample } from './join.js';
 import { bbox, renderCompiledSVG, animateStroke } from './render.js';
-import { createExamplePanel } from './practice.js';
+import { createExamplePanel, actualSizeStrip } from './practice.js';
 import { assessRepeats } from './repeats.js';
 import { getWriterScale, learnWriterScale } from './writer.js';
 
 const STORE_KEY = 'gregg.lessons.v1';
-const STRIP_GAP = 2.5; // U between outlines in the actual-size strip
-const SVG_NS = 'http://www.w3.org/2000/svg';
 
 function el(tag, props = {}, ...children) {
   const node = Object.assign(document.createElement(tag), props);
@@ -96,7 +94,29 @@ export function createLessons({ panel, pad, assist, unitPx }) {
     renderNav();
   }
 
-  function figure(id, { animate = true, caption = true } = {}) {
+  // The manual's printed outline for an example, or null if it does not print it.
+  function plateImg(id) {
+    const p = plateFor(id);
+    if (!p) return null;
+    const example = exampleFor(id);
+    return el('img', { src: p.src, className: 'plate', alt: `The manual's printed outline for ${example.title}, page ${p.page}`, title: `As printed in the manual, p. ${p.page}` });
+  }
+
+  // Section plates of a rule: whole figures or tables from the manual.
+  function sectionPlates(ids) {
+    if (!ids.length) return [];
+    return [
+      el('div', { className: 'ex-caption', textContent: 'From the manual' }),
+      ...ids.map((id) => {
+        const p = sectionPlate(id);
+        return el('figure', { className: 'lesson-plate' },
+          el('img', { src: p.src, className: 'plate', alt: `${p.caption}, as printed in the manual, page ${p.page}` }),
+          el('figcaption', { textContent: `${p.caption} (p. ${p.page})` }));
+      }),
+    ];
+  }
+
+  function figure(id, { animate = true, caption = true, plate = caption } = {}) {
     const example = exampleFor(id);
     const compiled = compileExample(example);
     const box = bbox(compiled);
@@ -108,56 +128,22 @@ export function createLessons({ panel, pad, assist, unitPx }) {
     const fig = el('figure', { className: 'lesson-fig', title: 'Tap to replay' }, svg);
     fig.replay = () => animateStroke(svg);
     fig.onclick = fig.replay;
+    const printed = plate ? plateImg(id) : null;
+    if (printed) fig.append(printed);
     if (caption) fig.append(el('figcaption', { textContent: example.title }));
     return fig;
   }
 
-  // The outlines at actual size, side by side, each resting on a rule: how they look on the
-  // pad at its line spacing. Tapping an outline tries it on the pad.
-  function actualStrip(ids) {
-    const ls = pad.lineSpacing;
-    const unit = ls / U_PER_LINE;
-    const placed = [];
-    let x = 0;
-    for (const id of ids) {
-      const c = compileExample(exampleFor(id));
-      const b = bbox(c);
-      placed.push({ id, c: translateCompiled(c, x - b.minX, -b.minY), from: x, to: x + b.maxX - b.minX, h: b.maxY - b.minY });
-      x += b.maxX - b.minX + STRIP_GAP;
-    }
-    const inkH = Math.max(...placed.map((p) => p.h)) * unit;
-    // The lowest point rests on a rule, with just enough ruled space above the ink and
-    // room for the labels below.
-    const baselineY = Math.max(1, Math.ceil((0.35 * ls + inkH) / ls)) * ls;
-    const height = baselineY + Math.max(0.8 * ls, 26);
-    const width = (x - STRIP_GAP) * unit + 32;
-    const origin = { x: 16, y: baselineY };
-    const compiled = { segments: placed.flatMap((p) => p.c.segments), start: placed[0].c.start, end: placed[placed.length - 1].c.end };
-    const svg = renderCompiledSVG(compiled, { unit, width, height, origin, strokeWidth: 2.2, label: `Actual size: ${ids.map((id) => exampleFor(id).title).join(', ')}` });
-    for (const p of placed) {
-      const label = document.createElementNS(SVG_NS, 'text');
-      Object.entries({ x: origin.x + ((p.from + p.to) / 2) * unit, y: baselineY + Math.max(0.55 * ls, 18), 'text-anchor': 'middle', class: 'strip-label' })
-        .forEach(([k, v]) => label.setAttribute(k, v));
-      label.textContent = exampleFor(p.id).title;
-      label.dataset.id = p.id;
-      svg.append(label);
-      // A tap anywhere over the outline's column picks it.
-      const hit = document.createElementNS(SVG_NS, 'rect');
-      Object.entries({ x: origin.x + p.from * unit - 8, y: 0, width: (p.to - p.from) * unit + 16, height, fill: 'transparent', class: 'strip-hit' })
-        .forEach(([k, v]) => hit.setAttribute(k, v));
-      hit.addEventListener('click', () => select(p.id));
-      svg.append(hit);
-    }
-    const box = el('div', { className: 'ex-actual lesson-actual' }, svg);
-    box.style.height = `${height}px`;
-    return box;
-  }
+  // The outlines at actual size on rules spaced like the pad's. Tapping one tries it.
+  const actualStrip = (ids, labels) => actualSizeStrip(ids.map(exampleFor), { lineSpacing: pad.lineSpacing, labels, onPick: (ex) => select(ex.id) });
 
-  function stripSection(ids) {
+  // `labels: false` hides the words (a reading question that is not answered yet).
+  function stripSection(ids, { labels = true } = {}) {
     const host = el('div');
-    strip = { host, ids };
-    host.append(actualStrip(ids));
-    return [el('div', { className: 'ex-caption', textContent: 'Actual size on the pad: write them this big' }), host];
+    strip = { host, ids, labels };
+    host.append(actualStrip(ids, labels));
+    const text = labels ? 'Actual size on the pad: write them this big' : 'On the pad, at actual size';
+    return [el('div', { className: 'ex-caption', textContent: text }), host];
   }
 
   // The "try it" block: which outline the pad is scored against, the score and critiques.
@@ -258,8 +244,9 @@ export function createLessons({ panel, pad, assist, unitPx }) {
       el('h2', { className: 'lesson-title', textContent: s.title }),
       el('div', { className: 'ex-source', textContent: s.ref }),
       ...s.text.map((t) => el('p', { className: 'lesson-text', textContent: t })),
+      ...sectionPlates(s.plates),
       ...(figures.length ? [
-        el('div', { className: 'ex-caption', textContent: 'Enlarged: green dot = start, red arrow = end' }),
+        el('div', { className: 'ex-caption', textContent: 'Enlarged (green dot = start, red arrow = end), and as printed in the manual' }),
         el('div', { className: 'lesson-figs' }, ...figures.map((f) => f.fig)),
         ...stripSection(s.show),
         ...trySection(s.show),
@@ -285,6 +272,7 @@ export function createLessons({ panel, pad, assist, unitPx }) {
     const answerLine = el('div', { className: 'lesson-status', ariaLive: 'polite' });
     const meaning = el('div', { className: 'ex-meaning' });
     const after = el('div', { className: 'lesson-body' });
+    const ruled = el('div', { className: 'lesson-body' });
     const fig = figure(s.example, { caption: false });
     replayers = [fig.replay];
     const answered = isDone(s);
@@ -298,7 +286,11 @@ export function createLessons({ panel, pad, assist, unitPx }) {
     const reveal = () => {
       for (const b of choices.children) b.disabled = true;
       meaning.replaceChildren(...example.meaning.map((line) => el('p', { textContent: line })));
-      after.replaceChildren(...stripSection([s.example]), ...trySection([s.example]));
+      const printed = plateImg(s.example);
+      ruled.replaceChildren(...stripSection([s.example]));
+      after.replaceChildren(
+        ...(printed ? [el('div', { className: 'ex-caption', textContent: `In the manual, p. ${plateFor(s.example).page}` }), el('div', { className: 'ex-plate' }, printed)] : []),
+        ...trySection([s.example]));
       select(s.example);
     };
     function pick(id, b) {
@@ -316,7 +308,9 @@ export function createLessons({ panel, pad, assist, unitPx }) {
       }
     }
     pad.load([]);
-    body.replaceChildren(el('div', { className: 'quiz-prompt', textContent: 'What does this say?' }), el('div', { className: 'ex-big' }, fig), choices, answerLine, meaning, after);
+    // The outline on ruled lines too: its size against the rules tells similar strokes apart.
+    ruled.replaceChildren(...stripSection([s.example], { labels: false }));
+    body.replaceChildren(el('div', { className: 'quiz-prompt', textContent: 'What does this say?' }), el('div', { className: 'ex-big' }, fig), ruled, choices, answerLine, meaning, after);
     if (answered) reveal();
   }
 
@@ -436,7 +430,7 @@ export function createLessons({ panel, pad, assist, unitPx }) {
       if (!ex) return;
       examplePanel.show(ex, { index: 0, total: 1, lineSpacing: pad.lineSpacing, animate: false });
       if (strip) {
-        strip.host.replaceChildren(actualStrip(strip.ids));
+        strip.host.replaceChildren(actualStrip(strip.ids, strip.labels));
         for (const t of strip.host.querySelectorAll('.strip-label')) t.classList.toggle('selected', t.dataset.id === target);
       }
       onPadChange();

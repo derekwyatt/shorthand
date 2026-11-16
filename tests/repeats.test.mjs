@@ -115,3 +115,17 @@ test('repeatIndexFor: outlines already written on the line at the point', () => 
   assert.equal(repeatIndexFor(e, written, { x: 500, y: y + 2 * LS }, O), 0);
   assert.equal(repeatIndexFor(ex('letter-k'), written, { x: 500, y }, O), 0);
 });
+
+test('repeatIndexFor: a tall outline that starts high still continues its line', () => {
+  // After "It will" (low, near the line), b starts almost a line space higher.
+  const e = ex('sentence-it-will-be-good');
+  const strokes = perfect(e, { skipDots: true });
+  const bStart = strokes[1].points[0];
+  assert.ok(300 - bStart.y > 0.8 * LS, 'b starts high above the line');
+  assert.equal(repeatIndexFor(e, strokes.slice(0, 1), bStart, O), 1, 'b is the next outline, not a new repeat');
+  // At the writer's size too.
+  const big = perfect(e, { skipDots: true, scale: 1.2 });
+  assert.equal(repeatIndexFor(e, big.slice(0, 1), big[1].points[0], { ...O, scale: 1.2 }), 1);
+  // A stroke starting a line lower is a new repeat.
+  assert.equal(repeatIndexFor(e, strokes.slice(0, 1), { x: 100, y: 300 + LS }, O), 0);
+});

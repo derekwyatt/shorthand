@@ -11,7 +11,8 @@ import { EXAMPLES } from './examples.js';
 
 export const PASS_SCORE = 80;
 
-const read = (title, ref, text, show = []) => ({ type: 'read', title, ref, text, show });
+// `plates`: section plates (data/plates.js) shown with the rule, e.g. a table of the manual.
+const read = (title, ref, text, show = [], plates = []) => ({ type: 'read', title, ref, text, show, plates });
 const write = (example, prompt = null) => ({ type: 'write', example, prompt });
 const choose = (example, choices) => ({ type: 'choose', example, choices });
 const writeAll = (...ids) => ids.map((id) => write(id));
@@ -41,11 +42,15 @@ const UNIT_1 = [
   write('letter-t', 'Write t: a short line struck upward to the right.'),
   write('letter-d', 'Write d: a longer line struck upward to the right.'),
   choose('letter-t', ['letter-t', 'letter-d', 'letter-n', 'letter-m']),
-  read('Th and h', 'Manual §2–3, p. 1', [
-    'Th is a short curve struck upward. It has two forms, curving over and curving under.',
+  read('Th and h', 'Manual §2–3, p. 1; §22, p. 9; §78, p. 42', [
+    'Th is the t stroke curved: short, and struck upward from the line like t. “The sign for t is curved to express th” (§22). It can curve either way, so th has two forms.',
+    'The over form bulges up and to the left: the pen rises and rolls over to the right, turning clockwise. That is right motion, like k and g. Written alone it is the brief form for “the”.',
+    'The under form bulges down and to the right: the pen dips, then swings up, turning counter-clockwise. That is left motion, like r and l. Written alone it stands for “there” and “their”.',
+    'Both say th; which one a word takes is a matter of joining, given in Unit 9: “The left-motion th is used before and after o, r, l. In other cases the right-motion th is used” (§78). So thin, teeth and thick take the over form; though, throw and earth the under form.',
     '“The aspirate h is indicated by a dot placed over the vowel.”',
-  ], ['letter-th-over', 'letter-th-under', 'letter-h']),
-  write('letter-th-over', 'Write th (the over form): a short upward curve.'),
+  ], ['letter-th-over', 'letter-th-under', 'letter-h'], ['p42-th']),
+  write('letter-th-over', 'Write th, the over form: a short upward curve that bulges up to the left (right motion).'),
+  write('letter-th-under', 'Write th, the under form: a short upward curve that bulges down to the right (left motion).'),
   read('Brief forms', 'Manual §3, pp. 1–2', [
     '“Many frequently recurring words are represented by simple alphabetic characters. Some of these signs represent two and even three words; for example, the sign for r represents are, our, hour.”',
     '“A dot on the line of writing represents the articles a, an.”',
@@ -55,18 +60,19 @@ const UNIT_1 = [
   choose('brief-m', ['brief-n', 'brief-m', 'brief-t', 'brief-d']),
   read('Sentences and the period', 'Manual §4–6, p. 2', [
     'The period is a short stroke slanting down to the right. “Capitals and proper names are indicated by two short dashes beneath the word.”',
-    'The manual joins common words into phrases (“I will”, “it will”); here every word is written as its own outline, then the period.',
-  ], ['sentence-it-will-be-good']),
+    '“The joining of simple words is a great help to accuracy and speed in writing shorthand, and its acquirement should not be deferred until the habit of writing common words separately has been formed” (§4). So common pairs are written as one outline, without lifting the pen: I will (a large circle running into l), he can (a small circle into k), it will (t up, then straight on into the long l) and in the (n, then th rising off its end).',
+    'In “It will be good” the first two words are one phrase: t and l joined, then be, good and the period, each on its own.',
+  ], ['sentence-it-will-be-good'], ['p2-phrasing', 'p2-punctuation']),
   write('sentence-it-will-be-good'),
   read('Vowels: the A and E groups', 'Manual §7–8, pp. 3–4', [
     '“In shorthand there are twelve distinct vowel sounds, which are arranged in four groups … In this lesson we have the first two groups.”',
     'The A group (a as in mat, calm, came) is a large circle; the E group (i as in kit, e as in get, e as in need) is a small circle.',
     'Dots and dashes can mark the exact sound, but “otherwise they are seldom used”, so they are left out here.',
-  ], ['word-day', 'word-tea']),
+  ], ['word-day', 'word-tea'], ['p3-a-group', 'p3-e-group']),
   read('Writing motion', 'Manual §9–10, p. 4', [
     '“The curved characters in this lesson are taken from horizontal ovals, one written with right motion, the other with left.”',
     'K and g are right-motion strokes; r and l are left-motion strokes. “The terms ‘left motion’ and ‘right motion’ refer to the rotation in movement, and not to the direction.”',
-  ], ['letter-k', 'letter-r']),
+  ], ['letter-k', 'letter-r'], ['p4-motion', 'p4-kg-rl']),
   read('Circles on curves', 'Manual §11, p. 5', [
     '“At the beginning or end of a single curve, the circle is placed inside the curve.”',
     'So the circle hangs below k and g, and sits above r and l.',
@@ -114,11 +120,11 @@ const UNIT_2 = [
   choose('word-rag', ['word-rag', 'word-wreck', 'word-lake', 'word-kill']),
   read('Kr and gl', 'Manual §19, p. 8', [
     '“K and r, and g and l, are equal curves and are made a little flatter than usual when joined.”',
-  ], ['word-cream', 'word-glee']),
+  ], ['word-cream', 'word-glee'], ['p8-kr-gl']),
   ...writeAll('word-crane', 'word-gleam', 'word-acre'),
   read('Gr and kl', 'Manual §20, p. 9', [
     '“Where curves of unequal length join without an angle … note how a distinction in length is positively shown. The movement in writing gr is similar to that in writing y in longhand; kl to that in writing h.”',
-  ], ['word-gray', 'word-clay']),
+  ], ['word-gray', 'word-clay'], ['p9-gr-kl']),
   ...writeAll('word-grain', 'word-clan', 'word-eager'),
   choose('word-gray', ['word-gray', 'word-glee', 'word-clay', 'word-cream']),
   read('Rk and lk', 'Manual §21, p. 9', [

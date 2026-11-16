@@ -115,7 +115,7 @@ test('penStrokes: a joined word is one stroke; a sentence has one per outline', 
   const sentence = ex('sentence-it-will-be-good');
   const compiled = compileExample(sentence);
   const runs = penStrokes(compiled);
-  assert.equal(runs.length, sentence.words.length, 'It · will · be · good · .');
+  assert.equal(runs.length, sentence.words.length, 'It will (one phrase) · be · good · .');
   assert.equal(runs.flatMap((r) => r.segments).length, compiled.segments.filter((s) => s.type !== 'dot').length, 'every segment is in a stroke');
   for (const r of runs) {
     assert.equal(r.start, r.segments[0].p0);

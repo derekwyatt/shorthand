@@ -8,7 +8,8 @@ A browser app for practising Gregg shorthand by hand. You copy an outline onto a
 
 - Four views: Lessons, Practice, Quiz and Strokes.
 - Step-by-step lessons for Units 1–3 of the 1929 manual: read each rule, watch its outlines, write them on the pad until they pass, and name outlines by sight.
-- Eight levels of examples: alphabet strokes, brief forms, two levels of circle words, short sentences, long sentences, joined words (Unit 2) and blends with the frequent-word drill (Unit 3).
+- The manual's own printed outline is shown next to the drawn one, in Practice, in the lessons and, once a question is answered, in reading questions.
+- Eight levels of examples: alphabet strokes, brief forms, two levels of circle words, short sentences, long sentences (with the manual's §4 phrases, such as *it will*, joined into one outline), joined words (Unit 2) and blends with the frequent-word drill (Unit 3).
 - Write the same example many times; every repeat is scored separately, with a running count, best score and recurring problems.
 - Per-line statistics: once you have written two or more lines, numbered buttons on the pad show the stats for one line.
 - A real-time guide: a faint preview of the next outline, live warnings while you write, and a green/red overlay showing the model under what you wrote.
@@ -35,6 +36,18 @@ Environment variables: `PORT` (default `8000`) and `HOST` (default `0.0.0.0`).
 
 The app is static, so any static file server pointed at `app/` also works. Quizzes do not depend on `/api/quiz`: if the request fails, the browser generates the quiz itself with the same code (`app/js/quizgen.js`). You lose live reload only.
 
+### Using it on an iPad from GitHub Pages (works offline)
+
+Every push to `main` publishes `app/` to GitHub Pages (`.github/workflows/pages.yml`, after the unit tests pass): https://derekwyatt.org/shorthand/ (served over HTTPS; offline use needs HTTPS)
+
+1. Open that address in Safari on the iPad.
+2. Tap Share, then **Add to Home Screen**. The app then opens full-screen from its icon.
+3. Open it once while online. A service worker (`app/sw.js`) saves every file of the app on the device, so from then on it also works with no network. When online it fetches the latest version and updates the saved copy.
+
+Progress is kept per browser and per address, so the Pages copy starts empty. Use **Back up** on one device and **Restore** on the other to move it (the backup file can go through Google Drive, Files, AirDrop and so on). Safari may clear stored data for websites you haven't visited for a while; apps added to the Home Screen are exempt.
+
+When you add, rename or remove a file under `app/`, run `npm run precache` to update the list of files the service worker saves (`app/precache.js`). A unit test fails until you do.
+
 ### Using it on an iPad over the LAN
 
 1. Put the computer and the iPad on the same network.
@@ -51,9 +64,9 @@ HOST=127.0.0.1 npm start
 
 ### Views
 
-- **Lessons** (`#learn`): shares the pad. One tab per unit of the manual (Units 1–3), each a sequence of steps. A *read* step quotes a rule and animates its outlines enlarged (tap a figure to replay it), then shows the same outlines at actual size on rules spaced like the pad's, so you can see how big to write them. Every outline a lesson shows can be tried on the pad: tap it (enlarged or actual size) and what you write is scored and drawn over the model in green and red, as in Practice; each outline keeps its own ink while the step is open. A *write* step shows an example to copy and scores the pad like Practice; a repeat scoring 80 or more passes it. A *choose* step shows an outline and asks what it says; a wrong pick can be retried, and once it is answered the outline is shown at actual size to try on the pad. Steps can be skipped; each tab shows how many exercises are done, and the unit summary lists the skipped ones. Progress is kept in localStorage; the strokes written in a lesson are not.
-- **Practice** (`#pad`, the default): the left panel shows the example to copy, enlarged and at actual size on ruled lines, with its meaning and source. Pick a level from the tabs, move with Prev/Next (or the left and right arrow keys), and use Replay to watch the stroke order. Write on the pad on the right.
-- **Quiz** (`#quiz`): shares the pad. Choose the length (5, 10 or 20 questions), the levels and the question types, then answer. Read questions ask what an outline says (four choices). Write questions ask you to write a word, letter or sentence and score it. Look-alike series ask you to write each member of a family of similar strokes (for example n, m or t, d) and show the results at the end. Passing is a score of 80 or more. The last 20 results are kept.
+- **Lessons** (`#learn`): shares the pad. One tab per unit of the manual (Units 1–3), each a sequence of steps. A *read* step quotes a rule, shows the manual's printed outlines for it (with the figures or tables the rule refers to), and animates its outlines enlarged (tap a figure to replay it), then shows the same outlines at actual size on rules spaced like the pad's, so you can see how big to write them. Every outline a lesson shows can be tried on the pad: tap it (enlarged or actual size) and what you write is scored and drawn over the model in green and red, as in Practice; each outline keeps its own ink while the step is open. A *write* step shows an example to copy and scores the pad like Practice; a repeat scoring 80 or more passes it. A *choose* step shows an outline, enlarged and unlabelled on ruled lines at actual size (its size against the rules tells look-alikes apart), and asks what it says; a wrong pick can be retried, and once it is answered the outline is shown at actual size to try on the pad. Steps can be skipped; each tab shows how many exercises are done, and the unit summary lists the skipped ones. Progress is kept in localStorage (and can be backed up to a file); the strokes written in a lesson are not.
+- **Practice** (`#pad`, the default): the left panel shows the example to copy, enlarged and at actual size on ruled lines, with its meaning and source, and below it the manual's printed outline where the manual prints one (with its page). Pick a level from the tabs, move with Prev/Next (or the left and right arrow keys), and use Replay to watch the stroke order. Write on the pad on the right.
+- **Quiz** (`#quiz`): shares the pad. Choose the length (5, 10 or 20 questions), the levels and the question types, then answer. Read questions ask what an outline says (four choices), showing it enlarged and on ruled lines at actual size; once answered, the manual's printed outline is shown. Write questions ask you to write a word, letter or sentence and score it. Look-alike series ask you to write each member of a family of similar strokes (for example n, m or t, d) and show the results at the end. Passing is a score of 80 or more. The last 20 results are kept.
 - **Strokes** (`#strokes`): every stroke family at one scale. A green dot is where the pen starts and a red arrow is where it ends. Tap a stroke to replay it, or use Replay all.
 
 | Quiz | Strokes |
@@ -70,11 +83,12 @@ HOST=127.0.0.1 npm start
 - **Line spacing**: 32 to 96 px, default 48. The example is redrawn at the same scale.
 - **Finger ink**: by default only the pen and the mouse draw. Turn this on to draw with a finger.
 - **Guide**: turns the real-time guide (preview and live warnings) on or off (on by default).
+- **Back up** and **Restore** (all views): Back up saves all progress (lessons, practice, quiz history, settings and the learned writing size) to a `gregg-progress-YYYY-MM-DD.json` file. On an iPad it opens the share sheet, so you can save it straight to Google Drive or Files; elsewhere it downloads the file. Restore loads such a file on another device or browser and, after a confirmation, replaces everything stored there.
 - **Reset** (all views): after a confirmation, deletes everything the app has stored: practice strokes and scores, quiz history, export marks, settings and the learned writing size.
 
 ### Repeats
 
-Write the example several times on the same pad. For letters, each stroke is one repeat, so write the letter again and again along a line. For everything else (brief forms, words, sentences), each line of writing is one repeat, so write the example again on the next line. Each repeat is scored separately. The panel shows the number of repeats, how many scored 80 or more, the best score, and the average score as the main number. Problems that show up in two or more repeats are called out.
+With the guide on, the whole example is drawn faintly on the top rule at the size it is judged at, so you can see how big to write before you start. Write the example several times on the same pad. For letters, each stroke is one repeat, so write the letter again and again along a line. For everything else (brief forms, words, sentences), each line of writing is one repeat, so write the example again on the next line. Each repeat is scored separately. The panel shows the number of repeats, how many scored 80 or more, the best score, and the average score as the main number. Problems that show up in two or more repeats are called out.
 
 ### Statistics for one line
 
@@ -120,6 +134,14 @@ npm run screenshots
 
 Regenerates the README screenshots in `docs/screenshots/` by writing on the pad in headless Chrome. It has the same requirements as the end-to-end test.
 
+### Plates
+
+```text
+npm run plates [ids…] [--sheet file.html] [--prune]
+```
+
+Cuts the manual's printed outlines from the scan into `app/plates/<id>.png`, using the crop boxes in `tools/plates.json`. With ids, only those crops are made. `--sheet file.html` also writes a contact sheet of the crops to check by eye, and `--prune` deletes images in `app/plates/` that have no crop. It needs the PDF locally and poppler's `pdftoppm`. The images are committed, so the app and the tests do not need either.
+
 ## Project layout
 
 ```text
@@ -139,15 +161,27 @@ app/
     render.js         stroke primitives to Bezier geometry, SVG and animation
     join.js           joins strokes, vowel circles and the h dot into outlines
     writer.js         learned writing-size scale
+    backup.js         progress backup file: export and restore of the gregg.* keys
     gallery.js        the Strokes view
   data/
     strokes.js        the stroke table (geometry in U) and look-alike families
     examples.js       the eight levels of examples
     lessons.js        the lesson steps for Units 1–3
+    plates.js         which examples and rules have a printed plate, and its page
+  plates/             images of the manual's printed outlines (npm run plates)
+  icons/              app icons for the Home Screen
+  manifest.webmanifest  name, icons and display mode for Add to Home Screen
+  sw.js               service worker: saves the app on the device for offline use
+  precache.js         the files sw.js saves (generated: npm run precache)
 tools/
   dev-server.mjs      static server for app/ with live reload and /api/quiz
   coverage.mjs        runs unit + Chrome tests under c8 (npm run coverage)
   screenshots.mjs     regenerates docs/screenshots/ (npm run screenshots)
+  plates.mjs          cuts app/plates/ from the scan (npm run plates)
+  plates.json         crop boxes for plates.mjs
+  precache.mjs        writes app/precache.js (npm run precache; --check in CI)
+.github/workflows/
+  pages.yml           tests, then publishes app/ to GitHub Pages on push to main
 tests/                unit tests (*.test.mjs), the Chrome end-to-end script
                       (inkpad.cdp.mjs) and fixtures
 docs/
@@ -160,13 +194,13 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for how the pieces fit together
 
 ## Data and privacy
 
-Everything stays in your browser's localStorage. Nothing is sent anywhere: the app makes no network requests except to load its own files from the server you started (and, with the dev server, `/api/quiz`). Export is user-initiated; the exported file contains your strokes and, among other fields, the browser's user-agent string. Reset removes all stored data.
+Everything stays in your browser's localStorage. Nothing is sent anywhere: the app makes no network requests except to load its own files from wherever it is served (and, with the dev server, `/api/quiz`). The service worker keeps a copy of those files in the browser's cache. Export is user-initiated; the exported file contains your strokes and, among other fields, the browser's user-agent string. Back up writes your progress to a file only when you ask, and Restore reads only a file you choose. Reset removes all stored data.
 
 ## Credits
 
 Outline forms and the rules for joining circles follow the *Gregg Shorthand Manual, Anniversary Edition* (1929). Brief forms come from the Gregg Simplified chart. Each example lists its source in the app.
 
-The manual is in the US public domain. The scan used to transcribe Units 1–3 (see `reference/`) was downloaded from [greggshorthand.github.io](https://greggshorthand.github.io) ([Annivman.pdf](https://greggshorthand.github.io/Annivman.pdf)). The PDF itself is not included in the repository.
+The manual is in the US public domain. The scan used to transcribe Units 1–3 (see `reference/`) was downloaded from [greggshorthand.github.io](https://greggshorthand.github.io) ([Annivman.pdf](https://greggshorthand.github.io/Annivman.pdf)). The PDF itself is not included in the repository. The plate images in `app/plates/` are cut from the same scan with `npm run plates`, which needs the PDF locally and poppler's `pdftoppm`.
 
 ## License
 

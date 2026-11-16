@@ -8,6 +8,7 @@ import { assessRepeats, repeatIndexFor, practiceLines } from './repeats.js';
 import { createAssist } from './assist.js';
 import { createQuiz } from './quiz.js';
 import { createLessons } from './lessons.js';
+import { exportProgress, importProgress, backupFileName } from './backup.js';
 import { getWriterScale, learnWriterScale } from './writer.js';
 
 // v2: strokes are kept per example. (v1 kept one global page; it is ignored.)
@@ -65,7 +66,7 @@ const panel = createExamplePanel({
   art: $('ex-art'), title: $('ex-title'), meaning: $('ex-meaning'), source: $('ex-source'), counter: $('ex-counter'),
   score: $('ex-score'), verdict: $('ex-verdict'), hint: $('ex-repeat-hint'), critiques: $('ex-critiques'),
 });
-const assist = createAssist({ overlay: $('guide'), check: $('check'), hint: $('hint'), unitPx, nextIndex: (strokes, point) => repeatIndexFor(guidedExample(), strokes, point, { unitPx: unitPx(), lineSpacing: pad.lineSpacing }), enabled: () => guideInput.checked && !inQuiz() && !!guidedExample() });
+const assist = createAssist({ overlay: $('guide'), check: $('check'), hint: $('hint'), model: $('model'), modelOf: () => ({ example: inQuiz() ? null : guidedExample(), scale: getWriterScale(), lineSpacing: pad.lineSpacing }), unitPx, nextIndex: (strokes, point) => repeatIndexFor(guidedExample(), strokes, point, { unitPx: unitPx(), lineSpacing: pad.lineSpacing, scale: getWriterScale() }), enabled: () => guideInput.checked && !inQuiz() && !!guidedExample() });
 const quiz = createQuiz({ panel: $('quiz-panel'), pad, assist, unitPx });
 const lessons = createLessons({ panel: $('lesson-panel'), pad, assist, unitPx });
 
@@ -75,6 +76,7 @@ guideInput.checked = saved.guide;
 guideInput.addEventListener('change', () => {
   saved.guide = guideInput.checked;
   if (!guideInput.checked) assist.reset();
+  assist.drawModel();
   persist();
 });
 for (const b of document.querySelectorAll('.sections button')) {
@@ -90,6 +92,7 @@ spacingInput.addEventListener('input', () => {
     showPanel(false);
     refreshAssessment();
   }
+  assist.drawModel();
   persist();
 });
 fingerInput.addEventListener('change', () => {
@@ -102,6 +105,42 @@ $('export').addEventListener('click', exportJSON);
 $('ex-prev').addEventListener('click', () => goTo(index - 1));
 $('ex-next').addEventListener('click', () => goTo(index + 1));
 $('ex-replay').addEventListener('click', () => panel.replay());
+// Back up: share sheet where available (lets the user pick Drive / Files), else a download.
+$('backup').addEventListener('click', async () => {
+  const text = JSON.stringify(exportProgress(localStorage), null, 2);
+  const name = backupFileName(new Date());
+  const file = new File([text], name, { type: 'application/json' });
+  if (navigator.canShare?.({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file] });
+      return;
+    } catch (err) {
+      if (err?.name === 'AbortError') return;
+    }
+  }
+  const url = URL.createObjectURL(file);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = name;
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+});
+$('restore').addEventListener('click', () => $('restore-file').click());
+$('restore-file').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  try {
+    const backup = JSON.parse(await file.text());
+    if (!window.confirm(`Restore progress from ${file.name}?\n\nThis replaces all progress on this device: lessons, practice, quiz history and your learned writing size.`)) return;
+    importProgress(localStorage, backup);
+    location.reload();
+  } catch (err) {
+    window.alert('That file could not be restored: ' + err.message);
+  }
+});
 $('reset-all').addEventListener('click', () => {
   const ok = window.confirm('Reset everything?\n\nThis clears all practice strokes and scores, quiz history, export marks, settings and your learned writing size. It can’t be undone.');
   if (!ok) return;
@@ -125,6 +164,7 @@ function route() {
   else if (view === 'learn') lessons.show();
   else if (wasElsewhere && view === 'pad') goTo(index, { animate: false });
   for (const a of document.querySelectorAll('.modes a')) a.classList.toggle('active', a.dataset.view === view);
+  assist.drawModel();
   if (view === 'strokes') {
     const first = !gallery;
     gallery ??= buildGallery($('gallery'));
@@ -331,3 +371,6 @@ async function exportJSON() {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
   markExported();
 }
+
+// Offline: the service worker keeps every file of the app on the device (see sw.js).
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch((err) => console.warn('offline support unavailable', err));

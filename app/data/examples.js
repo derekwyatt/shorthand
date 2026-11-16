@@ -49,7 +49,9 @@ const letters = LETTER_ORDER.map((id) => {
   if (s.verify) throw new Error(`example uses unverified stroke ${id}`);
   const lines = [`The sound ${SOUND[id]}.`];
   if (s.briefForms.length) lines.push(`Written alone, it is the brief form for ${quote(s.briefForms)}.`);
-  return { id: `letter-${id}`, kind: 'letter', level: 1, title: s.label, outline: [id], meaning: lines, source: 'Stroke chart' };
+  // The two th forms share a label; the title says which form it is.
+  const title = id.startsWith('th-') ? `${s.label} (${id.slice(3)})` : s.label;
+  return { id: `letter-${id}`, kind: 'letter', level: 1, title, outline: [id], meaning: lines, source: 'Stroke chart' };
 });
 
 // Level 2: one example per brief-form stroke (Simplified chart), in chart order.
@@ -289,8 +291,8 @@ export const EXAMPLES = [
 
 // ---------------------------------------------------------------- sentences
 // Built only from verified pieces: brief forms (single strokes, Simplified chart; "any"
-// from Manual §29) and the Manual p. 5 words and words built by §11–12 above. Every word is its own outline; experienced writers often join
-// common phrases ("phrasing"), which these examples leave out.
+// from Manual §29) and the Manual p. 5 words and words built by §11–12 above. Each word is
+// its own outline, except the phrases the manual joins (§4).
 const BRIEF = {
   a: ['h'], an: ['h'], is: ['s-right'], his: ['s-right'], for: ['f'], have: ['v'],
   in: ['n'], not: ['n'], am: ['m'], more: ['m'], men: ['men'], it: ['t'], at: ['t'],
@@ -298,6 +300,11 @@ const BRIEF = {
   put: ['p'], be: ['b'], by: ['b'], can: ['k'], go: ['g'], good: ['g'], shall: ['sh'], any: ['n', 'e'],
   which: ['ch'], the: ['th-over'], time: ['tem'], their: ['th-under'], there: ['th-under'],
   and: ['nd'], end: ['nd'],
+};
+// §4 Phrasing (p. 2): "The joining of simple words is a great help to accuracy and speed".
+// These are the manual's own examples; a phrase is written as one outline.
+export const PHRASES = {
+  'i will': ['a', 'l'], 'he can': ['e', 'k'], 'it will': ['t', 'l'], 'in the': ['n', 'th-over'],
 };
 const WORD_TOKENS = Object.fromEntries([...WORDS, ...WORDS_3B, ...WORDS_4].map(([w, o]) => [w, o]));
 
@@ -385,30 +392,40 @@ const SENTENCES = [
 ];
 
 function sentenceExample(text) {
-  const words = text.replace(/\.$/, '').split(' ').map((raw) => {
-    const w = raw.toLowerCase();
+  const raws = text.replace(/\.$/, '').split(' ');
+  const words = [];
+  for (let i = 0; i < raws.length; i++) {
+    const pair = raws.slice(i, i + 2).join(' ');
+    if (PHRASES[pair.toLowerCase()]) {
+      words.push({ text: pair, tokens: PHRASES[pair.toLowerCase()], brief: true, phrase: true });
+      i++;
+      continue;
+    }
+    const w = raws[i].toLowerCase();
     const tokens = BRIEF[w] || WORD_TOKENS[w];
-    if (!tokens) throw new Error(`no verified outline for "${raw}" in "${text}"`);
-    return { text: raw, tokens, brief: !!BRIEF[w] };
-  });
+    if (!tokens) throw new Error(`no verified outline for "${raws[i]}" in "${text}"`);
+    words.push({ text: raws[i], tokens, brief: !!BRIEF[w] });
+  }
   words.push({ text: '.', tokens: ['period'], brief: false });
   const parts = words.map((w) => {
     if (w.text === '.') return 'period = \\';
     const piece = w.tokens.length === 1 && w.tokens[0] === 'h' ? 'dot' : spell(w.tokens);
-    return `${w.text.toLowerCase()} = ${piece}`;
+    return `${w.text.toLowerCase()} = ${piece}${w.phrase ? ' (joined)' : ''}`;
   });
-  const briefs = [...new Set(words.filter((w) => w.brief).map((w) => w.text.toLowerCase()))];
+  const briefs = [...new Set(words.filter((w) => w.brief && !w.phrase).map((w) => w.text.toLowerCase()))];
+  const phrases = words.filter((w) => w.phrase).map((w) => `“${w.text.toLowerCase()}”`);
   return {
     id: `sentence-${text.toLowerCase().replace(/[^a-z]+/g, '-').replace(/-$/, '')}`,
-    kind: 'sentence', level: words.length - 1 <= 4 ? 5 : 6, title: text, words,
+    kind: 'sentence', level: raws.length <= 4 ? 5 : 6, title: text, words,
     outline: words.flatMap((w) => w.tokens),
     meaning: [
       `“${text}”`,
       parts.join(' · '),
       ...(briefs.length ? [`Brief forms: ${briefs.join(', ')}.`] : []),
-      'Write each word as its own outline, in order, and end with the period mark.',
+      ...(phrases.length ? [`Phrase (Manual §4): write ${phrases.join(' and ')} as one outline, without lifting the pen.`] : []),
+      `Write each ${phrases.length ? 'other ' : ''}word as its own outline, in order, and end with the period mark.`,
     ],
-    source: 'Brief forms (Simplified chart) and words built by Manual §11–12; period from Manual p. 2',
+    source: `Brief forms (Simplified chart) and words built by Manual §11–12; ${phrases.length ? 'phrasing from Manual §4, ' : ''}period from Manual p. 2`,
   };
 }
 
