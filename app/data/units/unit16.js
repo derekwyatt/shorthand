@@ -5,10 +5,10 @@ export default {
   pages: 'pp. 73–76',
   level: { name: 'Blends nd, md and ld', description: 'The -nt, -nd and -mt, -md blends, short e and i omitted before them at the start, the ld combination, and brief forms (Manual §133–138)' },
   rules: {
-    R133: '“When two straight lines form an obtuse or blunt angle, the natural tendency of the hand is to “slur” the angle and allow the lines to form a curve”: n and t or d blend to express -nt, -nd, and m and t or d blend to express -mt, -md. (Manual §133)',
-    R134: '“The -nt, -nd blend is an upward curve, corresponding in length to the sign for f; the -mt, -md blend is an upward curve, corresponding in length to v”; at the beginning of words short e and short i are omitted before these blends. (Manual §134)',
-    R135: 'Word drill on the -nt, -nd and -mt, -md blends. (Manual §135)',
-    R136: '“The combination ld is expressed by giving l a swinging upward turn at the finish.” (Manual §136)',
+    R133: '“When two straight lines form an obtuse or blunt angle, the natural tendency of the hand is to “slur” the angle and allow the lines to form a curve”: n and t or d blend to express -nt, -nd, and m and t or d blend to express -mt, -md (Manual §133).',
+    R134: '“The -nt, -nd blend is an upward curve, corresponding in length to the sign for f; the -mt, -md blend is an upward curve, corresponding in length to v”; at the beginning of words short e and short i are omitted before these blends (Manual §134).',
+    R135: 'Word drill on the -nt, -nd and -mt, -md blends (Manual §135).',
+    R136: '“The combination ld is expressed by giving l a swinging upward turn at the finish.” (Manual §136).',
   },
   words: [
     ['bond', ['b', 'o', 'nd'], 'R135', 73],

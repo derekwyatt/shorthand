@@ -5,9 +5,9 @@ export default {
   pages: 'pp. 80–83',
   level: { name: 'Prefixes be de re dis mis', description: 'The word-beginnings be, de, re, dis and mis with the vowel omitted, the phrase I had, and brief forms (Manual §145, §148, §150)' },
   rules: {
-    R145: '“The vowel is omitted in the syllables be, de, re, dis, and mis.” (Manual §145)',
-    R148: '“The word had when following a pronoun is expressed as shown in the following illustrations”: I had is the broken circle and d. (Manual §148)',
-    R150: 'Brief forms for common words. (Manual §150)',
+    R145: '“The vowel is omitted in the syllables be, de, re, dis, and mis.” (Manual §145).',
+    R148: '“The word had when following a pronoun is expressed as shown in the following illustrations”: I had is the broken circle and d (Manual §148).',
+    R150: 'Brief forms for common words (Manual §150).',
   },
   words: [
     ['delay', ['d', 'l', 'a'], 'R145', 80],

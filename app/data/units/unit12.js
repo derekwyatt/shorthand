@@ -5,10 +5,10 @@ export default {
   pages: 'pp. 56–60',
   level: { name: 'Y, ng and nk, prefixes', description: 'Y as a circle before a hook vowel, the ng and nk signs, the prefixes en, in, un, em, im, negative words, frequent phrases and brief forms (Manual §104–109)' },
   rules: {
-    R104: '“Y has the sound of long e, as in yacht, yoke, and when followed by a hook vowel is expressed by the small circle. Ye, as in year, yet, is expressed by a small loop; ya, by a large loop.” (Manual §104)',
-    R105: '“The sound ng, as in ring, rang, is expressed by n written at a slightly downward slant; nk (sounded ngk), as in bank, rank, is expressed by a longer stroke on the same slant.” (Manual §105)',
-    R106: '“The vowel is omitted in the prefixes en, in, un, em, im when the prefix is followed by a consonant; when a written vowel follows the prefix, the initial vowel is retained. Ex is expressed by es. The suffix ings is expressed by a left s and ingly by a small circle substituted for the ing-dot.” (Manual §106)',
-    R107: '“Negative words beginning with in, un, im in which the n or m is doubled are distinguished from the positive forms by omitting one of the doubled consonants and inserting the initial vowel.” (Manual §107)',
+    R104: '“Y has the sound of long e, as in yacht, yoke, and when followed by a hook vowel is expressed by the small circle. Ye, as in year, yet, is expressed by a small loop; ya, by a large loop.” (Manual §104).',
+    R105: '“The sound ng, as in ring, rang, is expressed by n written at a slightly downward slant; nk (sounded ngk), as in bank, rank, is expressed by a longer stroke on the same slant.” (Manual §105).',
+    R106: '“The vowel is omitted in the prefixes en, in, un, em, im when the prefix is followed by a consonant; when a written vowel follows the prefix, the initial vowel is retained. Ex is expressed by es. The suffix ings is expressed by a left s and ingly by a small circle substituted for the ing-dot.” (Manual §106).',
+    R107: '“Negative words beginning with in, un, im in which the n or m is doubled are distinguished from the positive forms by omitting one of the doubled consonants and inserting the initial vowel.” (Manual §107).',
   },
   words: [
     ['yacht', ['e', 'o', 't'], 'R104', 56],

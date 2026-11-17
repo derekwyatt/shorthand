@@ -5,12 +5,12 @@ export default {
   pages: 'pp. 84–87',
   level: { name: 'Blends ten and tem', description: 'The ten-den and tem-dem blends, the syllable tain, and the phrases with them (Manual §153–158)' },
   rules: {
-    R153: '“By blending t or d with n or m facile blends result, which make possible the writing of many syllables with but one movement of the pen”: t and n blended express ten, den; t and m blended express tem, dem. (Manual §153)',
-    R154: 'Word drill on the ten, den blend and the tem, dem blend. (Manual §154)',
-    R155: '“The blend is not employed when a strongly accented vowel or diphthong occurs in the syllable”; dean, dine, team, tame, dome, dime are written in full, but “the syllable tain, as in maintain, attain, however, is expressed by ten”. (Manual §155)',
-    R156: '“Where it is possible to use either ten-den or ent-end, as in intention, the right-motion blend is given preference”. (Manual §156)',
-    R157: '“The blending principle makes possible some interesting and valuable phrases”. (Manual §157)',
-    R158: '“When do-not is preceded by a pronoun, it is expressed by the sign den”. (Manual §158)',
+    R153: '“By blending t or d with n or m facile blends result, which make possible the writing of many syllables with but one movement of the pen”: t and n blended express ten, den; t and m blended express tem, dem (Manual §153).',
+    R154: 'Word drill on the ten, den blend and the tem, dem blend (Manual §154).',
+    R155: '“The blend is not employed when a strongly accented vowel or diphthong occurs in the syllable”; dean, dine, team, tame, dome, dime are written in full, but “the syllable tain, as in maintain, attain, however, is expressed by ten” (Manual §155).',
+    R156: '“Where it is possible to use either ten-den or ent-end, as in intention, the right-motion blend is given preference” (Manual §156).',
+    R157: '“The blending principle makes possible some interesting and valuable phrases” (Manual §157).',
+    R158: '“When do-not is preceded by a pronoun, it is expressed by the sign den” (Manual §158).',
   },
   words: [
     ['sudden', ['s-right', 'ten'], 'R154', 84],

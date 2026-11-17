@@ -5,9 +5,9 @@ export default {
   pages: 'pp. 97–99',
   level: { name: 'Omission of t', description: 'The final t omitted after s, k, p and den, and the words in which it is written (Manual §174–176)' },
   rules: {
-    R174: '“When slightly enunciated, t is omitted at the end of many words”: best, rest, latest, just, cost; the word drill is headed “t omitted after s”. (Manual §174)',
-    R175: 'Word drill headed “t omitted after k, p, den”: fact, elect, product, adopt, evident. (Manual §175)',
-    R176: 'Word drill headed “t is written in the following words”: lost, east, fast, dust, post, coast. (Manual §176)',
+    R174: '“When slightly enunciated, t is omitted at the end of many words”: best, rest, latest, just, cost; the word drill is headed “t omitted after s” (Manual §174).',
+    R175: 'Word drill headed “t omitted after k, p, den”: fact, elect, product, adopt, evident (Manual §175).',
+    R176: 'Word drill headed “t is written in the following words”: lost, east, fast, dust, post, coast (Manual §176).',
   },
   words: [
     ['best', ['b', 'e', 's-left'], 'R174', 97],

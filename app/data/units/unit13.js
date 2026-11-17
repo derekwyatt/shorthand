@@ -5,9 +5,9 @@ export default {
   pages: 'pp. 61–64',
   level: { name: 'Diphthongs', description: 'The diphthongs ū, ow, oi and ī (the broken circle), the large circle for long i in a few words, and brief forms (Manual §112–115)' },
   rules: {
-    R112: '“The diphthongs are therefore expressed by joining the circles and hooks representing the vowel sounds of which the diphthongs are composed”: ū as in fume, ow as in now, oi as in oil, ī as in die. “The signs are written in their sounded order. The sign for the diphthong i is treated as a circle, and conforms to the rules for joining circles.” (Manual §112)',
-    R113: 'Word drill on the four diphthongs: ū and ow (a circle then the oo hook), oi (the o hook then the small circle) and ī (the broken circle). (Manual §113)',
-    R114: '“For convenience, long i is expressed by the large circle in the following words”: life, line, quite, might. (Manual §114)',
+    R112: '“The diphthongs are therefore expressed by joining the circles and hooks representing the vowel sounds of which the diphthongs are composed”: ū as in fume, ow as in now, oi as in oil, ī as in die. “The signs are written in their sounded order. The sign for the diphthong i is treated as a circle, and conforms to the rules for joining circles.” (Manual §112).',
+    R113: 'Word drill on the four diphthongs: ū and ow (a circle then the oo hook), oi (the o hook then the small circle) and ī (the broken circle) (Manual §113).',
+    R114: '“For convenience, long i is expressed by the large circle in the following words”: life, line, quite, might (Manual §114).',
   },
   words: [
     ['human', ['h', 'e', 'u', 'men'], 'R113', 62],

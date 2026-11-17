@@ -5,8 +5,8 @@ export default {
   pages: 'pp. 93–94',
   level: { name: 'Prefixes and suffixes', description: 'The prefixes and suffixes f, self, selves and age, and the phrasing principles for him, hope, want and sure (Manual §170–171)' },
   rules: {
-    R170: '“The prefixes for, fore, fur are expressed by f. The suffixes ful and ify are expressed by f; self by s; selves by ses; and age by j”; the syllable ture is written tr, and the vowel in baggage is omitted to distinguish it from package. (Manual §170)',
-    R171: '“In phrases, the words ago, early, few, him, hope, sorry, want, sure, possible, are modified as shown below”. (Manual §171)',
+    R170: '“The prefixes for, fore, fur are expressed by f. The suffixes ful and ify are expressed by f; self by s; selves by ses; and age by j”; the syllable ture is written tr, and the vowel in baggage is omitted to distinguish it from package (Manual §170).',
+    R171: '“In phrases, the words ago, early, few, him, hope, sorry, want, sure, possible, are modified as shown below” (Manual §171).',
   },
   words: [
     ['forget', ['f', 'g', 'e', 't'], 'R170', 93],

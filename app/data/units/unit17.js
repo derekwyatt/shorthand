@@ -5,10 +5,10 @@ export default {
   pages: 'pp. 77–79',
   level: { name: 'Blends jent and def', description: 'The jent-d, pent-d blend and the def-v, -tive blend, business forms, and brief forms (Manual §140–143)' },
   rules: {
-    R140: '“By rounding off the angle, as shown in the previous blends, the following useful signs for syllables are obtained”: j and t blended express jent-d, pent-d; d and f blended express def-v, -tive. (Manual §140)',
-    R141: 'Word drill on the jent, pent blend and the def, tive blend. (Manual §141)',
-    R142: 'Special business forms: the jent blend alone is the salutation Gentlemen. (Manual §142)',
-    R143: 'Brief forms for common words. (Manual §143)',
+    R140: '“By rounding off the angle, as shown in the previous blends, the following useful signs for syllables are obtained”: j and t blended express jent-d, pent-d; d and f blended express def-v, -tive (Manual §140).',
+    R141: 'Word drill on the jent, pent blend and the def, tive blend (Manual §141).',
+    R142: 'Special business forms: the jent blend alone is the salutation Gentlemen (Manual §142).',
+    R143: 'Brief forms for common words (Manual §143).',
   },
   words: [
     ['spend', ['s-left', 'e', 'jnt'], 'R141', 77],
