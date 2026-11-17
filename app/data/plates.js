@@ -1444,6 +1444,24 @@ const PAGES = {
   'word-translation': 126,
   'word-undertake': 126,
   'word-unrestricted': 127,
+  // Unit 30
+  'phrase-enter-the': 129,
+  'phrase-enter-into': 129,
+  'phrase-over-the': 129,
+  'phrase-under-any': 129,
+  'phrase-under-consideration': 129,
+  'phrase-extra-fare': 129,
+  'phrase-short-time': 129,
+  'phrase-center-line': 129,
+  'phrase-have-done': 130,
+  'phrase-will-be-done': 130,
+  'phrase-would-be-done': 130,
+  'phrase-should-be-done': 130,
+  'phrase-nearer-than': 130,
+  'phrase-sooner-than': 130,
+  'phrase-i-always': 131,
+  'phrase-on-hand': 131,
+  'phrase-whole-lot': 131,
 };
 
 // Examples drawn with the plate of another: brief forms share the alphabet row of their

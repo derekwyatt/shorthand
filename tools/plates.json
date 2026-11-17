@@ -1424,6 +1424,23 @@
     {"id": "word-transaction", "page": 126, "box": [301, 233, 345, 274]},
     {"id": "word-translation", "page": 126, "box": [391, 235, 448, 269]},
     {"id": "word-undertake", "page": 126, "box": [299, 277, 347, 307]},
-    {"id": "word-unrestricted", "page": 127, "box": [494, 393, 549, 421]}
+    {"id": "word-unrestricted", "page": 127, "box": [494, 393, 549, 421]},
+    {"id": "phrase-enter-the", "page": 129, "box": [219, 631, 247, 652]},
+    {"id": "phrase-enter-into", "page": 129, "box": [215, 671, 259, 693]},
+    {"id": "phrase-over-the", "page": 129, "box": [222, 708, 243, 734]},
+    {"id": "phrase-under-any", "page": 129, "box": [217, 748, 247, 779]},
+    {"id": "phrase-under-consideration", "page": 129, "box": [486, 587, 518, 619]},
+    {"id": "phrase-extra-fare", "page": 129, "box": [481, 630, 525, 659]},
+    {"id": "phrase-short-time", "page": 129, "box": [471, 667, 522, 699]},
+    {"id": "phrase-center-line", "page": 129, "box": [468, 713, 537, 740]},
+    {"id": "phrase-have-done", "page": 130, "box": [289, 158, 330, 196]},
+    {"id": "phrase-will-be-done", "page": 130, "box": [525, 178, 583, 219]},
+    {"id": "phrase-would-be-done", "page": 130, "box": [535, 218, 589, 253]},
+    {"id": "phrase-should-be-done", "page": 130, "box": [535, 250, 589, 290]},
+    {"id": "phrase-nearer-than", "page": 130, "box": [530, 390, 574, 406]},
+    {"id": "phrase-sooner-than", "page": 130, "box": [293, 432, 334, 450]},
+    {"id": "phrase-i-always", "page": 131, "box": [189, 364, 252, 388]},
+    {"id": "phrase-on-hand", "page": 131, "box": [201, 397, 242, 428]},
+    {"id": "phrase-whole-lot", "page": 131, "box": [187, 488, 259, 513]}
   ]
 }
