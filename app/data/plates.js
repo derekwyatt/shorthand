@@ -1563,6 +1563,15 @@ const PAGES = {
   'word-va': 147,
   'word-omaha': 148,
   'word-erie': 149,
+  // Unit 35
+  'word-newport': 151,
+  'word-rockford': 151,
+  'word-milford': 151,
+  'word-birmingham': 151,
+  'phrase-state-of-pa': 152,
+  'phrase-state-of-la': 152,
+  'phrase-state-of-ga': 152,
+  'phrase-state-of-minn': 152,
 };
 
 // Examples drawn with the plate of another: brief forms share the alphabet row of their

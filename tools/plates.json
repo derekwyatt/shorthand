@@ -1538,6 +1538,14 @@
     {"id": "word-vt", "page": 147, "box": [504, 106, 539, 145]},
     {"id": "word-va", "page": 147, "box": [496, 141, 539, 197]},
     {"id": "word-omaha", "page": 148, "box": [503, 258, 560, 284]},
-    {"id": "word-erie", "page": 149, "box": [231, 587, 276, 612]}
+    {"id": "word-erie", "page": 149, "box": [231, 587, 276, 612]},
+    {"id": "word-newport", "page": 151, "box": [455, 323, 492, 363]},
+    {"id": "word-rockford", "page": 151, "box": [442, 444, 512, 480]},
+    {"id": "word-milford", "page": 151, "box": [434, 489, 523, 520]},
+    {"id": "word-birmingham", "page": 151, "box": [443, 590, 502, 637]},
+    {"id": "phrase-state-of-pa", "page": 152, "box": [510, 623, 540, 658]},
+    {"id": "phrase-state-of-la", "page": 152, "box": [487, 658, 557, 686]},
+    {"id": "phrase-state-of-ga", "page": 152, "box": [505, 700, 543, 754]},
+    {"id": "phrase-state-of-minn", "page": 152, "box": [492, 752, 560, 770]}
   ]
 }
