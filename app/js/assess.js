@@ -9,7 +9,7 @@
 // No DOM: unit-tested in Node (tests/assess.test.mjs).
 import { STROKES, STROKE_BY_ID, U_PER_LINE } from '../data/strokes.js';
 import { EXAMPLES } from '../data/examples.js';
-import { circleRotation, circleOf, isDoubledHook, isMark, isWLoop, JOIN_CIRCLE, layoutWords } from './join.js';
+import { circleRotation, circleOf, DISJOIN, isDoubledHook, isMark, isWLoop, JOIN_CIRCLE, layoutWords } from './join.js';
 import { samplePoints, tangent, cubicPoint } from './render.js';
 import { WRITER_MAX } from './writer.js';
 
@@ -100,7 +100,7 @@ export function angleText(a) {
 export function modelUnits(example) {
   const words = example.words ?? [{ text: example.title, tokens: example.outline }];
   const units = [];
-  for (const w of layoutWords(words)) {
+  for (const w of layoutWords(words).flatMap(disjoinedParts)) {
     const toks = w.tokens;
     const dots = w.compiled.segments.filter((s) => s.type === 'dot');
     if (toks.length === 1 && toks[0] === 'h') {
@@ -141,6 +141,22 @@ export function modelUnits(example) {
     units.push(outline);
   }
   return units;
+}
+
+// A word with a §209 disjoined prefix is two pen-downs: each part is scored as an outline of
+// its own (tokenOf renumbered within the part).
+function disjoinedParts(w) {
+  const k = w.tokens.indexOf(DISJOIN);
+  if (k < 0) return [w];
+  return [[0, k], [k + 1, w.tokens.length]].map(([from, to]) => {
+    const segments = [], tokenOf = [];
+    w.compiled.segments.forEach((s, i) => {
+      const t = w.compiled.tokenOf[i];
+      if (t >= from && t < to) { segments.push(s); tokenOf.push(t - from); }
+    });
+    const first = segments.find((s) => s.type === 'cubic'), last = segments.filter((s) => s.type === 'cubic').at(-1);
+    return { ...w, tokens: w.tokens.slice(from, to), compiled: { ...w.compiled, segments, tokenOf, start: first.p0, end: last.p3, tokens: w.tokens.slice(from, to) } };
+  });
 }
 
 // Letters a consonant stroke could be confused with (single straight lines and curves;

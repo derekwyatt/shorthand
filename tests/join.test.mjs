@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { EXAMPLES } from '../app/data/examples.js';
 import { STROKE_BY_ID } from '../app/data/strokes.js';
-import { compileOutline, compileExample, JOIN_CIRCLE, circleOf, isMark, isWLoop, W_LOOP } from '../app/js/join.js';
+import { compileOutline, compileExample, JOIN_CIRCLE, circleOf, isMark, isWLoop, W_LOOP, DISJOIN } from '../app/js/join.js';
 import { cubicPoint, pathData } from '../app/js/render.js';
 
 const words = EXAMPLES.filter((e) => e.kind === 'word');
@@ -47,7 +47,7 @@ test('every example compiles to finite geometry', () => {
 test('examples avoid strokes that are not yet verified', () => {
   for (const ex of EXAMPLES) {
     for (const tok of ex.outline) {
-      if (tok === 'h' || circleOf(tok) || isMark(tok)) continue;
+      if (tok === 'h' || tok === DISJOIN || circleOf(tok) || isMark(tok)) continue;
       assert.ok(!STROKE_BY_ID[tok].verify, `${ex.id} uses unverified stroke ${tok}`);
     }
   }
@@ -305,4 +305,14 @@ test('§136 ld: the l run on nearly level, swinging up steeply at the finish', (
   const start = dir(ld[0].p0, ld[0].c1), end = dir(ld.at(-1).c2, ld.at(-1).p3);
   assert.ok(Math.abs(start) < 20, `starts nearly level (${start.toFixed(0)}°)`);
   assert.ok(end > 55 && end < 85, `ends rising steeply (${end.toFixed(0)}°)`);
+});
+
+test('§209: a disjoined prefix is a stroke of its own just above the start of the rest', () => {
+  const c = compileOutline(['k', '^', 'a', 'k', 't']);
+  const pre = c.segments.filter((s, k) => c.tokenOf[k] === 0), rest = c.segments.filter((s, k) => c.tokenOf[k] > 1);
+  const pp = polygon(pre), rp = polygon(rest);
+  assert.notDeepEqual(pre.at(-1).p3, rest[0].p0, 'the pen is lifted');
+  const gap = Math.min(...pp.map((p) => p.y)) - Math.max(...rp.filter((p) => p.x < Math.max(...pp.map((q) => q.x)) + 0.3).map((p) => p.y));
+  assert.ok(gap > 0.2 && gap < 0.45, `above, very close (${gap.toFixed(2)})`);
+  assert.ok(Math.abs(Math.min(...pp.map((p) => p.x)) - Math.min(...rp.map((p) => p.x))) < 0.05, 'over the start of the rest');
 });

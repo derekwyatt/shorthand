@@ -271,6 +271,31 @@ try {
   })()`);
   check(word.title === 'hack' && word.ink && word.dots === 2 /* enlarged + actual size */ && /inside the curve/.test(word.meaning), `word example renders with its h dot and rule (${word.title})`);
 
+  // A §209 disjoined prefix is a second pen-down of the same word, not another repeat.
+  await evaluate(`(() => { const s = document.querySelector('#level-select'); s.value = '33'; s.dispatchEvent(new Event('change', { bubbles: true })); })()`);
+  await sleep(100);
+  await evaluate(`(async () => {
+    const { EXAMPLES } = await import('./data/examples.js');
+    const i = EXAMPLES.findIndex((e) => e.id === 'word-contract');
+    const cur = EXAMPLES.findIndex((e) => e.title === document.getElementById('ex-title').textContent);
+    document.getElementById('clear').click();
+    for (let k = cur; k < i; k++) document.getElementById('ex-next').click();
+  })()`);
+  await sleep(150);
+  const disPts = await evaluate(`(async () => {
+    const { EXAMPLES } = await import('./data/examples.js');
+    const { modelUnits } = await import('./js/assess.js');
+    const { samplePoints } = await import('./js/render.js');
+    const u = Number(document.getElementById('spacing').value) / 3;
+    const ex = EXAMPLES.find((e) => e.id === 'word-contract');
+    return modelUnits(ex).map((m) => samplePoints(m.compiled, 24).map((p) => [150 + p.x * u, 160 - p.y * u]));
+  })()`);
+  for (const s of disPts) await pen(s);
+  await sleep(150);
+  const dis = await evaluate(`({ title: document.getElementById('ex-title').textContent, verdict: document.getElementById('ex-verdict').textContent })`);
+  check(disPts.length === 2 && dis.title === 'contract' && dis.verdict.includes('1 repeat') && !/0 repeats|2 repeats/.test(dis.verdict), `a disjoined prefix and the rest are one word, one repeat (${dis.title}: ${dis.verdict})`);
+  await evaluate(`document.getElementById('clear').click()`);
+
   // Scoring, critiques and real-time assistance.
   await evaluate(`localStorage.removeItem('gregg.writer.v1')`); // earlier strokes taught a size; start from the example size
   await evaluate(`(() => { const s = document.querySelector('#level-select'); s.value = '1'; s.dispatchEvent(new Event('change', { bubbles: true })); })()`);

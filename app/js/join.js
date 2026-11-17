@@ -30,6 +30,9 @@
 //   §99  w within a word: "a short horizontal dash" under the following vowel (w-dash, the
 //        token before that vowel's circle or hook). §100 initial a: a dot on the line before
 //        the outline (a-dot). Both are written apart from the outline, like the h dot.
+//   §209 "The prefix is placed above the line, very close to the remainder of the word": the
+//        token `^` ends a disjoined prefix (contr = k ^, intr = n ^), drawn as a stroke of its
+//        own just above the start of the rest (p. 121).
 //   §94  "The oo-hook is turned under after n, m. It is also turned under after k or g if
 //        followed by r or l": the hook turned to start along the end of the n / m / k / g,
 //        so it curls down and back under the line (none, numb, cool, p. 50). The n and m
@@ -46,7 +49,7 @@
 // An outline is a list of tokens: a stroke id from data/strokes.js, 'a' or 'e' (circle),
 // 'a-rev' or 'e-rev' (the §71 r circle) or 'h' (dot). Geometry is in U with y up, like render.js.
 import { STROKE_BY_ID } from '../data/strokes.js';
-import { compileStroke, tangent, bbox } from './render.js';
+import { compileStroke, cubicPoint, tangent, bbox } from './render.js';
 
 // Diameters of joined circles in U (measured: a ≈ 0.8–1.05 U, e ≈ 0.4 U).
 export const JOIN_CIRCLE = { a: 0.95, e: 0.38 };
@@ -238,7 +241,34 @@ const A_DOT_GAP = 0.45; // before the outline
 // The outline without its §99 / §100 marks, compiled, then the marks placed: a w dash
 // below the vowel after it, the a dot on the line before the outline. Mark segments are
 // dots ({ type: 'dot', p, mark, dash? }); a dash has a length and is drawn as a short line.
+export const DISJOIN = '^';
+// §209: the prefix's lowest point this far above the highest point of the rest under it.
+const PREFIX_GAP = 0.3;
+
+// A disjoined prefix and the rest, placed: the prefix starts over the start of the rest,
+// just clear of it. tokenOf still indexes the whole outline; `^` owns no segment.
+function compileDisjoined(outline) {
+  const k = outline.indexOf(DISJOIN);
+  if (k < 1 || k === outline.length - 1 || outline.indexOf(DISJOIN, k + 1) !== -1) throw new Error(`one disjoined prefix, then the rest of the word (${outline.join(' ')})`);
+  const pre = compileOutline(outline.slice(0, k)), rest = compileOutline(outline.slice(k + 1));
+  const onCurve = (c) => c.segments.filter((s) => s.type === 'cubic').flatMap((s) => Array.from({ length: 17 }, (_, i) => cubicPoint(s, i / 16)));
+  const pp = onCurve(pre), rp = onCurve(rest);
+  const pMinX = Math.min(...pp.map((p) => p.x)), rMinX = Math.min(...rp.map((p) => p.x));
+  const span = Math.max(...pp.map((p) => p.x)) - pMinX;
+  const top = Math.max(...rp.filter((p) => p.x <= rMinX + span + 0.3).map((p) => p.y));
+  const d = { x: rMinX - pMinX, y: top + PREFIX_GAP - Math.min(...pp.map((p) => p.y)) };
+  const mv = (p) => ({ x: p.x + d.x, y: p.y + d.y });
+  const moved = pre.segments.map((s) => (s.type === 'dot' ? { ...s, p: mv(s.p) } : { ...s, p0: mv(s.p0), c1: mv(s.c1), c2: mv(s.c2), p3: mv(s.p3) }));
+  return {
+    segments: [...moved, ...rest.segments],
+    start: mv(pre.start), end: rest.end, tokens: outline,
+    tokenOf: [...pre.tokenOf, ...rest.tokenOf.map((t) => t + k + 1)],
+    joins: [...pre.joins, ...rest.joins.map((j) => ({ ...j, index: j.index + k + 1 }))],
+  };
+}
+
 export function compileOutline(outline) {
+  if (outline.includes(DISJOIN)) return compileDisjoined(outline);
   if (!outline.some(isMark)) return compileCore(outline);
   const core = [], origin = [], marks = [];
   outline.forEach((tok, i) => {
