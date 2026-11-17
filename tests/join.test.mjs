@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { EXAMPLES } from '../app/data/examples.js';
 import { STROKE_BY_ID } from '../app/data/strokes.js';
-import { compileOutline, compileExample, JOIN_CIRCLE, circleOf, isMark, isWLoop, W_LOOP, DISJOIN } from '../app/js/join.js';
+import { compileOutline, compileExample, JOIN_CIRCLE, circleOf, isMark, isWLoop, W_LOOP, isDisjoin } from '../app/js/join.js';
 import { cubicPoint, pathData } from '../app/js/render.js';
 
 const words = EXAMPLES.filter((e) => e.kind === 'word');
@@ -47,7 +47,7 @@ test('every example compiles to finite geometry', () => {
 test('examples avoid strokes that are not yet verified', () => {
   for (const ex of EXAMPLES) {
     for (const tok of ex.outline) {
-      if (tok === 'h' || tok === DISJOIN || circleOf(tok) || isMark(tok)) continue;
+      if (tok === 'h' || isDisjoin(tok) || circleOf(tok) || isMark(tok)) continue;
       assert.ok(!STROKE_BY_ID[tok].verify, `${ex.id} uses unverified stroke ${tok}`);
     }
   }
@@ -315,4 +315,16 @@ test('§209: a disjoined prefix is a stroke of its own just above the start of t
   const gap = Math.min(...pp.map((p) => p.y)) - Math.max(...rp.filter((p) => p.x < Math.max(...pp.map((q) => q.x)) + 0.3).map((p) => p.y));
   assert.ok(gap > 0.2 && gap < 0.45, `above, very close (${gap.toFixed(2)})`);
   assert.ok(Math.abs(Math.min(...pp.map((p) => p.x)) - Math.min(...rp.map((p) => p.x))) < 0.05, 'over the start of the rest');
+});
+
+test('§230: a disjoined suffix is a stroke of its own just under the end of the word', () => {
+  const c = compileOutline(['a', 'r', 't', '_', 'k']);
+  const word = c.segments.filter((s, k) => c.tokenOf[k] < 3), suf = c.segments.filter((s, k) => c.tokenOf[k] > 3);
+  const end = word.at(-1).p3, sp = polygon(suf);
+  assert.notDeepEqual(end, suf[0].p0, 'the pen is lifted');
+  const gap = end.y - Math.max(...sp.map((p) => p.y));
+  assert.ok(gap > 0.5 && gap < 1.0, `under the end, close (${gap.toFixed(2)})`);
+  const back = end.x - Math.min(...sp.map((p) => p.x));
+  assert.ok(back > 0.2 && back < 0.7, `starting just left of the end (${back.toFixed(2)})`);
+  assert.deepEqual(c.end, suf.at(-1).p3);
 });

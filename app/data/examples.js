@@ -258,6 +258,7 @@ function tokenName(t) {
   if (t === 'w-dash') return 'w-dash (below the vowel)';
   if (t === 'a-dot') return 'a-dot (before the outline)';
   if (t === '^') return 'pen lifted, the rest written just below';
+  if (t === '_') return 'pen lifted, the ending written under the end of the word';
   return STROKE_BY_ID[t].label;
 }
 const spell = (outline) => outline.map(tokenName).join(' + ');

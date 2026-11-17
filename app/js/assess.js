@@ -9,7 +9,7 @@
 // No DOM: unit-tested in Node (tests/assess.test.mjs).
 import { STROKES, STROKE_BY_ID, U_PER_LINE } from '../data/strokes.js';
 import { EXAMPLES } from '../data/examples.js';
-import { circleRotation, circleOf, DISJOIN, isDoubledHook, isMark, isWLoop, JOIN_CIRCLE, layoutWords } from './join.js';
+import { circleRotation, circleOf, isDisjoin, isDoubledHook, isMark, isWLoop, JOIN_CIRCLE, layoutWords } from './join.js';
 import { samplePoints, tangent, cubicPoint } from './render.js';
 import { WRITER_MAX } from './writer.js';
 
@@ -143,10 +143,10 @@ export function modelUnits(example) {
   return units;
 }
 
-// A word with a §209 disjoined prefix is two pen-downs: each part is scored as an outline of
+// A word with a §209 disjoined prefix or a §230 disjoined suffix is two pen-downs: each part is scored as an outline of
 // its own (tokenOf renumbered within the part).
 function disjoinedParts(w) {
-  const k = w.tokens.indexOf(DISJOIN);
+  const k = w.tokens.findIndex(isDisjoin);
   if (k < 0) return [w];
   return [[0, k], [k + 1, w.tokens.length]].map(([from, to]) => {
     const segments = [], tokenOf = [];

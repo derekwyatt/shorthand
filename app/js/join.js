@@ -33,6 +33,8 @@
 //   §209 "The prefix is placed above the line, very close to the remainder of the word": the
 //        token `^` ends a disjoined prefix (contr = k ^, intr = n ^), drawn as a stroke of its
 //        own just above the start of the rest (p. 121).
+//   §230 "Analogical word-endings, disjoined": the token `_` starts a suffix written apart,
+//        just under the end of the word (pp. 137–138).
 //   §94  "The oo-hook is turned under after n, m. It is also turned under after k or g if
 //        followed by r or l": the hook turned to start along the end of the n / m / k / g,
 //        so it curls down and back under the line (none, numb, cool, p. 50). The n and m
@@ -242,33 +244,56 @@ const A_DOT_GAP = 0.45; // before the outline
 // below the vowel after it, the a dot on the line before the outline. Mark segments are
 // dots ({ type: 'dot', p, mark, dash? }); a dash has a length and is drawn as a short line.
 export const DISJOIN = '^';
+// §230 (and the §218 stand forms): the token `_` starts a disjoined suffix, written as a
+// stroke of its own under the end of the word.
+export const SUFFIX = '_';
+export const isDisjoin = (tok) => tok === DISJOIN || tok === SUFFIX;
 // §209: the prefix's lowest point this far above the highest point of the rest under it.
 const PREFIX_GAP = 0.3;
+// §230: the suffix starts this far left of the word's last point, its top this far below
+// it (pp. 137–138).
+const SUFFIX_BACK = 0.45, SUFFIX_GAP = 0.75;
 
-// A disjoined prefix and the rest, placed: the prefix starts over the start of the rest,
-// just clear of it. tokenOf still indexes the whole outline; `^` owns no segment.
+// A word written in two pen-downs, placed. `^` ends a prefix, which starts over the start
+// of the rest, just clear of it; `_` starts a suffix, under the end of the word. tokenOf
+// still indexes the whole outline; the `^` or `_` owns no segment.
 function compileDisjoined(outline) {
-  const k = outline.indexOf(DISJOIN);
-  if (k < 1 || k === outline.length - 1 || outline.indexOf(DISJOIN, k + 1) !== -1) throw new Error(`one disjoined prefix, then the rest of the word (${outline.join(' ')})`);
-  const pre = compileOutline(outline.slice(0, k)), rest = compileOutline(outline.slice(k + 1));
+  const k = outline.findIndex(isDisjoin);
+  if (k < 1 || k === outline.length - 1 || outline.slice(k + 1).some(isDisjoin)) throw new Error(`one disjoined part, written before or after the rest of the word (${outline.join(' ')})`);
+  const first = compileOutline(outline.slice(0, k)), second = compileOutline(outline.slice(k + 1));
   const onCurve = (c) => c.segments.filter((s) => s.type === 'cubic').flatMap((s) => Array.from({ length: 17 }, (_, i) => cubicPoint(s, i / 16)));
-  const pp = onCurve(pre), rp = onCurve(rest);
-  const pMinX = Math.min(...pp.map((p) => p.x)), rMinX = Math.min(...rp.map((p) => p.x));
-  const span = Math.max(...pp.map((p) => p.x)) - pMinX;
-  const top = Math.max(...rp.filter((p) => p.x <= rMinX + span + 0.3).map((p) => p.y));
-  const d = { x: rMinX - pMinX, y: top + PREFIX_GAP - Math.min(...pp.map((p) => p.y)) };
+  const fp = onCurve(first), sp = onCurve(second);
+  const fMinX = Math.min(...fp.map((p) => p.x)), sMinX = Math.min(...sp.map((p) => p.x));
+  let d;
+  if (outline[k] === DISJOIN) {
+    const span = Math.max(...fp.map((p) => p.x)) - fMinX;
+    const top = Math.max(...sp.filter((p) => p.x <= sMinX + span + 0.3).map((p) => p.y));
+    d = { x: sMinX - fMinX, y: top + PREFIX_GAP - Math.min(...fp.map((p) => p.y)) };
+  }
+  // The part that moves: the prefix onto the rest, or the suffix under the word.
+  const moving = outline[k] === DISJOIN ? first : second;
+  if (outline[k] === SUFFIX) {
+    const x0 = first.end.x - SUFFIX_BACK, x1 = x0 + Math.max(...sp.map((p) => p.x)) - sMinX;
+    // Under the last point, and never into a part of the word that dips lower above it.
+    const above = fp.filter((p) => p.x >= x0 - 0.1 && p.x <= x1 + 0.1).map((p) => p.y - PREFIX_GAP);
+    const top = Math.min(first.end.y - SUFFIX_GAP, ...above);
+    d = { x: x0 - sMinX, y: top - Math.max(...sp.map((p) => p.y)) };
+  }
   const mv = (p) => ({ x: p.x + d.x, y: p.y + d.y });
-  const moved = pre.segments.map((s) => (s.type === 'dot' ? { ...s, p: mv(s.p) } : { ...s, p0: mv(s.p0), c1: mv(s.c1), c2: mv(s.c2), p3: mv(s.p3) }));
+  const moved = moving.segments.map((s) => (s.type === 'dot' ? { ...s, p: mv(s.p) } : { ...s, p0: mv(s.p0), c1: mv(s.c1), c2: mv(s.c2), p3: mv(s.p3) }));
+  const [a, b] = outline[k] === DISJOIN ? [moved, second.segments] : [first.segments, moved];
   return {
-    segments: [...moved, ...rest.segments],
-    start: mv(pre.start), end: rest.end, tokens: outline,
-    tokenOf: [...pre.tokenOf, ...rest.tokenOf.map((t) => t + k + 1)],
-    joins: [...pre.joins, ...rest.joins.map((j) => ({ ...j, index: j.index + k + 1 }))],
+    segments: [...a, ...b],
+    start: outline[k] === DISJOIN ? mv(first.start) : first.start,
+    end: outline[k] === DISJOIN ? second.end : mv(second.end),
+    tokens: outline,
+    tokenOf: [...first.tokenOf, ...second.tokenOf.map((t) => t + k + 1)],
+    joins: [...first.joins, ...second.joins.map((j) => ({ ...j, index: j.index + k + 1 }))],
   };
 }
 
 export function compileOutline(outline) {
-  if (outline.includes(DISJOIN)) return compileDisjoined(outline);
+  if (outline.some(isDisjoin)) return compileDisjoined(outline);
   if (!outline.some(isMark)) return compileCore(outline);
   const core = [], origin = [], marks = [];
   outline.forEach((tok, i) => {
