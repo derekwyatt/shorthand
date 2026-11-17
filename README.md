@@ -7,9 +7,9 @@ A browser app for practising Gregg shorthand by hand. You copy an outline onto a
 ## Features
 
 - Four views: Lessons, Practice, Quiz and Strokes.
-- Step-by-step lessons for Units 1–9 of the 1929 manual: read each rule, watch its outlines, write them on the pad until they pass, and name outlines by sight.
+- Step-by-step lessons for the units of the 1929 manual done so far (Unit 1 onward, in the book's order): read each rule, watch its outlines, write them on the pad until they pass, and name outlines by sight.
 - The manual's own printed outline is shown next to the drawn one, in Practice, in the lessons and, once a question is answered, in reading questions.
-- Fourteen levels of examples: alphabet strokes (with the o hook), brief forms, two levels of circle words, short sentences, long sentences (with the manual's §4 phrases, such as *it will*, joined into one outline), joined words (Unit 2), blends with the frequent-word drill (Unit 3), downward characters with blends and brief forms (Unit 4), the s signs (Unit 5), shun, past-tense and brief forms with joined phrases such as *would be* (Unit 6), the o hook (Unit 7), the left-motion r circle and the s loop (Unit 8), and th joinings, con/com, ly, to/as/be-able phrases and brief forms (Unit 9).
+- Levels of examples: alphabet strokes (with the o and oo hooks), brief forms, two levels of circle words, short sentences, long sentences (with the manual's §4 phrases, such as *it will*, joined into one outline), then one level per manual unit from Unit 2: joined words (Unit 2), blends with the frequent-word drill (Unit 3), downward characters with blends and brief forms (Unit 4), the s signs (Unit 5), shun, past-tense and brief forms with joined phrases such as *would be* (Unit 6), the o hook (Unit 7), the left-motion r circle and the s loop (Unit 8), th joinings, con/com, ly, to/as/be-able phrases and brief forms (Unit 9), the oo hook (Unit 10), and so on (the level of Unit N is N + 5).
 - Write the same example many times; every repeat is scored separately, with a running count, best score and recurring problems.
 - Per-line statistics: once you have written two or more lines, numbered buttons on the pad show the stats for one line.
 - A real-time guide: a faint preview of the next outline, live warnings while you write, and a green/red overlay showing the model under what you wrote.
@@ -64,7 +64,7 @@ HOST=127.0.0.1 npm start
 
 ### Views
 
-- **Lessons** (`#learn`): shares the pad. A dropdown picks the unit of the manual (Units 1–9), each a sequence of steps. A *read* step quotes a rule, shows the manual's printed outlines for it (with the figures or tables the rule refers to), and animates its outlines enlarged (tap a figure to replay it), then shows the same outlines at actual size on rules spaced like the pad's, so you can see how big to write them. Every outline a lesson shows can be tried on the pad: tap it (enlarged or actual size) and what you write is scored and drawn over the model in green and red, as in Practice; each outline keeps its own ink while the step is open. A *write* step shows an example to copy and scores the pad like Practice; a repeat scoring 70 or more passes it. A *choose* step shows an outline, enlarged and unlabelled on ruled lines at actual size (its size against the rules tells look-alikes apart), and asks what it says; a wrong pick can be retried, and once it is answered the outline is shown at actual size to try on the pad. Back, Replay and Next sit at the top of the panel and stay there as a step scrolls. Steps can be skipped; the dropdown shows how many exercises are done in each unit, and the unit summary lists the skipped ones. Progress is kept in localStorage (and can be backed up to a file); the strokes written in a lesson are not.
+- **Lessons** (`#learn`): shares the pad. A dropdown picks the unit of the manual, each a sequence of steps. A *read* step quotes a rule, shows the manual's printed outlines for it (with the figures or tables the rule refers to), and animates its outlines enlarged (tap a figure to replay it), then shows the same outlines at actual size on rules spaced like the pad's, so you can see how big to write them. Every outline a lesson shows can be tried on the pad: tap it (enlarged or actual size) and what you write is scored and drawn over the model in green and red, as in Practice; each outline keeps its own ink while the step is open. A *write* step shows an example to copy and scores the pad like Practice; a repeat scoring 70 or more passes it. A *choose* step shows an outline, enlarged and unlabelled on ruled lines at actual size (its size against the rules tells look-alikes apart), and asks what it says; a wrong pick can be retried, and once it is answered the outline is shown at actual size to try on the pad. Back, Replay and Next sit at the top of the panel and stay there as a step scrolls. Steps can be skipped; the dropdown shows how many exercises are done in each unit, and the unit summary lists the skipped ones. Progress is kept in localStorage (and can be backed up to a file); the strokes written in a lesson are not.
 - **Practice** (`#pad`, the default): the left panel shows the example to copy, enlarged and at actual size on ruled lines, with its meaning and source, and below it the manual's printed outline where the manual prints one (with its page). Pick a level from the dropdown (levels tied to a manual unit are grouped under “Manual units”), move with Prev/Next (or the left and right arrow keys), and use Replay to watch the stroke order. Write on the pad on the right.
 - **Quiz** (`#quiz`): shares the pad. Choose the length (5, 10 or 20 questions), the levels and the question types, then answer. Read questions ask what an outline says (four choices), showing it enlarged and on ruled lines at actual size; once answered, the manual's printed outline is shown. Write questions ask you to write a word, letter or sentence and score it. Look-alike series ask you to write each member of a family of similar strokes (for example n, m or t, d) and show the results at the end. Passing is a score of 70 or more. The last 20 results are kept.
 - **Strokes** (`#strokes`): every stroke family at one scale. A green dot is where the pen starts and a red arrow is where it ends. Tap a stroke to replay it, or use Replay all.
@@ -155,7 +155,7 @@ app/
     repeats.js        groups pad strokes into repeats and lines; aggregates scores
     assist.js         real-time guide, live warnings, green/red check overlay
     practice.js       the example panel (art, meaning, score, critiques)
-    lessons.js        the Lessons view (Units 1–9, step by step)
+    lessons.js        the Lessons view (one unit at a time, step by step)
     quiz.js           quiz UI and history
     quizgen.js        seeded quiz generation (no DOM)
     render.js         stroke primitives to Bezier geometry, SVG and animation
@@ -165,10 +165,10 @@ app/
     gallery.js        the Strokes view
   data/
     strokes.js        the stroke table (geometry in U) and look-alike families
-    examples.js       the fourteen levels of examples
-    lessons.js        the lesson steps for Units 1–3 (Units 4–9 come from units/)
+    examples.js       the levels of examples
+    lessons.js        the lesson steps for Units 1–3 (later units come from units/)
     plates.js         which examples and rules have a printed plate, and its page
-    units/            manual Units 4–9 as data, one module per unit (index.js lists them)
+    units/            manual Units 4 onward as data, one module per unit (index.js lists them)
   plates/             images of the manual's printed outlines (npm run plates)
   icons/              app icons for the Home Screen
   manifest.webmanifest  name, icons and display mode for Add to Home Screen
@@ -188,7 +188,7 @@ tests/                unit tests (*.test.mjs), the Chrome end-to-end script
                       (inkpad.cdp.mjs) and fixtures
 docs/
   ARCHITECTURE.md     module map, data flow, formats
-reference/            transcriptions of the manual's Units 2 to 9 and stroke-geometry notes
+reference/            transcriptions of the manual's units (from Unit 2) and stroke-geometry notes
   screenshots/        images used in this README
 ```
 
@@ -202,7 +202,7 @@ Everything stays in your browser's localStorage. Nothing is sent anywhere: the a
 
 Outline forms and the rules for joining circles follow the *Gregg Shorthand Manual, Anniversary Edition* (1929). Brief forms come from the Gregg Simplified chart. Each example lists its source in the app.
 
-The manual is in the US public domain. The scan used to transcribe Units 2–9 (see `reference/`) was downloaded from [greggshorthand.github.io](https://greggshorthand.github.io) ([Annivman.pdf](https://greggshorthand.github.io/Annivman.pdf)). The PDF itself is not included in the repository. The plate images in `app/plates/` are cut from the same scan with `npm run plates`, which needs the PDF locally and poppler's `pdftoppm`.
+The manual is in the US public domain. The scan used to transcribe the units (see `reference/`) was downloaded from [greggshorthand.github.io](https://greggshorthand.github.io) ([Annivman.pdf](https://greggshorthand.github.io/Annivman.pdf)). The PDF itself is not included in the repository. The plate images in `app/plates/` are cut from the same scan with `npm run plates`, which needs the PDF locally and poppler's `pdftoppm`.
 
 ## License
 

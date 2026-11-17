@@ -12,18 +12,18 @@ The app is plain ES modules loaded by `app/index.html`; there is no bundler. Mod
 | `app/js/repeats.js` | `assessRepeats()`: splits pad strokes into repeats, scores each, aggregates. `practiceLines()` and `repeatIndexFor()`. |
 | `app/js/assist.js` | Real-time guide, live warnings, per-stroke notes, green/red check overlay. |
 | `app/js/practice.js` | The example panel: enlarged and actual-size art, meaning, source, score badge, critiques. |
-| `app/js/lessons.js` | The Lessons view (Units 1–9): unit dropdown, read / write / choose steps, progress. Shares the pad and reuses the example panel and `assessRepeats()`. |
+| `app/js/lessons.js` | The Lessons view: unit dropdown, read / write / choose steps, progress. Shares the pad and reuses the example panel and `assessRepeats()`. |
 | `app/js/quiz.js` | Quiz UI (start screen, questions, summary) and result history. Shares the pad. |
 | `app/js/quizgen.js` | Seeded quiz generation, no DOM. Used by the dev server and, as a fallback, by the browser. |
 | `app/js/render.js` | Stroke primitives to cubic Bezier geometry (U, y up); SVG output and animation. An arc may carry `ctrl` (two control points) instead of the bulge/skew/spread form; the o and u hooks use it. |
-| `app/js/join.js` | Joins consonant strokes, vowel circles and the h dot into one outline (Manual §11–12 for circles at the ends, §14–22 for circles between strokes and joined curves). Turns the o hook (§67) before n, m, r, l and their blends so it leaves along the next stroke; after a downstroke it starts along the downstroke's end and is drawn twice the size (the curl on the p. 36 plates). Puts the h dot above a hook (home, hope). `circleOf(tok)` gives `{ size, reversed, loop }` for a circle token: `reversed` for the §71 r circle, `loop` for the §74 s loop. Rounds the angle into one shared direction, with no corner, for fr and fl (§39; vr and vl by inference), for the Unit 6 pairs the plates round (k-sh, f-m, f-g, b-g, k-b) and for the §52 ses blend. Handles shorten on sharp turns. |
+| `app/js/join.js` | Joins consonant strokes, vowel circles and the h dot into one outline (Manual §11–12 for circles at the ends, §14–22 for circles between strokes and joined curves). Turns the o hook (§67) before n, m, r, l and their blends so it leaves along the next stroke; after a downstroke it starts along the downstroke's end and is drawn twice the size (the curl on the p. 36 plates). Turns the oo hook under (§94) after n, m and their blends, and after k or g before r or l, so it starts along the stroke before it; joins us without an angle (§93). Puts the h dot above a hook (home, hope, who). `circleOf(tok)` gives `{ size, reversed, loop }` for a circle token: `reversed` for the §71 r circle, `loop` for the §74 s loop. Rounds the angle into one shared direction, with no corner, for fr and fl (§39; vr and vl by inference), for the Unit 6 pairs the plates round (k-sh, f-m, f-g, b-g, k-b) and for the §52 ses blend. Handles shorten on sharp turns. |
 | `app/js/writer.js` | Learned writing-size scale, kept in localStorage. |
 | `app/js/backup.js` | Progress backup and restore: `exportProgress()`, `importProgress()` and `backupFileName()` (no DOM). `main.js` wires the Back up and Restore buttons. |
 | `app/js/gallery.js` | The Strokes view. |
 | `app/data/strokes.js` | The stroke table and look-alike families. |
-| `app/data/examples.js` | All practice examples, grouped in fourteen levels. Units 4–9 are built from `data/units/`. |
-| `app/data/lessons.js` | The lesson steps for Manual Units 1–3; they refer to examples by id. Units 4–9 are turned into lessons from `data/units/`. |
-| `app/data/units/` | Manual Units 4–9 as plain data, one module per unit. `index.js` lists them in `UNITS` and gives each unit's Practice level (`levelOfUnit()`, unit + 5). |
+| `app/data/examples.js` | All practice examples, grouped in levels (one per manual unit from Unit 2, at unit + 5). Units 4 onward are built from `data/units/`. |
+| `app/data/lessons.js` | The lesson steps for Manual Units 1–3; they refer to examples by id. Units 4 onward are turned into lessons from `data/units/`. |
+| `app/data/units/` | Manual Units 4 onward as plain data, one module per unit. `index.js` lists them in `UNITS` and gives each unit's Practice level (`levelOfUnit()`, unit + 5). |
 | `app/data/plates.js` | Which examples have a printed plate (`plateFor()`), with its page, and the section plates used by lessons (`sectionPlate()`). |
 | `tools/plates.mjs` | Cuts `app/plates/*.png` from the scan using `tools/plates.json`. |
 | `tools/compare.mjs` | Sheet of each outline as the app draws it, beside the manual's plate (`node tools/compare.mjs`). |
@@ -173,9 +173,9 @@ If storage is full or unavailable the app keeps working but nothing survives a r
 
 ## Adding an example
 
-Examples live in `app/data/examples.js`. Each has `id`, `kind` (`letter`, `brief`, `word`, `phrase` or `sentence`), `level` (1 to 14), `title`, `outline` (a list of tokens), `meaning` (a list of strings) and `source`. Sentences also have `words`, a list of `{ text, tokens, brief, phrase }`. Phrase examples (Units 6 to 9) are written by the unit modules in `data/units/`, not added here.
+Examples live in `app/data/examples.js`. Each has `id`, `kind` (`letter`, `brief`, `word`, `phrase` or `sentence`), `level` (1 to 8, then unit + 5 for Units 4 onward), `title`, `outline` (a list of tokens), `meaning` (a list of strings) and `source`. Sentences also have `words`, a list of `{ text, tokens, brief, phrase }`. Phrase examples (Unit 6 onward) are written by the unit modules in `data/units/`, not added here.
 
-An outline token is a stroke id from `app/data/strokes.js` (including the o hook, `o`), `a` or `e` (vowel circles), `a-rev` or `e-rev` (the §71 r circle: the a or e circle written with left motion, counter-clockwise, on straight strokes only), `a-rev-s` or `e-rev-s` (the §74 s loop: that circle made a narrow loop at the end of an outline), or `h` (the dot). Strokes marked `verify` in the stroke table are deliberately left out of examples until they are checked against the sources (the u hook is one, until Unit 10).
+An outline token is a stroke id from `app/data/strokes.js` (including the o and oo hooks, `o` and `u`), `a` or `e` (vowel circles), `a-rev` or `e-rev` (the §71 r circle: the a or e circle written with left motion, counter-clockwise, on straight strokes only), `a-rev-s` or `e-rev-s` (the §74 s loop: that circle made a narrow loop at the end of an outline), or `h` (the dot). Strokes marked `verify` in the stroke table are deliberately left out of examples until they are checked against the sources (the def and jnt loop blends, for now).
 
 To add a word:
 

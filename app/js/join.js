@@ -24,7 +24,12 @@
 //        "When a downstroke comes before the o-hook, this rule does not apply, since the
 //        o-hook joins to downstrokes without an angle": after a downstroke the hook is
 //        turned to start along the downstroke's end (pour, bone, pole on p. 36).
-//   h    before a hook, the dot goes above the hook (home, hope).
+//   h    before a hook, the dot goes above the hook (home, hope, who).
+//   §93  "The combination us is written without an angle": u s-right is a rounded pair.
+//   §94  "The oo-hook is turned under after n, m. It is also turned under after k or g if
+//        followed by r or l": the hook turned to start along the end of the n / m / k / g,
+//        so it curls down and back under the line (none, numb, cool, p. 50). The n and m
+//        blends are taken to follow n and m (an inference: no plate).
 //   §71  "The circle is written with left motion to express r following the vowel" before and
 //        after straight strokes and between straight strokes in the same direction: the
 //        tokens a-rev and e-rev are the a and e circles turned the other way from §12 / §17.
@@ -47,7 +52,7 @@ export const ANGLE_THRESHOLD = 20;
 // §19/§21: equal curves joined directly are drawn this much flatter (bulge factor).
 export const JOINED_CURVE_FLATTEN = 0.75;
 const FLAT_PAIRS = new Set(['k r', 'g l', 'r k', 'l k']);
-const ROUND_PAIRS = new Set(['f r', 'f l', 'v r', 'v l', 'k sh', 'f m', 'f g', 'b g', 'k b', 's-left s-right', 's-right s-left']);
+const ROUND_PAIRS = new Set(['f r', 'f l', 'v r', 'v l', 'k sh', 'f m', 'f g', 'b g', 'k b', 's-left s-right', 's-right s-left', 'u s-right']);
 
 // §39: bend the end of the previous stroke and the start of the next so that both run
 // along the average of their directions where they meet (a rounded turn, no corner).
@@ -164,6 +169,12 @@ const turnedHook = (hook, turn) => ({ ...hook, turned: turn, primitives: hook.pr
 function outlineStrokes(outline) {
   const strokes = outline.map((_, i) => strokeAt(outline, i));
   outline.forEach((tok, i) => {
+    if (tok === 'u') {
+      const prev = outline[i - 1], next = outline[i + 1];
+      const under = ['n', 'm', 'men', 'nd', 'md'].includes(prev) || (['k', 'g'].includes(prev) && ['r', 'l'].includes(next));
+      if (under) strokes[i] = turnedHook(strokes[i], turnDegrees(tangent(compileStroke(strokes[i]), 'start'), tangent(compileStroke(strokes[i - 1]), 'end')));
+      return;
+    }
     if (tok !== 'o') return;
     const hook = compileStroke(strokes[i]);
     const prev = strokes[i - 1];
@@ -251,7 +262,7 @@ export function compileOutline(outline) {
     if (ROUND_PAIRS.has(`${outline[i - 1]} ${tok}`) && segments.length) roundJoin(segments[segments.length - 1], c.segments[0]);
     segments.push(...c.segments);
     owners.push(...c.segments.map(() => i));
-    if (pendingDot && tok === 'o') {
+    if (pendingDot && (tok === 'o' || tok === 'u')) {
       // Above the hook: over the middle of its span, a gap above its top.
       const b = bbox(c);
       dots.push({ type: 'dot', p: { x: (b.minX + b.maxX) / 2, y: b.maxY + H_GAP } });

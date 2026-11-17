@@ -109,10 +109,10 @@ export const STROKES = [
   // The oo hook (Manual §91): "the upper part" of the same figure, the o hook turned over and
   // written the other way: it rises at about 30°, turns over a narrow top and comes down
   // steeply back. Mirrored control points, (a, b) -> (1 - a, -b), agree with fits of who
-  // and blue (p. 48); the lone ŭ and ŏ in the two tables are the same size. Its joinings
-  // are not checked yet (Unit 10).
+  // and blue (p. 48); the lone ŭ and ŏ in the two tables are the same size. Joinings:
+  // §93–94 in join.js.
   { id: 'u', label: 'u', sounds: ['u (as in up, use, ooze)', 'initial w'], size: 'small',
-    primitives: [arc(-6, 0.28, 0.9, { ctrl: [[0.64, 0.97], [2.4, 1.42]] })], briefForms: ['you', 'your'], verify: 'joinings (Unit 10)' },
+    primitives: [arc(-6, 0.28, 0.9, { ctrl: [[0.64, 0.97], [2.4, 1.42]] })], briefForms: ['you', 'your'] },
 
   // Down-forward lines.
   { id: 'ng', label: 'ng', sounds: ['ng'], size: 'short', primitives: [line(NG, 1.15)], briefForms: [] },

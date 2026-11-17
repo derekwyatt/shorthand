@@ -297,7 +297,8 @@ test('a small o hook is a stroke, not a dot', () => {
   for (let i = 0; i <= 20; i++) { const a = Math.PI + (i / 20) * Math.PI; cup.push({ x: 100 + (0.17 + 0.17 * Math.cos(a)) * UNIT, y: 300 - 0.2 * Math.sin(a) * UNIT, t: i * 8 }); }
   const r = assessAttempt(e, [{ points: cup }], UNIT);
   assert.ok(r.score >= 90, `${r.score}: ${texts(r)}`);
-  // Upside down it is not an o.
+  // Upside down it is not an o: it is the oo hook.
   const flipped = cup.map((p) => ({ ...p, y: 600 - p.y }));
   assert.ok(assessAttempt(e, [{ points: flipped }], UNIT).score < 70);
+  assert.ok(assessAttempt(ex('letter-u'), [{ points: flipped }], UNIT).score >= 90);
 });

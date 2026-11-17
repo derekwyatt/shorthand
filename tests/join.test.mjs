@@ -240,3 +240,17 @@ test('§74: the s loop is a narrow loop carrying on along the stroke, at the end
   assert.ok(signedAreaOf(['n', 'e-rev-s'], 1) > 0, 'left motion, like the r circle');
   assert.throws(() => compileOutline(['n', 'e-rev-s', 't']), /ends an outline/);
 });
+
+test('§94: the oo hook turns under after n and m, and after k before r or l; §93 us has no angle', () => {
+  const startOf = (outline) => { const c = compileOutline(outline); const i = outline.indexOf('u'); const s = c.segments.find((x, k) => c.tokenOf[k] === i); return dir(s.p0, s.c1); };
+  assert.ok(Math.abs(startOf(['n', 'u'])) < 1, 'none: the hook starts along the n');
+  assert.ok(Math.abs(startOf(['m', 'u', 'd'])) < 1, 'mood');
+  assert.ok(startOf(['k', 'u', 't']) > 30, 'cut: the ordinary raised hook after k');
+  const cool = compileOutline(['k', 'u', 'l']);
+  const kEnd = cool.segments.filter((x, k) => cool.tokenOf[k] === 0).pop();
+  assert.ok(Math.abs(startOf(['k', 'u', 'l']) - dir(kEnd.c2, kEnd.p3)) < 1, 'cool: turned under after k before l');
+  const c = compileOutline(['u', 's-right']);
+  const [h] = c.segments.filter((s, k) => c.tokenOf[k] === 0), [s] = c.segments.filter((x, k) => c.tokenOf[k] === 1);
+  const turn = Math.abs(dir(h.c2, h.p3) - dir(s.p0, s.c1));
+  assert.ok(turn < 1 || turn > 359, `us: no angle between the hook and s (${turn.toFixed(1)}°)`);
+});
