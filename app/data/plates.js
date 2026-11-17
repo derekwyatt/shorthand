@@ -1233,6 +1233,17 @@ const PAGES = {
   'word-almanac': 101,
   'word-homeless': 101,
   'word-needless': 101,
+  // Unit 24
+  'phrase-more-or-less': 104,
+  'phrase-little-or-no': 104,
+  'phrase-one-or-two': 104,
+  'phrase-week-or-two': 104,
+  'phrase-some-of-them': 104,
+  'phrase-in-a-week-or-two': 104,
+  'phrase-on-the-question': 105,
+  'phrase-in-the-matter': 105,
+  'phrase-more-and-more': 105,
+  'phrase-i-am-of-the-opinion': 105,
 };
 
 // Examples drawn with the plate of another: brief forms share the alphabet row of their

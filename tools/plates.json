@@ -1219,6 +1219,16 @@
     {"id": "word-thoughtless", "page": 101, "box": [390, 500, 555, 542]},
     {"id": "word-almanac", "page": 101, "box": [74, 545, 228, 578]},
     {"id": "word-homeless", "page": 101, "box": [390, 545, 560, 582]},
-    {"id": "word-needless", "page": 101, "box": [390, 578, 565, 614]}
+    {"id": "word-needless", "page": 101, "box": [390, 578, 565, 614]},
+    {"id": "phrase-more-or-less", "page": 104, "box": [125, 403, 340, 447]},
+    {"id": "phrase-little-or-no", "page": 104, "box": [125, 445, 340, 489]},
+    {"id": "phrase-one-or-two", "page": 104, "box": [125, 488, 335, 530]},
+    {"id": "phrase-week-or-two", "page": 104, "box": [125, 530, 335, 572]},
+    {"id": "phrase-some-of-them", "page": 104, "box": [125, 703, 340, 745]},
+    {"id": "phrase-in-a-week-or-two", "page": 104, "box": [345, 654, 605, 698]},
+    {"id": "phrase-on-the-question", "page": 105, "box": [95, 285, 305, 328]},
+    {"id": "phrase-in-the-matter", "page": 105, "box": [95, 327, 305, 371]},
+    {"id": "phrase-more-and-more", "page": 105, "box": [95, 540, 305, 582]},
+    {"id": "phrase-i-am-of-the-opinion", "page": 105, "box": [300, 158, 590, 205]}
   ]
 }
