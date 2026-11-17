@@ -60,7 +60,8 @@ export function createAssist({ overlay, check, hint, model, modelOf, unitPx, ena
       if (s.dash) {
         const l = document.createElementNS(SVG_NS, 'line');
         const x = origin.x + s.p.x * u, y = origin.y - s.p.y * u, half = (s.dash * u) / 2;
-        l.setAttribute('x1', x - half); l.setAttribute('x2', x + half); l.setAttribute('y1', y); l.setAttribute('y2', y);
+        const a = ((s.angle ?? 0) * Math.PI) / 180, hx = half * Math.cos(a), hy = half * Math.sin(a);
+        l.setAttribute('x1', x - hx); l.setAttribute('x2', x + hx); l.setAttribute('y1', y + hy); l.setAttribute('y2', y - hy);
         l.setAttribute('class', 'model-path');
         return l;
       }

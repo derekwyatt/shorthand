@@ -103,12 +103,12 @@ export function modelUnits(example) {
   for (const w of layoutWords(words).flatMap(disjoinedParts)) {
     const toks = w.tokens;
     const dots = w.compiled.segments.filter((s) => s.type === 'dot');
-    if (toks.length === 1 && toks[0] === 'h') {
-      units.push({ kind: 'dot', role: 'brief', word: w.text, pos: dots[0].p });
+    // §99 / §100 / §233 marks are written apart, like the h dot: each is a unit of its own.
+    for (const s of dots.filter((d) => d.mark)) units.push({ kind: 'dot', role: s.mark, word: w.text, pos: s.p });
+    if (toks.filter((t) => !isMark(t)).join() === 'h') {
+      units.push({ kind: 'dot', role: 'brief', word: w.text, pos: dots.find((d) => !d.mark).p });
       continue;
     }
-    // §99 / §100 marks are written apart, like the h dot: each is a unit of its own.
-    for (const s of dots.filter((d) => d.mark)) units.push({ kind: 'dot', role: s.mark, word: w.text, pos: s.p });
     const main = toks.filter((t) => t !== 'h' && !isMark(t));
     const consonants = main.filter((t) => !isCircleTok(t));
     // Joined consonants, the §74 s loop, the w loop, the broken circle, the doubled hooks
@@ -665,6 +665,7 @@ export function assessAttempt(example, strokes, unitPx, { scale = 1 } = {}) {
     if (m.role === 'h') what = `the h dot${sentence ? ` in “${m.word}”` : ''}`;
     else if (m.role === 'w') what = 'the w dash under the vowel (Manual §99)';
     else if (m.role === 'a') what = 'the a dot before the outline (Manual §100)';
+    else if (m.role === 'cap') what = 'the capital dashes under the outline (Manual §233)';
     else if (sentence) what = `the dot for “${m.word.toLowerCase()}”`;
     if (!pick) {
       results.push({ unit: m, user: null, weight: 0.25, score: 0, missing: true, critiques: [{ level: 'error', text: `Missing ${what}${m.role === 'h' ? ' above the circle' : ''}.` }] });

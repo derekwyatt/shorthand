@@ -28,7 +28,7 @@ function svgFor(tokens) {
   const origin = { x: PAD - b.minX * UNIT, y: PAD + b.maxY * UNIT };
   const dots = c.segments.filter((s) => s.type === 'dot')
     .map((s) => (s.dash
-      ? `<line x1="${origin.x + (s.p.x - s.dash / 2) * UNIT}" x2="${origin.x + (s.p.x + s.dash / 2) * UNIT}" y1="${origin.y - s.p.y * UNIT}" y2="${origin.y - s.p.y * UNIT}" stroke="#1d3c8f" stroke-width="2" stroke-linecap="round"/>`
+      ? `<line x1="${origin.x + (s.p.x - (s.dash / 2) * Math.cos(((s.angle ?? 0) * Math.PI) / 180)) * UNIT}" x2="${origin.x + (s.p.x + (s.dash / 2) * Math.cos(((s.angle ?? 0) * Math.PI) / 180)) * UNIT}" y1="${origin.y - (s.p.y - (s.dash / 2) * Math.sin(((s.angle ?? 0) * Math.PI) / 180)) * UNIT}" y2="${origin.y - (s.p.y + (s.dash / 2) * Math.sin(((s.angle ?? 0) * Math.PI) / 180)) * UNIT}" stroke="#1d3c8f" stroke-width="2" stroke-linecap="round"/>`
       : `<circle cx="${origin.x + s.p.x * UNIT}" cy="${origin.y - s.p.y * UNIT}" r="2.5" fill="#1d3c8f"/>`)).join('');
   const start = c.start ? `<circle cx="${origin.x + c.start.x * UNIT}" cy="${origin.y - c.start.y * UNIT}" r="3" fill="#2e9d4f"/>` : '';
   return `<svg width="${w.toFixed(0)}" height="${h.toFixed(0)}"><path d="${pathData(c, UNIT, origin)}" fill="none" stroke="#1d3c8f" stroke-width="2" stroke-linecap="round"/>${dots}${start}</svg>`;

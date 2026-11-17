@@ -257,6 +257,7 @@ function tokenName(t) {
   if (t === 'h') return 'h-dot';
   if (t === 'w-dash') return 'w-dash (below the vowel)';
   if (t === 'a-dot') return 'a-dot (before the outline)';
+  if (t === 'cap') return 'the capital mark (two dashes under the outline)';
   if (t === '^') return 'pen lifted, the rest written just below';
   if (t === '_') return 'pen lifted, the ending written under the end of the word';
   return STROKE_BY_ID[t].label;

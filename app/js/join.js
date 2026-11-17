@@ -235,10 +235,12 @@ function outlineStrokes(outline) {
   return strokes;
 }
 
-const MARKS = new Set(['w-dash', 'a-dot']);
+const MARKS = new Set(['w-dash', 'a-dot', 'cap']);
 export const isMark = (tok) => MARKS.has(tok);
 const W_DASH = { length: 0.4, gap: 0.25 }; // below the vowel, in U
 const A_DOT_GAP = 0.45; // before the outline
+// §233: the capital mark, two short parallel dashes rising to the right under the outline (p. 141).
+const CAP = { length: 0.4, angle: 30, gap: 0.35, apart: 0.14 };
 
 // The outline without its §99 / §100 marks, compiled, then the marks placed: a w dash
 // below the vowel after it, the a dot on the line before the outline. Mark segments are
@@ -307,6 +309,16 @@ export function compileOutline(outline) {
     let seg;
     if (m.tok === 'a-dot') {
       seg = { type: 'dot', mark: 'a', p: { x: box.minX - A_DOT_GAP, y: c.start.y } };
+    } else if (m.tok === 'cap') {
+      // Centred under the outline's lowest point, the upper dash CAP.gap below it.
+      const pts = [...c.segments.filter((s) => s.type === 'cubic').flatMap((s) => Array.from({ length: 17 }, (_, i) => cubicPoint(s, i / 16))), ...c.segments.filter((s) => s.type === 'dot').map((s) => s.p)];
+      const low = pts.reduce((a, p) => (p.y < a.y ? p : a));
+      const y = low.y - CAP.gap - (CAP.length / 2) * Math.sin((CAP.angle * Math.PI) / 180);
+      for (const k of [1, 0]) {
+        segments.unshift({ type: 'dot', mark: 'cap', dash: CAP.length, angle: CAP.angle, p: { x: low.x, y: y - k * CAP.apart } });
+        tokenOf.unshift(m.i);
+      }
+      continue;
     } else {
       const own = c.segments.filter((s, k) => c.tokenOf[k] === m.at && s.type === 'cubic');
       if (!own.length) throw new Error(`a w dash goes before a vowel (${outline.join(' ')})`);
@@ -428,7 +440,7 @@ export function translateCompiled(c, dx, dy) {
     start: movePoint(c.start, dx, dy),
     end: movePoint(c.end, dx, dy),
     segments: c.segments.map((s) => (s.type === 'dot'
-      ? { type: 'dot', p: movePoint(s.p, dx, dy) }
+      ? { ...s, p: movePoint(s.p, dx, dy) }
       : { type: 'cubic', p0: movePoint(s.p0, dx, dy), c1: movePoint(s.c1, dx, dy), c2: movePoint(s.c2, dx, dy), p3: movePoint(s.p3, dx, dy) })),
   };
 }

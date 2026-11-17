@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { EXAMPLES } from '../app/data/examples.js';
 import { STROKE_BY_ID } from '../app/data/strokes.js';
-import { compileOutline, compileExample, JOIN_CIRCLE, circleOf, isMark, isWLoop, W_LOOP, isDisjoin } from '../app/js/join.js';
+import { compileOutline, compileExample, JOIN_CIRCLE, circleOf, isMark, isWLoop, W_LOOP, isDisjoin, layoutWords } from '../app/js/join.js';
 import { cubicPoint, pathData } from '../app/js/render.js';
 
 const words = EXAMPLES.filter((e) => e.kind === 'word');
@@ -327,4 +327,16 @@ test('§230: a disjoined suffix is a stroke of its own just under the end of the
   const back = end.x - Math.min(...sp.map((p) => p.x));
   assert.ok(back > 0.2 && back < 0.7, `starting just left of the end (${back.toFixed(2)})`);
   assert.deepEqual(c.end, suf.at(-1).p3);
+});
+
+test('§233: the capital mark is two parallel rising dashes under the outline, kept through layout', () => {
+  const [w] = layoutWords([{ text: 'B', tokens: ['b', 'cap'] }]);
+  const caps = w.compiled.segments.filter((s) => s.mark === 'cap');
+  assert.equal(caps.length, 2);
+  for (const s of caps) assert.ok(s.dash > 0 && s.angle > 0);
+  const low = Math.min(...polygon(w.compiled.segments.filter((s) => s.type === 'cubic')).map((p) => p.y));
+  assert.ok(caps.every((s) => s.p.y < low - 0.3), 'below the outline');
+  // The w dash keeps its length through layout too.
+  const [q] = layoutWords([{ text: 'quarter', tokens: ['k', 'w-dash', 'o', 't', 'e-rev'] }]);
+  assert.ok(q.compiled.segments.some((s) => s.mark === 'w' && s.dash > 0));
 });
