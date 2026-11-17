@@ -1305,6 +1305,25 @@
     {"id": "word-information", "page": 114, "box": [363, 503, 580, 547]},
     {"id": "word-permission", "page": 114, "box": [363, 549, 580, 580]},
     {"id": "word-intimation", "page": 114, "box": [363, 585, 580, 627]},
-    {"id": "word-definition", "page": 114, "box": [363, 627, 580, 673]}
+    {"id": "word-definition", "page": 114, "box": [363, 627, 580, 673]},
+    {"id": "word-anywhere", "page": 116, "box": [332, 245, 381, 263]},
+    {"id": "word-before", "page": 116, "box": [205, 265, 258, 325]},
+    {"id": "word-belong", "page": 116, "box": [393, 267, 449, 305]},
+    {"id": "word-whenever", "page": 116, "box": [235, 333, 286, 375]},
+    {"id": "word-herein", "page": 116, "box": [245, 374, 273, 392]},
+    {"id": "word-hereon", "page": 116, "box": [364, 368, 411, 388]},
+    {"id": "word-therein", "page": 116, "box": [245, 417, 277, 434]},
+    {"id": "word-therefore", "page": 116, "box": [283, 417, 310, 445]},
+    {"id": "word-therefrom", "page": 116, "box": [331, 416, 377, 444]},
+    {"id": "word-thereon", "page": 116, "box": [386, 412, 422, 429]},
+    {"id": "word-thereupon", "page": 116, "box": [483, 412, 510, 447]},
+    {"id": "word-wherever", "page": 116, "box": [306, 459, 346, 499]},
+    {"id": "word-wherefore", "page": 116, "box": [353, 455, 388, 487]},
+    {"id": "word-wherein", "page": 116, "box": [394, 457, 427, 471]},
+    {"id": "word-whereof", "page": 116, "box": [432, 454, 473, 471]},
+    {"id": "word-whereon", "page": 116, "box": [478, 451, 529, 468]},
+    {"id": "word-elsewhere", "page": 116, "box": [537, 453, 600, 475]},
+    {"id": "word-somebody", "page": 116, "box": [210, 549, 257, 589]},
+    {"id": "word-someone", "page": 116, "box": [335, 547, 396, 559]}
   ]
 }

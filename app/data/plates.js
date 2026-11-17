@@ -1322,6 +1322,26 @@ const PAGES = {
   'word-permission': 114,
   'word-intimation': 114,
   'word-definition': 114,
+  // Unit 27
+  'word-anywhere': 116,
+  'word-before': 116,
+  'word-belong': 116,
+  'word-whenever': 116,
+  'word-herein': 116,
+  'word-hereon': 116,
+  'word-therein': 116,
+  'word-therefore': 116,
+  'word-therefrom': 116,
+  'word-thereon': 116,
+  'word-thereupon': 116,
+  'word-wherever': 116,
+  'word-wherefore': 116,
+  'word-wherein': 116,
+  'word-whereof': 116,
+  'word-whereon': 116,
+  'word-elsewhere': 116,
+  'word-somebody': 116,
+  'word-someone': 116,
 };
 
 // Examples drawn with the plate of another: brief forms share the alphabet row of their
