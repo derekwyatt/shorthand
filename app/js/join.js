@@ -25,7 +25,11 @@
 //        o-hook joins to downstrokes without an angle": after a downstroke the hook is
 //        turned to start along the downstroke's end (pour, bone, pole on p. 36).
 //   h    before a hook, the dot goes above the hook (home, hope, who).
-//   §93  "The combination us is written without an angle": u s-right is a rounded pair.
+//   §93  "The combination us is written without an angle": u s-right is a rounded pair, and
+//        so is s-right u, the sw of sweet and swim on the Unit 11 plates (p. 53).
+//   §99  w within a word: "a short horizontal dash" under the following vowel (w-dash, the
+//        token before that vowel's circle or hook). §100 initial a: a dot on the line before
+//        the outline (a-dot). Both are written apart from the outline, like the h dot.
 //   §94  "The oo-hook is turned under after n, m. It is also turned under after k or g if
 //        followed by r or l": the hook turned to start along the end of the n / m / k / g,
 //        so it curls down and back under the line (none, numb, cool, p. 50). The n and m
@@ -52,7 +56,7 @@ export const ANGLE_THRESHOLD = 20;
 // §19/§21: equal curves joined directly are drawn this much flatter (bulge factor).
 export const JOINED_CURVE_FLATTEN = 0.75;
 const FLAT_PAIRS = new Set(['k r', 'g l', 'r k', 'l k']);
-const ROUND_PAIRS = new Set(['f r', 'f l', 'v r', 'v l', 'k sh', 'f m', 'f g', 'b g', 'k b', 's-left s-right', 's-right s-left', 'u s-right']);
+const ROUND_PAIRS = new Set(['f r', 'f l', 'v r', 'v l', 'k sh', 'f m', 'f g', 'b g', 'k b', 's-left s-right', 's-right s-left', 'u s-right', 's-right u']);
 
 // §39: bend the end of the previous stroke and the start of the next so that both run
 // along the average of their directions where they meet (a rounded turn, no corner).
@@ -77,6 +81,13 @@ export function circleOf(tok) {
   return m ? { size: m[1], reversed: !!m[2], loop: !!m[3] } : null;
 }
 export const S_LOOP = { a: { length: 2.0, width: 0.6 }, e: { length: 1.5, width: 0.4 } };
+// w before a vowel (we, way, wait; Unit 11 plates, p. 52): the oo hook drawn about twice its
+// size runs on into the circle, which the plates draw as a narrow loop carrying on along the
+// hook's descending end and turning the same way (∂), not a round circle beside the join.
+// Measured against t on the 600-dpi plates.
+export const W_LOOP = { a: { length: 1.5, width: 0.6 }, e: { length: 1.2, width: 0.4 } };
+const W_HOOK = 2;
+export const isWLoop = (outline, i) => outline[i - 1] === 'u' && circleOf(outline[i]) !== null && !circleOf(outline[i]).reversed;
 
 // §74: a narrow loop from `p` out along `t` and back, turning with rotation `s`.
 export function loopFrom(p, t, s, { length, width }) {
@@ -173,6 +184,7 @@ function outlineStrokes(outline) {
       const prev = outline[i - 1], next = outline[i + 1];
       const under = ['n', 'm', 'men', 'nd', 'md'].includes(prev) || (['k', 'g'].includes(prev) && ['r', 'l'].includes(next));
       if (under) strokes[i] = turnedHook(strokes[i], turnDegrees(tangent(compileStroke(strokes[i]), 'start'), tangent(compileStroke(strokes[i - 1]), 'end')));
+      if (isWLoop(outline, i + 1)) strokes[i] = { ...strokes[i], primitives: strokes[i].primitives.map((p) => ({ ...p, length: p.length * W_HOOK })) };
       return;
     }
     if (tok !== 'o') return;
@@ -197,10 +209,44 @@ function outlineStrokes(outline) {
   return strokes;
 }
 
+const MARKS = new Set(['w-dash', 'a-dot']);
+export const isMark = (tok) => MARKS.has(tok);
+const W_DASH = { length: 0.4, gap: 0.25 }; // below the vowel, in U
+const A_DOT_GAP = 0.45; // before the outline
+
+// The outline without its §99 / §100 marks, compiled, then the marks placed: a w dash
+// below the vowel after it, the a dot on the line before the outline. Mark segments are
+// dots ({ type: 'dot', p, mark, dash? }); a dash has a length and is drawn as a short line.
+export function compileOutline(outline) {
+  if (!outline.some(isMark)) return compileCore(outline);
+  const core = [], origin = [], marks = [];
+  outline.forEach((tok, i) => {
+    if (isMark(tok)) marks.push({ tok, i, at: core.length });
+    else { core.push(tok); origin.push(i); }
+  });
+  const c = compileCore(core);
+  const box = bbox(c);
+  const segments = [...c.segments], tokenOf = c.tokenOf.map((k) => origin[k]);
+  for (const m of marks) {
+    let seg;
+    if (m.tok === 'a-dot') {
+      seg = { type: 'dot', mark: 'a', p: { x: box.minX - A_DOT_GAP, y: c.start.y } };
+    } else {
+      const own = c.segments.filter((s, k) => c.tokenOf[k] === m.at && s.type === 'cubic');
+      if (!own.length) throw new Error(`a w dash goes before a vowel (${outline.join(' ')})`);
+      const b = bbox({ segments: own });
+      seg = { type: 'dot', mark: 'w', dash: W_DASH.length, p: { x: (b.minX + b.maxX) / 2, y: b.minY - W_DASH.gap } };
+    }
+    segments.unshift(seg);
+    tokenOf.unshift(m.i);
+  }
+  return { ...c, segments, tokens: outline, tokenOf, joins: c.joins.map((j) => ({ ...j, index: origin[j.index] })) };
+}
+
 // Returns { segments, start, end, tokens, tokenOf, joins } in the same shape as
 // compileStroke(): tokenOf[k] is the index in `outline` of the token that segment k was
 // drawn for; joins lists the circles between two strokes with the rule that placed them.
-export function compileOutline(outline) {
+function compileCore(outline) {
   const segments = [];
   const owners = [];
   const dots = [];
@@ -240,6 +286,12 @@ export function compileOutline(outline) {
         if (![prev, next].filter(Boolean).every(isStraight)) throw new Error(`the r circle joins only straight strokes (${outline.join(' ')})`);
         rotation = -rotation;
         if (joins.length && joins[joins.length - 1].index === i) Object.assign(joins[joins.length - 1], { section: 71, rotation });
+      }
+      if (isWLoop(outline, i)) {
+        const segs = loopFrom(pen, t, circleRotation(prev), W_LOOP[size]);
+        segments.push(...segs);
+        owners.push(...segs.map(() => i));
+        return;
       }
       if (loop) {
         if (!reversed || next) throw new Error(`the s loop ends an outline (${outline.join(' ')})`);

@@ -226,7 +226,11 @@ export function renderCompiledSVG(compiled, {
   }
   for (const seg of compiled.segments.filter((s) => s.type === 'dot')) {
     const p = toPx(seg.p, unit, origin);
-    const dot = el('circle', { cx: fmt(p.x), cy: fmt(p.y), r: strokeWidth * 1.4, fill: color, class: 'ink' });
+    // A mark with a length (the §99 w dash) is a short level line centred on p.
+    const half = ((seg.dash ?? 0) * unit) / 2;
+    const dot = seg.dash
+      ? el('line', { x1: fmt(p.x - half), y1: fmt(p.y), x2: fmt(p.x + half), y2: fmt(p.y), stroke: color, 'stroke-width': strokeWidth, 'stroke-linecap': 'round', class: 'ink' })
+      : el('circle', { cx: fmt(p.x), cy: fmt(p.y), r: strokeWidth * 1.4, fill: color, class: 'ink' });
     parts.dots.push(dot);
     svg.append(dot);
   }

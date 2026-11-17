@@ -3,13 +3,13 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { EXAMPLES } from '../app/data/examples.js';
 import { STROKE_BY_ID } from '../app/data/strokes.js';
-import { compileOutline, compileExample, JOIN_CIRCLE, circleOf } from '../app/js/join.js';
+import { compileOutline, compileExample, JOIN_CIRCLE, circleOf, isMark, isWLoop, W_LOOP } from '../app/js/join.js';
 import { cubicPoint, pathData } from '../app/js/render.js';
 
 const words = EXAMPLES.filter((e) => e.kind === 'word');
 const byTitle = (t) => words.find((w) => w.title === t);
 // Words of one consonant stroke, with circles only at its ends (Manual §11–12).
-const consonants = (outline) => outline.filter((t) => t !== 'h' && !circleOf(t));
+const consonants = (outline) => outline.filter((t) => t !== 'h' && !circleOf(t) && !isMark(t));
 const single = words.filter((w) => consonants(w.outline).length === 1);
 
 // The 4 cubic segments of each circle, in order, from a compiled outline. `tok` is the
@@ -19,7 +19,7 @@ function circles(example) {
   const out = [];
   example.outline.forEach((tok, i) => {
     const circle = circleOf(tok);
-    if (!circle || circle.loop) return;
+    if (!circle || circle.loop || isWLoop(example.outline, i)) return; // loops: tested on their own
     out.push({ tok: circle.size, reversed: circle.reversed, segs: c.segments.filter((s, k) => c.tokenOf[k] === i && s.type === 'cubic') });
   });
   return { compiled: c, circles: out };
@@ -47,7 +47,7 @@ test('every example compiles to finite geometry', () => {
 test('examples avoid strokes that are not yet verified', () => {
   for (const ex of EXAMPLES) {
     for (const tok of ex.outline) {
-      if (tok === 'h' || circleOf(tok)) continue;
+      if (tok === 'h' || circleOf(tok) || isMark(tok)) continue;
       assert.ok(!STROKE_BY_ID[tok].verify, `${ex.id} uses unverified stroke ${tok}`);
     }
   }
@@ -253,4 +253,33 @@ test('§94: the oo hook turns under after n and m, and after k before r or l; §
   const [h] = c.segments.filter((s, k) => c.tokenOf[k] === 0), [s] = c.segments.filter((x, k) => c.tokenOf[k] === 1);
   const turn = Math.abs(dir(h.c2, h.p3) - dir(s.p0, s.c1));
   assert.ok(turn < 1 || turn > 359, `us: no angle between the hook and s (${turn.toFixed(1)}°)`);
+});
+
+test('§99 the w dash sits under its vowel; §100 the a dot sits on the line before the outline', () => {
+  const c = compileOutline(['k', 'w-dash', 'e', 'k']);
+  const dash = c.segments.find((s) => s.mark === 'w');
+  const circle = c.segments.filter((s, k) => c.tokenOf[k] === 2 && s.type === 'cubic').flatMap((s) => [s.p0, s.p3]);
+  assert.ok(dash && dash.dash > 0, 'quick: a dash');
+  assert.ok(dash.p.y < Math.min(...circle.map((p) => p.y)), 'quick: below the e circle');
+  assert.deepEqual(c.tokenOf.filter((k) => k === 1).length, 1, 'the dash is owned by the w-dash token');
+  const a = compileOutline(['a-dot', 'u', 'a']);
+  const dot = a.segments.find((s) => s.mark === 'a');
+  const xs = a.segments.filter((s) => s.type === 'cubic').flatMap((s) => [s.p0.x, s.p3.x]);
+  assert.ok(dot.p.x < Math.min(...xs) && Math.abs(dot.p.y - a.start.y) < 1e-9, 'away: the dot is before the outline, level with its start');
+});
+
+test('w before a vowel: the hook doubled, running on into a narrow loop that turns the same way', () => {
+  const c = compileOutline(['u', 'a', 't']);
+  const hook = c.segments.filter((s, k) => c.tokenOf[k] === 0), loop = c.segments.filter((s, k) => c.tokenOf[k] === 1);
+  const plain = compileOutline(['u']);
+  const span = (segs) => { const p = polygon(segs); return Math.max(...p.map((q) => q.x)) - Math.min(...p.map((q) => q.x)); };
+  assert.ok(Math.abs(span(hook) / span(plain.segments) - 2) < 0.05, 'wait: the hook is twice its size');
+  assert.equal(loop.length, 2, 'wait: a loop, not a circle');
+  const end = hook.at(-1), first = loop[0];
+  assert.deepEqual(first.p0, end.p3);
+  assert.ok(Math.hypot(loop[1].p3.x - end.p3.x, loop[1].p3.y - end.p3.y) < 1e-9, 'the loop closes on the joint');
+  const p = polygon(loop), reach = Math.max(...p.map((q) => Math.hypot(q.x - end.p3.x, q.y - end.p3.y)));
+  assert.ok(Math.abs(reach - W_LOOP.a.length) < 0.1, `the a loop is ${W_LOOP.a.length} U long (${reach.toFixed(2)})`);
+  const area = p.reduce((a, q, k) => { const r = p[(k + 1) % p.length]; return a + q.x * r.y - r.x * q.y; }, 0);
+  assert.ok(area < 0, 'clockwise, carrying on the hook');
 });

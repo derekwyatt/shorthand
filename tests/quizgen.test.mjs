@@ -32,7 +32,7 @@ test('count, uniqueness, kinds and types are respected', () => {
   }
 });
 
-test('read questions have 4 unique same-kind choices without title clashes', () => {
+test('read questions have 4 unique choices without title clashes', () => {
   for (const { opts, seed } of cases()) {
     for (const q of generateQuiz({ ...opts, seed }).questions.filter((x) => x.type === 'read')) {
       const answer = BY_ID.get(q.exampleId);
@@ -41,7 +41,10 @@ test('read questions have 4 unique same-kind choices without title clashes', () 
       assert.ok(q.choices.includes(q.exampleId));
       const titles = q.choices.map((id) => BY_ID.get(id).title);
       assert.equal(new Set(titles).size, 4);
-      for (const id of q.choices) assert.equal(BY_ID.get(id).kind, answer.kind);
+      // A level with too few of the answer's kind (Unit 11 has three brief forms) mixes in
+      // the level's other examples.
+      const sameKind = EXAMPLES.filter((e) => e.level === answer.level && e.kind === answer.kind);
+      if (sameKind.length >= 4) for (const id of q.choices) assert.equal(BY_ID.get(id).kind, answer.kind);
     }
   }
 });

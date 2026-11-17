@@ -9,7 +9,7 @@
 // No DOM: unit-tested in Node (tests/assess.test.mjs).
 import { STROKES, STROKE_BY_ID, U_PER_LINE } from '../data/strokes.js';
 import { EXAMPLES } from '../data/examples.js';
-import { circleRotation, circleOf, JOIN_CIRCLE, layoutWords } from './join.js';
+import { circleRotation, circleOf, isMark, isWLoop, JOIN_CIRCLE, layoutWords } from './join.js';
 import { samplePoints, tangent, cubicPoint } from './render.js';
 import { WRITER_MAX } from './writer.js';
 
@@ -107,10 +107,12 @@ export function modelUnits(example) {
       units.push({ kind: 'dot', role: 'brief', word: w.text, pos: dots[0].p });
       continue;
     }
-    const main = toks.filter((t) => t !== 'h');
+    // §99 / §100 marks are written apart, like the h dot: each is a unit of its own.
+    for (const s of dots.filter((d) => d.mark)) units.push({ kind: 'dot', role: s.mark, word: w.text, pos: s.p });
+    const main = toks.filter((t) => t !== 'h' && !isMark(t));
     const consonants = main.filter((t) => !isCircleTok(t));
-    // Joined consonants, and the §74 s loop: the whole shape is matched, not its parts.
-    if (consonants.length >= 2 || main.some((t) => circleOf(t)?.loop)) {
+    // Joined consonants, the §74 s loop and the w loop: the whole shape is matched, not its parts.
+    if (consonants.length >= 2 || main.some((t, k) => circleOf(t)?.loop || isWLoop(main, k))) {
       // Joined consonants (level 7): the whole shape is matched, not its parts.
       const geometry = { ...w.compiled, segments: [], tokenOf: [] };
       w.compiled.segments.forEach((seg, k) => {
@@ -133,7 +135,7 @@ export function modelUnits(example) {
     });
     const geometry = { ...w.compiled, segments: w.compiled.segments.filter((s) => s.type !== 'dot') };
     const outline = { kind: 'outline', word: w.text, tokens: main, allTokens: toks, consonant: cons, circles, compiled: geometry, start: geometry.start };
-    if (toks[0] === 'h') units.push({ kind: 'dot', role: 'h', word: w.text, pos: dots[0].p, owner: outline });
+    if (toks[0] === 'h') units.push({ kind: 'dot', role: 'h', word: w.text, pos: dots.find((d) => !d.mark).p, owner: outline });
     units.push(outline);
   }
   return units;
@@ -284,7 +286,10 @@ export function strokeFeatures(pts) {
     }
     bulge /= L;
   }
-  return { angle: angleOf(c), length: L, bulge, startDir: dirAt(pts, 'start'), endDir: dirAt(pts, 'end') };
+  // The ends' directions over a quarter of the stroke at most: over a fixed span a small
+  // hook's end direction would be its chord's.
+  const span = Math.min(0.35, pathLen(pts) / 4);
+  return { angle: angleOf(c), length: L, bulge, startDir: dirAt(pts, 'start', span), endDir: dirAt(pts, 'end', span) };
 }
 
 // ---------------------------------------------------------------- one outline
@@ -640,6 +645,8 @@ export function assessAttempt(example, strokes, unitPx, { scale = 1 } = {}) {
     }
     let what = 'the dot';
     if (m.role === 'h') what = `the h dot${sentence ? ` in “${m.word}”` : ''}`;
+    else if (m.role === 'w') what = 'the w dash under the vowel (Manual §99)';
+    else if (m.role === 'a') what = 'the a dot before the outline (Manual §100)';
     else if (sentence) what = `the dot for “${m.word.toLowerCase()}”`;
     if (!pick) {
       results.push({ unit: m, user: null, weight: 0.25, score: 0, missing: true, critiques: [{ level: 'error', text: `Missing ${what}${m.role === 'h' ? ' above the circle' : ''}.` }] });

@@ -57,6 +57,13 @@ export function createAssist({ overlay, check, hint, model, modelOf, unitPx, ena
     path.setAttribute('d', pathData(compiled, u, origin));
     path.setAttribute('class', 'model-path');
     const dots = compiled.segments.filter((s) => s.type === 'dot').map((s) => {
+      if (s.dash) {
+        const l = document.createElementNS(SVG_NS, 'line');
+        const x = origin.x + s.p.x * u, y = origin.y - s.p.y * u, half = (s.dash * u) / 2;
+        l.setAttribute('x1', x - half); l.setAttribute('x2', x + half); l.setAttribute('y1', y); l.setAttribute('y2', y);
+        l.setAttribute('class', 'model-path');
+        return l;
+      }
       const c = document.createElementNS(SVG_NS, 'circle');
       c.setAttribute('cx', origin.x + s.p.x * u);
       c.setAttribute('cy', origin.y - s.p.y * u);

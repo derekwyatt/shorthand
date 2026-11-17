@@ -254,6 +254,8 @@ function tokenName(t) {
   if (t === 'a-rev' || t === 'e-rev') return `${t[0]}-circle with left motion (r)`;
   if (t === 'a-rev-s' || t === 'e-rev-s') return `${t[0]}-circle with left motion made a loop (r + s)`;
   if (t === 'h') return 'h-dot';
+  if (t === 'w-dash') return 'w-dash (below the vowel)';
+  if (t === 'a-dot') return 'a-dot (before the outline)';
   return STROKE_BY_ID[t].label;
 }
 const spell = (outline) => outline.map(tokenName).join(' + ');
