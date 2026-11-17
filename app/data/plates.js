@@ -1572,6 +1572,20 @@ const PAGES = {
   'phrase-state-of-la': 152,
   'phrase-state-of-ga': 152,
   'phrase-state-of-minn': 152,
+  // Unit 36
+  'word-argument': 155,
+  'word-clerk': 156,
+  'word-commerce': 156,
+  'word-compare': 156,
+  'word-connect': 156,
+  'word-defendant': 156,
+  'word-god': 157,
+  'word-inasmuch': 157,
+  'word-legislate': 157,
+  'word-manufacture': 158,
+  'word-occupy': 158,
+  'word-partial': 158,
+  'word-vote': 159,
 };
 
 // Examples drawn with the plate of another: brief forms share the alphabet row of their

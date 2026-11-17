@@ -1546,6 +1546,19 @@
     {"id": "phrase-state-of-pa", "page": 152, "box": [510, 623, 540, 658]},
     {"id": "phrase-state-of-la", "page": 152, "box": [487, 658, 557, 686]},
     {"id": "phrase-state-of-ga", "page": 152, "box": [505, 700, 543, 754]},
-    {"id": "phrase-state-of-minn", "page": 152, "box": [492, 752, 560, 770]}
+    {"id": "phrase-state-of-minn", "page": 152, "box": [492, 752, 560, 770]},
+    {"id": "word-argument", "page": 155, "box": [219, 749, 315, 792]},
+    {"id": "word-clerk", "page": 156, "box": [264, 256, 349, 284]},
+    {"id": "word-commerce", "page": 156, "box": [275, 299, 349, 323]},
+    {"id": "word-compare", "page": 156, "box": [288, 384, 325, 421]},
+    {"id": "word-connect", "page": 156, "box": [280, 637, 331, 661]},
+    {"id": "word-defendant", "page": 156, "box": [517, 408, 571, 448]},
+    {"id": "word-god", "page": 157, "box": [213, 752, 293, 788]},
+    {"id": "word-inasmuch", "page": 157, "box": [477, 221, 541, 255]},
+    {"id": "word-legislate", "page": 157, "box": [477, 555, 533, 600]},
+    {"id": "word-manufacture", "page": 158, "box": [261, 344, 323, 380]},
+    {"id": "word-occupy", "page": 158, "box": [509, 216, 547, 253]},
+    {"id": "word-partial", "page": 158, "box": [504, 335, 547, 367]},
+    {"id": "word-vote", "page": 159, "box": [486, 614, 523, 655]}
   ]
 }
