@@ -75,10 +75,23 @@ function roundJoin(prevSeg, nextSeg) {
   nextSeg.c1 = { x: nextSeg.p0.x + t.x * lb * k, y: nextSeg.p0.y + t.y * lb * k };
 }
 
-// A circle token as { size: 'a' | 'e', reversed, loop }, or null for any other token.
+// A circle token as { size: 'a' | 'e', reversed, loop, broken }, or null for any other token.
+// i is the §112 broken circle: the large circle, joined like one, with an indent.
 export function circleOf(tok) {
+  if (tok === 'i') return { size: 'a', reversed: false, loop: false, broken: true };
   const m = /^([ae])(?:(-rev)(-s)?)?$/.exec(tok ?? '');
-  return m ? { size: m[1], reversed: !!m[2], loop: !!m[3] } : null;
+  return m ? { size: m[1], reversed: !!m[2], loop: !!m[3], broken: false } : null;
+}
+
+// §112 the broken circle: on the plates (night, tie, kind; p. 63) the circle closes and the
+// pen runs on a little along the top and turns in, a short tick into the circle.
+function brokenTick(p, t, center) {
+  const toC = { x: center.x - p.x, y: center.y - p.y };
+  const L = Math.hypot(toC.x, toC.y) || 1;
+  const n = { x: toC.x / L, y: toC.y / L };
+  const r = L, along = 0.35 * r, depth = 0.3 * r;
+  const a = { x: p.x + t.x * along, y: p.y + t.y * along };
+  return { type: 'cubic', p0: p, c1: { x: p.x + t.x * along * 0.8, y: p.y + t.y * along * 0.8 }, c2: a, p3: { x: a.x + n.x * depth, y: a.y + n.y * depth } };
 }
 export const S_LOOP = { a: { length: 2.0, width: 0.6 }, e: { length: 1.5, width: 0.4 } };
 // w before a vowel (we, way, wait; Unit 11 plates, p. 52): the oo hook drawn about twice its
@@ -87,6 +100,10 @@ export const S_LOOP = { a: { length: 2.0, width: 0.6 }, e: { length: 1.5, width:
 // Measured against t on the 600-dpi plates.
 export const W_LOOP = { a: { length: 1.5, width: 0.6 }, e: { length: 1.2, width: 0.4 } };
 const W_HOOK = 2;
+// A hook drawn twice its size beside a circle (below).
+export const isDoubledHook = (outline, i) => (outline[i] === 'u' && (isWLoop(outline, i + 1) || circleOf(outline[i - 1]) !== null))
+  || (outline[i] === 'o' && circleOf(outline[i + 1]) !== null);
+const doubled = (stroke) => ({ ...stroke, primitives: stroke.primitives.map((p) => ({ ...p, length: p.length * W_HOOK })) });
 export const isWLoop = (outline, i) => outline[i - 1] === 'u' && circleOf(outline[i]) !== null && !circleOf(outline[i]).reversed;
 
 // §74: a narrow loop from `p` out along `t` and back, turning with rotation `s`.
@@ -184,10 +201,14 @@ function outlineStrokes(outline) {
       const prev = outline[i - 1], next = outline[i + 1];
       const under = ['n', 'm', 'men', 'nd', 'md'].includes(prev) || (['k', 'g'].includes(prev) && ['r', 'l'].includes(next));
       if (under) strokes[i] = turnedHook(strokes[i], turnDegrees(tangent(compileStroke(strokes[i]), 'start'), tangent(compileStroke(strokes[i - 1]), 'end')));
-      if (isWLoop(outline, i + 1)) strokes[i] = { ...strokes[i], primitives: strokes[i].primitives.map((p) => ({ ...p, length: p.length * W_HOOK })) };
+      // Beside a circle (w before a vowel; the diphthongs ū and ow, §112) the hook is about
+      // twice its size on the plates (way, use, now, cow; pp. 52, 61).
+      if (isDoubledHook(outline, i)) strokes[i] = doubled(strokes[i]);
       return;
     }
     if (tok !== 'o') return;
+    // oi (§112): the hook before the circle is doubled too (oil, toy, boy; p. 61).
+    if (isDoubledHook(outline, i) && !(strokes[i - 1] && isDownstroke(strokes[i - 1]))) strokes[i] = doubled(strokes[i]);
     const hook = compileStroke(strokes[i]);
     const prev = strokes[i - 1];
     if (prev && isDownstroke(prev)) {
@@ -303,6 +324,11 @@ function compileCore(outline) {
       const circle = circleFrom(pen, t, rotation, JOIN_CIRCLE[size] / 2);
       segments.push(...circle.segments);
       owners.push(...circle.segments.map(() => i));
+      if (circleOf(tok).broken && !next) {
+        // The indent ends the outline; within one the next stroke leaves from the joint.
+        segments.push(brokenTick(pen, t, circle.center));
+        owners.push(i);
+      }
       if (pendingDot) {
         dots.push({ type: 'dot', p: { x: circle.center.x, y: circle.center.y + circle.r + H_GAP } });
         dotOwners.push(dotToken);

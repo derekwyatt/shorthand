@@ -252,6 +252,7 @@ const BRIEF_8 = [
 function tokenName(t) {
   if (t === 'a' || t === 'e') return `${t}-circle`;
   if (t === 'a-rev' || t === 'e-rev') return `${t[0]}-circle with left motion (r)`;
+  if (t === 'i') return 'ī (the broken circle)';
   if (t === 'a-rev-s' || t === 'e-rev-s') return `${t[0]}-circle with left motion made a loop (r + s)`;
   if (t === 'h') return 'h-dot';
   if (t === 'w-dash') return 'w-dash (below the vowel)';

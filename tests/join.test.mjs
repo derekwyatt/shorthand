@@ -283,3 +283,19 @@ test('w before a vowel: the hook doubled, running on into a narrow loop that tur
   const area = p.reduce((a, q, k) => { const r = p[(k + 1) % p.length]; return a + q.x * r.y - r.x * q.y; }, 0);
   assert.ok(area < 0, 'clockwise, carrying on the hook');
 });
+
+test('§112: the broken circle joins like the large circle and ends turned in; hooks beside a circle are doubled', () => {
+  const tie = compileOutline(['t', 'i']), tea = compileOutline(['t', 'a']);
+  const circ = (c) => c.segments.filter((s, k) => c.tokenOf[k] === 1);
+  assert.equal(circ(tie).length, circ(tea).length + 1, 'tie: the a circle plus the indent');
+  assert.deepEqual(circ(tie)[0].p0, circ(tea)[0].p0);
+  const tick = circ(tie).at(-1), centre = centroid(polygon(circ(tea)));
+  const d = (p) => Math.hypot(p.x - centre.x, p.y - centre.y);
+  assert.ok(d(tick.p3) < d(tick.p0), 'the indent turns into the circle');
+  const fight = compileOutline(['f', 'i', 't']);
+  assert.equal(fight.segments.filter((s, k) => fight.tokenOf[k] === 1).length, 4, 'within an outline the next stroke leaves from the joint');
+  const span = (c, i) => { const p = polygon(c.segments.filter((s, k) => c.tokenOf[k] === i)); return Math.max(...p.map((q) => q.x)) - Math.min(...p.map((q) => q.x)); };
+  const plainU = span(compileOutline(['k', 'u', 't']), 1), plainO = span(compileOutline(['t', 'o', 'k']), 1);
+  assert.ok(Math.abs(span(compileOutline(['n', 'a', 'u']), 2) / plainU - 2) < 0.1, 'now: the ow hook doubled');
+  assert.ok(Math.abs(span(compileOutline(['t', 'o', 'e']), 1) / plainO - 2) < 0.15, 'toy: the oi hook doubled');
+});

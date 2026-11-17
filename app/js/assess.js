@@ -9,7 +9,7 @@
 // No DOM: unit-tested in Node (tests/assess.test.mjs).
 import { STROKES, STROKE_BY_ID, U_PER_LINE } from '../data/strokes.js';
 import { EXAMPLES } from '../data/examples.js';
-import { circleRotation, circleOf, isMark, isWLoop, JOIN_CIRCLE, layoutWords } from './join.js';
+import { circleRotation, circleOf, isDoubledHook, isMark, isWLoop, JOIN_CIRCLE, layoutWords } from './join.js';
 import { samplePoints, tangent, cubicPoint } from './render.js';
 import { WRITER_MAX } from './writer.js';
 
@@ -111,8 +111,9 @@ export function modelUnits(example) {
     for (const s of dots.filter((d) => d.mark)) units.push({ kind: 'dot', role: s.mark, word: w.text, pos: s.p });
     const main = toks.filter((t) => t !== 'h' && !isMark(t));
     const consonants = main.filter((t) => !isCircleTok(t));
-    // Joined consonants, the §74 s loop and the w loop: the whole shape is matched, not its parts.
-    if (consonants.length >= 2 || main.some((t, k) => circleOf(t)?.loop || isWLoop(main, k))) {
+    // Joined consonants, the §74 s loop, the w loop, the broken circle and the doubled hooks
+    // of the diphthongs: the whole shape is matched, not its parts.
+    if (consonants.length >= 2 || main.some((t, k) => circleOf(t)?.loop || circleOf(t)?.broken || isWLoop(main, k) || isDoubledHook(main, k))) {
       // Joined consonants (level 7): the whole shape is matched, not its parts.
       const geometry = { ...w.compiled, segments: [], tokenOf: [] };
       w.compiled.segments.forEach((seg, k) => {
