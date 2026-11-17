@@ -124,9 +124,11 @@ export const STROKES = [
 
   // Loop blends: two strokes merged into one large curve.
   { id: 'def', label: 'def', sounds: ['def', 'dev', 'tive'], size: 'large',
-    primitives: [arc(-15, 1.9, 0.5, { spread: 0.25, skew: 0.35 })], briefForms: [], verify: 'loop proportions' },
+    // Fitted to differ (p. 78, 1200 dpi): up the left side, over and down, a deep oval.
+    primitives: [arc(-12.4, 1.164, 1.335, { ctrl: [[-0.11, 1.82], [2.62, 1.74]] })], briefForms: [] },
   { id: 'jnt', label: 'jent', sounds: ['jent', 'jend', 'pent', 'pend'], size: 'large',
-    primitives: [arc(20, 1.9, -0.5, { spread: 0.25, skew: -0.35 })], briefForms: ['gentlemen'], verify: 'loop proportions and end height' },
+    // Fitted to Gentlemen (p. 78, 1200 dpi): down the left side, round and up, a deep U.
+    primitives: [arc(-12.3, 1.07, -1.4212, { ctrl: [[-1.9, -1.74], [1.3, -2.05]] })], briefForms: ['gentlemen'] },
 
   // Marks.
   { id: 'h', label: 'h', sounds: ['h (dot above the line)'], size: 'dot', primitives: [{ type: 'dot' }], briefForms: ['a', 'an'] },
