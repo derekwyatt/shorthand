@@ -239,8 +239,8 @@ const MARKS = new Set(['w-dash', 'a-dot', 'cap']);
 export const isMark = (tok) => MARKS.has(tok);
 const W_DASH = { length: 0.4, gap: 0.25 }; // below the vowel, in U
 const A_DOT_GAP = 0.45; // before the outline
-// §233: the capital mark, two short parallel dashes rising to the right under the outline (p. 141).
-const CAP = { length: 0.4, angle: 30, gap: 0.35, apart: 0.14 };
+// §233: the capital mark, two short parallel dashes rising to the right under the outline, right of its middle (p. 141).
+const CAP = { length: 0.4, angle: 30, gap: 0.35, apart: 0.14, along: 0.7 };
 
 // The outline without its §99 / §100 marks, compiled, then the marks placed: a w dash
 // below the vowel after it, the a dot on the line before the outline. Mark segments are
@@ -310,12 +310,14 @@ export function compileOutline(outline) {
     if (m.tok === 'a-dot') {
       seg = { type: 'dot', mark: 'a', p: { x: box.minX - A_DOT_GAP, y: c.start.y } };
     } else if (m.tok === 'cap') {
-      // Centred under the outline's lowest point, the upper dash CAP.gap below it.
+      // Under the outline, CAP.along of the way across its width (p. 141: right of the middle
+      // of m and k, near the right end of g and n), the upper dash CAP.gap below its lowest point.
       const pts = [...c.segments.filter((s) => s.type === 'cubic').flatMap((s) => Array.from({ length: 17 }, (_, i) => cubicPoint(s, i / 16))), ...c.segments.filter((s) => s.type === 'dot').map((s) => s.p)];
       const low = pts.reduce((a, p) => (p.y < a.y ? p : a));
       const y = low.y - CAP.gap - (CAP.length / 2) * Math.sin((CAP.angle * Math.PI) / 180);
+      const minX = Math.min(...pts.map((p) => p.x)), mid = minX + CAP.along * (Math.max(...pts.map((p) => p.x)) - minX);
       for (const k of [1, 0]) {
-        segments.unshift({ type: 'dot', mark: 'cap', dash: CAP.length, angle: CAP.angle, p: { x: low.x, y: y - k * CAP.apart } });
+        segments.unshift({ type: 'dot', mark: 'cap', dash: CAP.length, angle: CAP.angle, p: { x: mid, y: y - k * CAP.apart } });
         tokenOf.unshift(m.i);
       }
       continue;

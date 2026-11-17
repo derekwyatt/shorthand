@@ -1523,6 +1523,30 @@ const PAGES = {
   'word-refinement': 135,
   'word-consignment': 135,
   'word-adjournment': 135,
+  // Unit 32
+  'word-locality': 137,
+  'word-formality': 137,
+  'word-security': 137,
+  'word-popularity': 137,
+  'word-township': 138,
+  'word-forward': 138,
+  'word-afterward': 138,
+  // Unit 33
+  'word-initial-b': 141,
+  'word-initial-d': 141,
+  'word-initial-f': 141,
+  'word-initial-g': 141,
+  'word-initial-h': 141,
+  'word-initial-j': 141,
+  'word-initial-k': 141,
+  'word-initial-l': 141,
+  'word-initial-m': 141,
+  'word-initial-n': 141,
+  'word-initial-o': 141,
+  'word-initial-p': 141,
+  'word-initial-r': 141,
+  'word-initial-t': 141,
+  'word-initial-v': 141,
 };
 
 // Examples drawn with the plate of another: brief forms share the alphabet row of their
