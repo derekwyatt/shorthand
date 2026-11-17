@@ -299,3 +299,10 @@ test('§112: the broken circle joins like the large circle and ends turned in; h
   assert.ok(Math.abs(span(compileOutline(['n', 'a', 'u']), 2) / plainU - 2) < 0.1, 'now: the ow hook doubled');
   assert.ok(Math.abs(span(compileOutline(['t', 'o', 'e']), 1) / plainO - 2) < 0.15, 'toy: the oi hook doubled');
 });
+
+test('§136 ld: the l run on nearly level, swinging up steeply at the finish', () => {
+  const ld = compileOutline(['ld']).segments.filter((s) => s.type === 'cubic');
+  const start = dir(ld[0].p0, ld[0].c1), end = dir(ld.at(-1).c2, ld.at(-1).p3);
+  assert.ok(Math.abs(start) < 20, `starts nearly level (${start.toFixed(0)}°)`);
+  assert.ok(end > 55 && end < 85, `ends rising steeply (${end.toFixed(0)}°)`);
+});

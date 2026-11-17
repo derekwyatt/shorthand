@@ -37,6 +37,7 @@ export const FAMILIES = [
   { id: 'sh-ch-j',    name: 'Downward lines',              members: ['sh', 'ch', 'j'] },
   { id: 'th-over',    name: 'Upward curves, convex up-left',    members: ['th-over', 'ten', 'tem'] },
   { id: 'th-under',   name: 'Upward curves, convex down-right', members: ['th-under', 'nd', 'md'] },
+  { id: 'ld',         name: 'The ld blend',                members: ['ld'] },
   { id: 'hooks',      name: 'Vowel hooks',                 members: ['o', 'u'] },
   { id: 'ng-nk',      name: 'Down-forward lines',          members: ['ng', 'nk'] },
   { id: 'blends',     name: 'Loop blends',                 members: ['def', 'jnt'] },
@@ -72,6 +73,9 @@ export const STROKES = [
   // Forward curves, convex downward (bottom of the ellipse: deeper toward the start).
   { id: 'r', label: 'r', sounds: ['r'], size: 'short', primitives: [arc(0, 1.6, -0.18, { skew: -0.3 })], briefForms: ['are', 'our'] },
   { id: 'l', label: 'l', sounds: ['l'], size: 'long', primitives: [arc(0, 3.2, -0.15, { skew: -0.3 })], briefForms: ['will', 'well'] },
+  // §136 ld: "giving l a swinging upward turn at the finish" (old, fold, held, p. 74): the l
+  // runs on nearly level, then rises steeply at the end, about 70° on the plates.
+  { id: 'ld', label: 'ld', sounds: ['ld'], size: 'long', primitives: [arc(22, 3.4, -0.1725, { ctrl: [[0.3, -0.21], [0.8, -0.25]] })], briefForms: [] },
 
   // Downward curves, convex left, "(".
   { id: 's-left', label: 's', sounds: ['s', 'z'], size: 'tiny', primitives: [arc(DOWN, 0.7, -0.25)], briefForms: [] },

@@ -111,9 +111,10 @@ export function modelUnits(example) {
     for (const s of dots.filter((d) => d.mark)) units.push({ kind: 'dot', role: s.mark, word: w.text, pos: s.p });
     const main = toks.filter((t) => t !== 'h' && !isMark(t));
     const consonants = main.filter((t) => !isCircleTok(t));
-    // Joined consonants, the §74 s loop, the w loop, the broken circle and the doubled hooks
-    // of the diphthongs: the whole shape is matched, not its parts.
-    if (consonants.length >= 2 || main.some((t, k) => circleOf(t)?.loop || circleOf(t)?.broken || isWLoop(main, k) || isDoubledHook(main, k))) {
+    // Joined consonants, the §74 s loop, the w loop, the broken circle, the doubled hooks
+    // of the diphthongs and ld (on its own its stroke is easily taken for md): the whole
+    // shape is matched, not its parts.
+    if (consonants.length >= 2 || consonants.includes('ld') || main.some((t, k) => circleOf(t)?.loop || circleOf(t)?.broken || isWLoop(main, k) || isDoubledHook(main, k))) {
       // Joined consonants (level 7): the whole shape is matched, not its parts.
       const geometry = { ...w.compiled, segments: [], tokenOf: [] };
       w.compiled.segments.forEach((seg, k) => {
