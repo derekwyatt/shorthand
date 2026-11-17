@@ -36,6 +36,7 @@ function loadProgress() {
 function writePrompt(example) {
   const first = example.title.split(' / ')[0];
   if (example.kind === 'letter') return `Write the letter “${example.title}”.`;
+  if (example.kind === 'phrase') return `Write the phrase “${example.title}”.`;
   if (example.kind === 'brief') return `Write the brief form for “${first}”.`;
   if (example.kind === 'sentence') return `Write the sentence “${example.title}”`;
   return `Write “${first}”.`;
@@ -90,7 +91,7 @@ export function createLessons({ panel, pad, assist, unitPx }) {
     set.add(stepKey(s));
     progress.done[lesson.id] = [...set];
     persist();
-    renderTabs();
+    renderUnits();
     renderNav();
   }
 
@@ -175,23 +176,22 @@ export function createLessons({ panel, pad, assist, unitPx }) {
   }
 
   // ---------------------------------------------------------------- frame
-  const tabs = el('div', { className: 'sections lesson-tabs', role: 'tablist' });
+  const units = el('select', { className: 'lesson-unit' });
+  units.setAttribute('aria-label', 'Unit');
+  units.addEventListener('change', () => openUnit(LESSONS.find((l) => String(l.unit) === units.value)));
   const heading = el('div', { className: 'lesson-head' });
   const bar = el('div', { className: 'lesson-bar' }, el('span'));
   const body = el('div', { className: 'lesson-body' });
   const nav = el('div', { className: 'ex-nav lesson-nav' });
-  // Navigation sits at the top, below the unit tabs, and stays there as the step scrolls.
-  panel.replaceChildren(tabs, nav, heading, bar, body);
+  // Navigation sits at the top, below the unit picker, and stays there as the step scrolls.
+  panel.replaceChildren(units, nav, heading, bar, body);
 
-  function renderTabs() {
-    tabs.replaceChildren(...LESSONS.map((l) => {
+  function renderUnits() {
+    units.replaceChildren(...LESSONS.map((l) => {
       const c = counts(l);
-      const b = button('', l === lesson ? 'active' : '', () => openUnit(l));
-      b.dataset.unit = String(l.unit);
-      b.title = `${l.title}: ${l.subtitle}`;
-      b.append(el('span', { textContent: l.title }), el('small', { textContent: `${c.done}/${c.total}` }));
-      return b;
+      return el('option', { value: String(l.unit), textContent: `${l.title} · ${l.subtitle} (${c.done}/${c.total})` });
     }));
+    units.value = String(lesson.unit);
   }
 
   function renderHeading() {
@@ -325,7 +325,7 @@ export function createLessons({ panel, pad, assist, unitPx }) {
     figures = [];
     assist.drawCheck(null);
     assist.reset();
-    renderTabs();
+    renderUnits();
     if (screen === 'summary') renderSummary();
     else {
       const s = step();

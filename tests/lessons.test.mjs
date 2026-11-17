@@ -6,8 +6,8 @@ import assert from 'node:assert/strict';
 import { LESSONS, stepKey, exampleFor, isTask } from '../app/data/lessons.js';
 import { EXAMPLES } from '../app/data/examples.js';
 
-test('three units, in order, each with read, write and choose steps', () => {
-  assert.deepEqual(LESSONS.map((l) => l.unit), [1, 2, 3]);
+test('the units, in order from Unit 1, each with read, write and choose steps', () => {
+  assert.deepEqual(LESSONS.map((l) => l.unit), LESSONS.map((_, i) => i + 1));
   for (const l of LESSONS) {
     assert.ok(l.title && l.subtitle && l.pages, l.id);
     for (const type of ['read', 'write', 'choose']) assert.ok(l.steps.some((s) => s.type === type), `${l.id} has a ${type} step`);

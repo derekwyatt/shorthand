@@ -76,7 +76,7 @@ export const STROKES = [
   // Downward curves, convex left, "(".
   { id: 's-left', label: 's', sounds: ['s', 'z'], size: 'tiny', primitives: [arc(DOWN, 0.7, -0.25)], briefForms: [] },
   { id: 'p', label: 'p', sounds: ['p'], size: 'short', primitives: [arc(DOWN, 1.7, -0.2)], briefForms: ['put'] },
-  { id: 'b', label: 'b', sounds: ['b'], size: 'long', primitives: [arc(DOWN, 3.2, -0.2)], briefForms: ['be', 'by'] },
+  { id: 'b', label: 'b', sounds: ['b'], size: 'long', primitives: [arc(DOWN, 3.2, -0.2)], briefForms: ['be', 'by', 'but'] },
 
   // Downward curves, convex right, ")".
   { id: 's-right', label: 's', sounds: ['s', 'z'], size: 'tiny', primitives: [arc(DOWN, 0.7, 0.25)], briefForms: ['is', 'his'] },
@@ -84,8 +84,8 @@ export const STROKES = [
   { id: 'v', label: 'v', sounds: ['v'], size: 'long', primitives: [arc(DOWN, 3.2, 0.2)], briefForms: ['have'] },
 
   // Downward lines.
-  { id: 'sh', label: 'sh', sounds: ['sh', 'zh'], size: 'short', primitives: [line(DOWN, 0.85)], briefForms: ['shall'] },
-  { id: 'ch', label: 'ch', sounds: ['ch'], size: 'medium', primitives: [line(DOWN, 1.7)], briefForms: ['which'] },
+  { id: 'sh', label: 'sh', sounds: ['sh', 'zh'], size: 'short', primitives: [line(DOWN, 0.85)], briefForms: ['shall', 'ship'] },
+  { id: 'ch', label: 'ch', sounds: ['ch'], size: 'medium', primitives: [line(DOWN, 1.7)], briefForms: ['which', 'change'] },
   { id: 'j', label: 'j', sounds: ['j', 'soft g'], size: 'long', primitives: [line(DOWN, 3.1)], briefForms: [] },
 
   // Upward curves, convex up-left.

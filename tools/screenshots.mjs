@@ -130,7 +130,7 @@ try {
   await sleep(300);
   const padLs = await evaluate(`getComputedStyle(document.documentElement).getPropertyValue('--line-spacing').trim() + ' / ' + document.getElementById('spacing-out').value`);
   console.log('line spacing', padLs);
-  await evaluate(`document.querySelector('.sections button[data-level="5"]').click()`);
+  await evaluate(`(() => { const s = document.querySelector('#level-select'); s.value = '5'; s.dispatchEvent(new Event('change', { bubbles: true })); })()`);
   await sleep(400);
   const EXAMPLE_ID = await evaluate(`import('./data/examples.js').then(({ EXAMPLES }) => EXAMPLES.find((e) => e.level === 5).id)`);
   console.log('example', EXAMPLE_ID);
@@ -265,7 +265,7 @@ try {
   // 5. Lessons: Unit 1, step 1 ("aim" and "knee"), "aim" copied twice on the pad.
   await evaluate(`location.hash = '#learn'`);
   await sleep(400);
-  await evaluate(`document.querySelector('#lesson-panel .lesson-tabs button[data-unit="1"]').click()`);
+  await evaluate(`(() => { const s = document.querySelector('#lesson-panel .lesson-unit'); s.value = '1'; s.dispatchEvent(new Event('change', { bubbles: true })); })()`);
   await sleep(300);
   const lessonModel = await evaluate(`(async () => {
     const { EXAMPLES } = await import('./data/examples.js');

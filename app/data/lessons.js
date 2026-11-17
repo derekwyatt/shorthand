@@ -8,6 +8,7 @@
 // Text in quotes is the manual's own wording (1929, US public domain); the rest is a short
 // paraphrase. Every example id must exist in data/examples.js (tests/lessons.test.mjs).
 import { EXAMPLES } from './examples.js';
+import { UNITS } from './units/index.js';
 
 export { PASS_SCORE } from '../js/assess.js';
 
@@ -183,10 +184,19 @@ export function stepKey(step) {
   return step.type === 'read' ? `read:${step.title}` : `${step.type}:${step.example}`;
 }
 
+// A unit module's lesson (data/units/) as steps.
+const stepOf = (s) => {
+  if (s.read) return read(...s.read);
+  if (s.write) return Array.isArray(s.write) ? write(...s.write) : write(s.write);
+  if (s.choose) return choose(...s.choose);
+  throw new Error(`unknown lesson step ${JSON.stringify(s)}`);
+};
+
 export const LESSONS = [
   { id: 'unit-1', unit: 1, title: 'Unit 1', subtitle: 'The first consonants, vowel circles and how circles join', pages: 'pp. 1–6', steps: UNIT_1 },
   { id: 'unit-2', unit: 2, title: 'Unit 2', subtitle: 'Circles between strokes and joined curves', pages: 'pp. 7–11', steps: UNIT_2 },
   { id: 'unit-3', unit: 3, title: 'Unit 3', subtitle: 'The ted and men blends, the frequent-word drill and brief forms', pages: 'pp. 12–14', steps: UNIT_3 },
+  ...UNITS.map((u) => ({ id: `unit-${u.unit}`, unit: u.unit, title: `Unit ${u.unit}`, subtitle: u.subtitle, pages: u.pages, steps: u.lesson.map(stepOf) })),
 ];
 
 // Steps that must be done (written or answered) to finish a unit; read steps are done on sight.

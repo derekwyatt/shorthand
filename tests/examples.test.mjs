@@ -8,15 +8,17 @@ import { compileExample } from '../app/js/join.js';
 const atLevel = (n) => EXAMPLES.filter((e) => e.level === n);
 const key = (e) => e.outline.join(' ');
 
-test('eight levels, every example has one, and the list is ordered by level', () => {
-  assert.deepEqual(LEVELS.map((l) => l.id), [1, 2, 3, 4, 5, 6, 7, 8]);
+test('levels run on without gaps, one per manual unit from Unit 2, every example has one, ordered', () => {
+  assert.deepEqual(LEVELS.map((l) => l.id), LEVELS.map((_, i) => i + 1));
   for (const l of LEVELS) assert.ok(l.name && l.description, `level ${l.id}`);
-  for (const e of EXAMPLES) assert.ok(Number.isInteger(e.level) && e.level >= 1 && e.level <= 8, e.id);
+  for (const l of LEVELS.filter((x) => x.unit)) assert.equal(l.id, l.unit + 5, `level ${l.id} is Unit ${l.unit}`);
+  const ids = new Set(LEVELS.map((l) => l.id));
+  for (const e of EXAMPLES) assert.ok(ids.has(e.level), e.id);
   for (let i = 1; i < EXAMPLES.length; i++) assert.ok(EXAMPLES[i - 1].level <= EXAMPLES[i].level);
 });
 
 test('level sizes and unique ids', () => {
-  assert.deepEqual([1, 2, 3, 4, 7, 8].map((n) => atLevel(n).length), [28, 22, 33, 26, 61, 44]);
+  assert.deepEqual([1, 2, 3, 4, 7, 8, 9, 10, 11].map((n) => atLevel(n).length), [28, 22, 33, 26, 61, 44, 80, 113, 24]);
   assert.ok(atLevel(5).length >= 30);
   assert.ok(atLevel(6).length >= 30);
   assert.equal(new Set(EXAMPLES.map((e) => e.id)).size, EXAMPLES.length);

@@ -12,19 +12,21 @@ The app is plain ES modules loaded by `app/index.html`; there is no bundler. Mod
 | `app/js/repeats.js` | `assessRepeats()`: splits pad strokes into repeats, scores each, aggregates. `practiceLines()` and `repeatIndexFor()`. |
 | `app/js/assist.js` | Real-time guide, live warnings, per-stroke notes, green/red check overlay. |
 | `app/js/practice.js` | The example panel: enlarged and actual-size art, meaning, source, score badge, critiques. |
-| `app/js/lessons.js` | The Lessons view: unit tabs, read / write / choose steps, progress. Shares the pad and reuses the example panel and `assessRepeats()`. |
+| `app/js/lessons.js` | The Lessons view: unit dropdown, read / write / choose steps, progress. Shares the pad and reuses the example panel and `assessRepeats()`. |
 | `app/js/quiz.js` | Quiz UI (start screen, questions, summary) and result history. Shares the pad. |
 | `app/js/quizgen.js` | Seeded quiz generation, no DOM. Used by the dev server and, as a fallback, by the browser. |
 | `app/js/render.js` | Stroke primitives to cubic Bezier geometry (U, y up); SVG output and animation. |
-| `app/js/join.js` | Joins consonant strokes, vowel circles and the h dot into one outline (Manual §11–12 for circles at the ends, §14–22 for circles between strokes and joined curves). |
+| `app/js/join.js` | Joins consonant strokes, vowel circles and the h dot into one outline (Manual §11–12 for circles at the ends, §14–22 for circles between strokes and joined curves). Rounds the angle into one shared direction, with no corner, for fr and fl (§39; vr and vl by inference), for the Unit 6 pairs the plates round (k-sh, f-m, f-g, b-g, k-b) and for the §52 ses blend. Handles shorten on sharp turns. |
 | `app/js/writer.js` | Learned writing-size scale, kept in localStorage. |
 | `app/js/backup.js` | Progress backup and restore: `exportProgress()`, `importProgress()` and `backupFileName()` (no DOM). `main.js` wires the Back up and Restore buttons. |
 | `app/js/gallery.js` | The Strokes view. |
 | `app/data/strokes.js` | The stroke table and look-alike families. |
-| `app/data/examples.js` | All practice examples, grouped in eight levels. |
-| `app/data/lessons.js` | The lesson steps for Manual Units 1–3; they refer to examples by id. |
+| `app/data/examples.js` | All practice examples, grouped in eleven levels. Units 4–6 are built from `data/units/`. |
+| `app/data/lessons.js` | The lesson steps for Manual Units 1–3; they refer to examples by id. Units 4–6 are turned into lessons from `data/units/`. |
+| `app/data/units/` | Manual Units 4–6 as plain data, one module per unit. `index.js` lists them in `UNITS` and gives each unit's Practice level (`levelOfUnit()`, unit + 5). |
 | `app/data/plates.js` | Which examples have a printed plate (`plateFor()`), with its page, and the section plates used by lessons (`sectionPlate()`). |
 | `tools/plates.mjs` | Cuts `app/plates/*.png` from the scan using `tools/plates.json`. |
+| `tools/compare.mjs` | Sheet of each outline as the app draws it, beside the manual's plate (`node tools/compare.mjs`). |
 | `tools/dev-server.mjs` | Static server for `app/` with live reload and `/api/quiz`. |
 | `app/sw.js` | Service worker for offline use. Registered by `main.js`. |
 | `tools/precache.mjs` | Writes `app/precache.js`, the list of files `sw.js` saves. |
@@ -171,7 +173,7 @@ If storage is full or unavailable the app keeps working but nothing survives a r
 
 ## Adding an example
 
-Examples live in `app/data/examples.js`. Each has `id`, `kind` (`letter`, `brief`, `word` or `sentence`), `level` (1 to 8), `title`, `outline` (a list of tokens), `meaning` (a list of strings) and `source`. Sentences also have `words`, a list of `{ text, tokens, brief, phrase }`.
+Examples live in `app/data/examples.js`. Each has `id`, `kind` (`letter`, `brief`, `word`, `phrase` or `sentence`), `level` (1 to 11), `title`, `outline` (a list of tokens), `meaning` (a list of strings) and `source`. Sentences also have `words`, a list of `{ text, tokens, brief, phrase }`. Phrase examples (Unit 6) are written by the unit modules in `data/units/`, not added here.
 
 An outline token is a stroke id from `app/data/strokes.js`, `a` or `e` (vowel circles), or `h` (the dot). Strokes marked `verify` in the stroke table are deliberately left out of examples until they are checked against the sources.
 
@@ -190,3 +192,7 @@ Cite the source in the example's `source` field. Then run `npm test`: `tests/exa
 ## Adding a lesson step
 
 Lessons live in `app/data/lessons.js`, one list of steps per unit, built with `read(title, ref, text, show)`, `write(exampleId, prompt)` and `choose(exampleId, choices)`. Steps only refer to examples, so add the example first. Saved progress is keyed by `stepKey()` (the read step's title, or the type and example id), so editing a step's text keeps it; renaming a read step or changing its example resets that step. `tests/lessons.test.mjs` checks that every id exists, that keys are unique within a unit, and that each choose step has four distinctly titled choices whose wrong answers do not share the answer's outline.
+
+## Adding a unit
+
+Manual Units 4 onward live in `app/data/units/`, one module per unit, with the format described in the comment at the top of `index.js`. To add Unit N: transcribe the unit into `reference/manual-unitN.md`, with each outline and the reasoning behind it. Add crops of its printed outlines to `tools/plates.json`, run `npm run plates <ids> --sheet sheet.html`, check the crops by eye, and add the ids and pages to `PAGES` in `app/data/plates.js` (or an alias or section plate, as above). Write `app/data/units/unitNN.js` and add it to `UNITS` in `index.js`; its words, brief forms and phrases become Practice examples at level `unit + 5`, and its lesson appears in the Lessons dropdown. Check the outlines with `node tools/compare.mjs --level <N> --out sheet.html` and fix any join that differs from the plate. Then run `npm run precache` (the new plates are new files under `app/`) and `npm test`.

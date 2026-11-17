@@ -79,9 +79,20 @@ guideInput.addEventListener('change', () => {
   assist.drawModel();
   persist();
 });
-for (const b of document.querySelectorAll('.sections button')) {
-  b.addEventListener('click', () => goTo(EXAMPLES.findIndex((e) => e.level === Number(b.dataset.level))));
+// Levels with a manual unit are grouped apart from the basics.
+const levelSelect = $('level-select');
+for (const [label, levels] of [['Basics', LEVELS.filter((l) => !l.unit)], ['Manual units', LEVELS.filter((l) => l.unit)]]) {
+  if (!levels.length) continue;
+  const group = document.createElement('optgroup');
+  group.label = label;
+  for (const l of levels) {
+    const o = new Option(`${l.id} · ${l.name}`, String(l.id));
+    o.title = l.description;
+    group.append(o);
+  }
+  levelSelect.append(group);
 }
+levelSelect.addEventListener('change', () => goTo(EXAMPLES.findIndex((e) => e.level === Number(levelSelect.value))));
 applySpacing(saved.lineSpacing);
 goTo(index, { animate: true });
 
@@ -203,7 +214,7 @@ function goTo(i, { animate = true } = {}) {
   showPanel(animate);
   assist.setExample(ex);
   refreshAssessment();
-  for (const b of document.querySelectorAll('.sections button')) b.classList.toggle('active', Number(b.dataset.level) === ex.level);
+  levelSelect.value = String(ex.level);
   $('ex-prev').disabled = index === 0;
   $('ex-next').disabled = index === EXAMPLES.length - 1;
   persist();

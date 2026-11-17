@@ -273,10 +273,10 @@ try {
 
   // Scoring, critiques and real-time assistance.
   await evaluate(`localStorage.removeItem('gregg.writer.v1')`); // earlier strokes taught a size; start from the example size
-  await evaluate(`document.querySelector('.sections button[data-level="1"]').click()`);
+  await evaluate(`(() => { const s = document.querySelector('#level-select'); s.value = '1'; s.dispatchEvent(new Event('change', { bubbles: true })); })()`);
   await evaluate(`document.getElementById('clear').click()`);
   await sleep(100);
-  check(await evaluate(`document.getElementById('ex-title').textContent`) === 'k', 'Level 1 button jumps to the first letter');
+  check(await evaluate(`document.getElementById('ex-title').textContent`) === 'k', 'Level 1 option jumps to the first letter');
   // Draw a perfect k from the model geometry, through real pen events.
   const kPts = await evaluate(`(async () => {
     const { STROKE_BY_ID, U_PER_LINE } = await import('./data/strokes.js');
@@ -374,7 +374,7 @@ try {
   check(lp.pressed.length === 0 && lp.verdict.includes('2 repeats'), `unpicking shows every line again (${lp.verdict})`);
 
   // A flat line for k is critiqued.
-  await evaluate(`document.querySelector('.sections button[data-level="1"]').click()`);
+  await evaluate(`(() => { const s = document.querySelector('#level-select'); s.value = '1'; s.dispatchEvent(new Event('change', { bubbles: true })); })()`);
   await sleep(100);
   await evaluate(`document.getElementById('clear').click()`);
   await pen(line(200, 300, 260, 300));
@@ -387,7 +387,7 @@ try {
   check(exported?.ex === 'letter-k' && exported.score < 80 && exported.critiques.length > 0, `export includes the score and critiques (${exported?.ex}: ${exported?.score})`);
 
   // The dot letter (h / "a"): a tap is scored and gets its own note, with no guide.
-  await evaluate(`(() => { const b = [...document.querySelectorAll('.sections button')]; b[0].click(); })()`);
+  await evaluate(`(() => { const s = document.querySelector('#level-select'); s.value = '1'; s.dispatchEvent(new Event('change', { bubbles: true })); })()`);
   const toH = await evaluate(`(async () => {
     const { EXAMPLES } = await import('./data/examples.js');
     const i = EXAMPLES.findIndex((e) => e.id === 'letter-h');
@@ -407,12 +407,12 @@ try {
     `the dot letter is scored (${toH}: ${dotFb.score}, "${dotFb.hint}")`);
 
   // Level 5 (short sentences).
-  await evaluate(`document.querySelector('.sections button[data-level="5"]').click()`);
+  await evaluate(`(() => { const s = document.querySelector('#level-select'); s.value = '5'; s.dispatchEvent(new Event('change', { bubbles: true })); })()`);
   await sleep(150);
   const sent = await evaluate(`(() => ({
     title: document.getElementById('ex-title').textContent,
     counter: document.getElementById('ex-counter').textContent,
-    active: document.querySelector('.sections button.active')?.dataset.level,
+    active: document.getElementById('level-select').value,
     ink: document.querySelectorAll('#ex-art .ex-big path.ink').length,
     starts: document.querySelectorAll('#ex-art .ex-big .start-mark').length,
     arrows: document.querySelectorAll('#ex-art .ex-big .arrow').length,
@@ -528,7 +528,7 @@ try {
     counter: document.querySelector('#lesson-panel .ex-counter')?.textContent,
     title: document.querySelector('#lesson-panel .lesson-title, #lesson-panel .quiz-prompt')?.textContent,
     next: document.querySelector('#lesson-panel .lesson-next')?.textContent,
-    tab: document.querySelector('#lesson-panel .lesson-tabs button.active')?.dataset.unit,
+    tab: document.querySelector('#lesson-panel .lesson-unit')?.value,
     figs: document.querySelectorAll('#lesson-panel .lesson-fig svg').length,
     status: document.querySelector('#lesson-panel .lesson-status')?.textContent ?? '',
   }))()`);
@@ -583,7 +583,7 @@ try {
   ls = await lessonText();
   check(/Passed/.test(ls.status) && ls.next === 'Next ▶', `a good k passes the write step (${ls.status})`);
   check(await evaluate(`JSON.parse(localStorage.getItem('gregg.lessons.v1')).done['unit-1'].includes('write:letter-k')`), 'the passed step is saved');
-  check(await evaluate(`document.querySelector('#lesson-panel .lesson-tabs button.active small').textContent.startsWith('1/')`), 'the unit tab counts the step');
+  check(await evaluate(`document.querySelector('#lesson-panel .lesson-unit').selectedOptions[0].textContent.includes('(1/')`), 'the unit picker counts the step');
   for (let i = 0; i < 4; i++) await lessonNext();
   await sleep(200);
   ls = await lessonText();
@@ -602,7 +602,7 @@ try {
   await sleep(300);
   ls = await lessonText();
   check(/Step 7 of/.test(ls.counter) && await evaluate(`document.querySelectorAll('#lesson-panel .choice.correct').length === 1`), `after a reload the lesson resumes at the same step, answered (${ls.counter})`);
-  await click('#lesson-panel .lesson-tabs button[data-unit="2"]');
+  await evaluate(`(() => { const s = document.querySelector('#lesson-panel .lesson-unit'); s.value = '2'; s.dispatchEvent(new Event('change', { bubbles: true })); })()`);
   await sleep(200);
   ls = await lessonText();
   check(ls.tab === '2' && /^Unit 2 · Manual pp\. 7–11 · Step 1 of/.test(ls.counter) && ls.title === 'Circles between strokes', `the Unit 2 tab opens Unit 2 (${ls.counter})`);

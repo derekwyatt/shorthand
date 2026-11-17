@@ -2,7 +2,7 @@
 import { EXAMPLES, LEVELS } from '../data/examples.js';
 import { STROKE_BY_ID, FAMILIES } from '../data/strokes.js';
 
-const ALL_KINDS = ['letter', 'brief', 'word', 'sentence'];
+const ALL_KINDS = ['letter', 'brief', 'word', 'phrase', 'sentence'];
 const ALL_LEVELS = LEVELS.map((l) => l.id);
 const ALL_TYPES = ['read', 'write', 'series'];
 const SINGLE_TYPES = ['read', 'write'];
@@ -83,6 +83,7 @@ function writePrompt(example, rng) {
     if (forms.length && rng() < 0.5) return `Write the brief form for “${forms[Math.floor(rng() * forms.length)]}”.`;
     return `Write the letter “${example.title}”.`;
   }
+  if (example.kind === 'phrase') return `Write the phrase “${example.title}”.`;
   if (example.kind === 'brief') return `Write the brief form for “${example.title.split(' / ')[0]}”.`;
   if (example.kind === 'word') return `Write the word “${example.title.split(' / ')[0]}”.`;
   return `Write the sentence: “${example.title}”`;

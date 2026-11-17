@@ -13,6 +13,12 @@
 //        second curve, against the first).
 //   §19/§21  k+r, g+l, r+k and l+k are equal curves and are made a little flatter when joined.
 //   (§20 gr and kl keep their normal geometry.)
+//   §39  fr and fl: "the angle is rounded to give fluency", like part of a longhand y. The
+//        strokes meet with one shared direction instead of a corner. (vr and vl, the long
+//        forms, are taken to follow the same rule: an inference.)
+//        The Unit 6 plates round k-sh (action), f-m (formal, inform), f-g (forgot), b-g
+//        (big) and k-b (can be) the same way, so those pairs are rounded too.
+//   §52  The two s signs of ses are joined "as a blend": one smooth reverse curve.
 // The angle threshold and the flattening factor are inferences (reference/manual-unit2.md).
 //
 // An outline is a list of tokens: a stroke id from data/strokes.js, 'a' or 'e' (circle)
@@ -28,6 +34,24 @@ export const ANGLE_THRESHOLD = 20;
 // §19/§21: equal curves joined directly are drawn this much flatter (bulge factor).
 export const JOINED_CURVE_FLATTEN = 0.75;
 const FLAT_PAIRS = new Set(['k r', 'g l', 'r k', 'l k']);
+const ROUND_PAIRS = new Set(['f r', 'f l', 'v r', 'v l', 'k sh', 'f m', 'f g', 'b g', 'k b', 's-left s-right', 's-right s-left']);
+
+// §39: bend the end of the previous stroke and the start of the next so that both run
+// along the average of their directions where they meet (a rounded turn, no corner).
+function roundJoin(prevSeg, nextSeg) {
+  const a = { x: prevSeg.p3.x - prevSeg.c2.x, y: prevSeg.p3.y - prevSeg.c2.y };
+  const b = { x: nextSeg.c1.x - nextSeg.p0.x, y: nextSeg.c1.y - nextSeg.p0.y };
+  const la = Math.hypot(a.x, a.y), lb = Math.hypot(b.x, b.y);
+  const t = { x: a.x / la + b.x / lb, y: a.y / la + b.y / lb };
+  const lt = Math.hypot(t.x, t.y);
+  if (lt < 1e-6) return;
+  t.x /= lt; t.y /= lt;
+  // The sharper the turn, the shorter the handles, so a near-reversal (f-g) bends without
+  // overshooting into a loop.
+  const k = Math.max(0.3, (1 + (a.x * b.x + a.y * b.y) / (la * lb)) / 2);
+  prevSeg.c2 = { x: prevSeg.p3.x - t.x * la * k, y: prevSeg.p3.y - t.y * la * k };
+  nextSeg.c1 = { x: nextSeg.p0.x + t.x * lb * k, y: nextSeg.p0.y + t.y * lb * k };
+}
 
 const isCircle = (tok) => tok === 'a' || tok === 'e';
 const strokeAt = (outline, i) => {
@@ -157,6 +181,7 @@ export function compileOutline(outline) {
       return;
     }
     const c = compileStroke(strokes[i], pen);
+    if (ROUND_PAIRS.has(`${outline[i - 1]} ${tok}`) && segments.length) roundJoin(segments[segments.length - 1], c.segments[0]);
     segments.push(...c.segments);
     owners.push(...c.segments.map(() => i));
     pen = c.end;

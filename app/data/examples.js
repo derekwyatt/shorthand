@@ -31,6 +31,8 @@ const LETTER_ORDER = [
   'men', 'ted', 'ten', 'tem', 'nd', 'md',
 ];
 
+import { UNITS, levelOfUnit } from './units/index.js';
+
 export const LEVELS = [
   { id: 1, name: 'Alphabet', kinds: ['letter'], description: 'Single strokes of the alphabet' },
   { id: 2, name: 'Brief forms', description: 'One stroke stands for a whole word' },
@@ -38,8 +40,9 @@ export const LEVELS = [
   { id: 4, name: 'Circle words II', description: 'The same circle rules on p b f v sh ch j nk and the blends' },
   { id: 5, name: 'Short sentences', description: 'Two to four words' },
   { id: 6, name: 'Long sentences', description: 'Five to eight words' },
-  { id: 7, name: 'Joined words', description: 'Circles between strokes and joined curves (Manual §14–22)' },
-  { id: 8, name: 'Blends and drill', description: 'The ted and men blends, the frequent-word drill and brief forms (Manual §26–29)' },
+  { id: 7, unit: 2, name: 'Joined words', description: 'Circles between strokes and joined curves (Manual §14–22)' },
+  { id: 8, unit: 3, name: 'Blends and drill', description: 'The ted and men blends, the frequent-word drill and brief forms (Manual §26–29)' },
+  ...UNITS.map((u) => ({ id: levelOfUnit(u.unit), unit: u.unit, ...u.level })),
 ];
 
 const quote = (words) => words.map((w) => `“${w}”`).join(', ');
@@ -59,8 +62,8 @@ const BRIEF_STROKES = [
   ['k', ['can']], ['g', ['go', 'good']], ['r', ['are', 'our']], ['l', ['will', 'well']],
   ['n', ['in', 'not']], ['m', ['am', 'more']], ['t', ['it', 'at']], ['d', ['would']],
   ['th-over', ['the']], ['th-under', ['their', 'there']], ['h', ['a', 'an']],
-  ['s-right', ['is', 'his']], ['p', ['put']], ['b', ['be', 'by']], ['f', ['for']], ['v', ['have']],
-  ['sh', ['shall']], ['ch', ['which']], ['men', ['men']], ['ted', ['did', 'date']],
+  ['s-right', ['is', 'his']], ['p', ['put']], ['b', ['be', 'by', 'but']], ['f', ['for']], ['v', ['have']],
+  ['sh', ['shall', 'ship']], ['ch', ['which', 'change']], ['men', ['men']], ['ted', ['did', 'date']],
   ['tem', ['time']], ['nd', ['and', 'end']],
 ];
 
@@ -278,6 +281,32 @@ const briefExample8 = ([title, outline, note]) => {
   };
 };
 
+// Words, brief forms and phrases of the unit modules (data/units/). Ids are
+// <kind>-<first name>, with spaces as dashes ("have been" -> brief-have-been).
+const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+function unitExamples(u) {
+  const level = levelOfUnit(u.unit);
+  const source = (page) => `Gregg Shorthand Manual (1929), p. ${page}`;
+  const words = u.words.map(([title, outline, rule, page, note]) => {
+    if (!(rule in u.rules)) throw new Error(`Unit ${u.unit}: no rule "${rule}" for ${title}`);
+    return { ...wordExampleAt(level)([title, outline, u.rules[rule], page, note]), id: `word-${slug(title.split(' / ')[0])}` };
+  });
+  const brief = (u.brief ?? []).map(([title, outline, page, note]) => {
+    const names = title.split(' / ');
+    return {
+      id: `brief-${slug(names[0])}`, kind: 'brief', level, title, outline,
+      meaning: [`A brief form for ${names.length > 1 ? 'the words ' : ''}${quote(names)}: ${spell(outline)} (Manual, Unit ${u.unit}).`, ...(note ? [note] : [])],
+      source: source(page),
+    };
+  });
+  const phrases = (u.phrases ?? []).map(([title, outline, page, note]) => ({
+    id: `phrase-${slug(title)}`, kind: 'phrase', level, title, outline,
+    meaning: [`The phrase “${title}”, written as one outline: ${spell(outline)} (Manual, Unit ${u.unit}).`, ...(note ? [note] : [])],
+    source: source(page),
+  }));
+  return [...words, ...brief, ...phrases];
+}
+
 export const EXAMPLES = [
   ...letters,
   ...briefs,
@@ -287,6 +316,7 @@ export const EXAMPLES = [
   ...WORDS_7.map(wordExampleAt(7)),
   ...WORDS_8.map(wordExampleAt(8)),
   ...BRIEF_8.map(briefExample8),
+  ...UNITS.flatMap(unitExamples),
 ];
 
 // ---------------------------------------------------------------- sentences

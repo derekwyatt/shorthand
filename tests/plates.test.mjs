@@ -30,14 +30,14 @@ test('every crop has a PNG image, 8-bit grayscale, and there are no stray images
   for (const f of files) assert.ok(CROP_BY_ID.has(f), `stray image ${f}.png is not in plates.json`);
 });
 
-test('every plateFor() result points at an existing file and a page from 1 to 14', () => {
+test('every plateFor() result points at an existing file and a page of the manual', () => {
   let n = 0;
   for (const ex of EXAMPLES) {
     const p = plateFor(ex.id);
     if (!p) continue;
     n++;
     assert.ok(fs.existsSync(fileOf(p)), `${ex.id}: missing ${p.src}`);
-    assert.ok(Number.isInteger(p.page) && p.page >= 1 && p.page <= 14, `${ex.id}: page ${p.page}`);
+    assert.ok(Number.isInteger(p.page) && p.page >= 1 && p.page <= 176, `${ex.id}: page ${p.page}`);
   }
   assert.ok(n > 100, 'plates are found for the examples');
 });
