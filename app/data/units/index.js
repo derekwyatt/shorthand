@@ -34,8 +34,9 @@ import unit21 from './unit21.js';
 import unit22 from './unit22.js';
 import unit23 from './unit23.js';
 import unit24 from './unit24.js';
+import unit25 from './unit25.js';
 
-export const UNITS = [unit04, unit05, unit06, unit07, unit08, unit09, unit10, unit11, unit12, unit13, unit14, unit15, unit16, unit17, unit18, unit19, unit20, unit21, unit22, unit23, unit24];
+export const UNITS = [unit04, unit05, unit06, unit07, unit08, unit09, unit10, unit11, unit12, unit13, unit14, unit15, unit16, unit17, unit18, unit19, unit20, unit21, unit22, unit23, unit24, unit25];
 
 // The Practice level of a unit's words.
 export const levelOfUnit = (unit) => unit + 5;
