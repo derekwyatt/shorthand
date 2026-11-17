@@ -830,6 +830,23 @@
     {"id": "brief-kind", "page": 63, "box": [497, 541, 570, 581]},
     {"id": "brief-inquire", "page": 63, "box": [497, 584, 570, 624]},
     {"id": "brief-mile", "page": 63, "box": [497, 626, 570, 666]},
-    {"id": "brief-require", "page": 63, "box": [497, 668, 570, 708]}
+    {"id": "brief-require", "page": 63, "box": [497, 668, 570, 708]},
+    {"id": "word-theory", "page": 66, "box": [230, 243, 270, 266]},
+    {"id": "word-idea", "page": 66, "box": [544, 230, 593, 266]},
+    {"id": "word-ideal", "page": 66, "box": [527, 269, 598, 308]},
+    {"id": "word-genuine", "page": 66, "box": [545, 327, 587, 354]},
+    {"id": "word-renew", "page": 66, "box": [520, 368, 594, 388]},
+    {"id": "word-new", "page": 66, "box": [240, 415, 267, 435]},
+    {"id": "word-avenue", "page": 66, "box": [379, 390, 416, 429]},
+    {"id": "word-renewal", "page": 66, "box": [520, 413, 614, 435]},
+    {"id": "brief-dollar", "page": 66, "box": [225, 511, 271, 545]},
+    {"id": "brief-please", "page": 66, "box": [546, 514, 600, 544]},
+    {"id": "brief-object", "page": 66, "box": [234, 539, 267, 586]},
+    {"id": "brief-progress", "page": 66, "box": [546, 553, 611, 581]},
+    {"id": "brief-opportunity", "page": 66, "box": [405, 644, 435, 672]},
+    {"id": "brief-various", "page": 66, "box": [544, 631, 592, 670]},
+    {"id": "brief-enclose", "page": 66, "box": [549, 689, 595, 715]},
+    {"id": "brief-address", "page": 66, "box": [210, 720, 279, 755]},
+    {"id": "brief-wonder", "page": 66, "box": [549, 732, 597, 753]}
   ]
 }

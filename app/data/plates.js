@@ -834,6 +834,24 @@ const PAGES = {
   'brief-inquire': 63,
   'brief-mile': 63,
   'brief-require': 63,
+  // Unit 14
+  'word-theory': 66,
+  'word-idea': 66,
+  'word-ideal': 66,
+  'word-genuine': 66,
+  'word-renew': 66,
+  'word-new': 66,
+  'word-avenue': 66,
+  'word-renewal': 66,
+  'brief-dollar': 66,
+  'brief-please': 66,
+  'brief-object': 66,
+  'brief-progress': 66,
+  'brief-opportunity': 66,
+  'brief-various': 66,
+  'brief-enclose': 66,
+  'brief-address': 66,
+  'brief-wonder': 66,
 };
 
 // Examples drawn with the plate of another: brief forms share the alphabet row of their
