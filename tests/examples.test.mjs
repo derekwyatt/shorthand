@@ -18,7 +18,7 @@ test('levels run on without gaps, one per manual unit from Unit 2, every example
 });
 
 test('level sizes and unique ids', () => {
-  assert.deepEqual([1, 2, 3, 4, 7, 8, 9, 10, 11].map((n) => atLevel(n).length), [28, 22, 33, 26, 61, 44, 80, 113, 24]);
+  assert.deepEqual([1, 2, 3, 4, 7, 8, 9, 10, 11, 12, 13, 14].map((n) => atLevel(n).length), [29, 22, 33, 26, 61, 44, 80, 113, 24, 84, 46, 72]);
   assert.ok(atLevel(5).length >= 30);
   assert.ok(atLevel(6).length >= 30);
   assert.equal(new Set(EXAMPLES.map((e) => e.id)).size, EXAMPLES.length);

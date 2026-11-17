@@ -9,7 +9,7 @@
 // No DOM: unit-tested in Node (tests/assess.test.mjs).
 import { STROKES, STROKE_BY_ID, U_PER_LINE } from '../data/strokes.js';
 import { EXAMPLES } from '../data/examples.js';
-import { circleRotation, JOIN_CIRCLE, layoutWords } from './join.js';
+import { circleRotation, circleOf, JOIN_CIRCLE, layoutWords } from './join.js';
 import { samplePoints, tangent, cubicPoint } from './render.js';
 import { WRITER_MAX } from './writer.js';
 
@@ -27,7 +27,7 @@ const cross = (a, b) => a.x * b.y - a.y * b.x;
 const angleOf = (v) => Math.atan2(v.y, v.x) * DEG;
 const wrap = (a) => ((((a + 180) % 360) + 360) % 360) - 180;
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
-const isCircleTok = (t) => t === 'a' || t === 'e';
+const isCircleTok = (t) => circleOf(t) !== null;
 
 export const DOT_MAX = 0.4; // a stroke smaller than this (bbox diagonal, U) is a dot
 const NAME = {
@@ -79,6 +79,12 @@ function compass(v) {
   const names = ['right', 'up-right', 'up', 'up-left', 'left', 'down-left', 'down', 'down-right'];
   return names[(Math.round(angleOf(v) / 45) + 8) % 8];
 }
+// Where a circle sits, as words: "above", "below and to the left of".
+const BESIDE = {
+  right: 'to the right of', 'up-right': 'above and to the right of', up: 'above', 'up-left': 'above and to the left of',
+  left: 'to the left of', 'down-left': 'below and to the left of', down: 'below', 'down-right': 'below and to the right of',
+};
+const besideWords = (v) => BESIDE[compass(v)];
 // "up to the right at 30°", "level, left to right", "down to the left at 55°"
 export function angleText(a) {
   a = wrap(a);
@@ -103,7 +109,8 @@ export function modelUnits(example) {
     }
     const main = toks.filter((t) => t !== 'h');
     const consonants = main.filter((t) => !isCircleTok(t));
-    if (consonants.length >= 2) {
+    // Joined consonants, and the §74 s loop: the whole shape is matched, not its parts.
+    if (consonants.length >= 2 || main.some((t) => circleOf(t)?.loop)) {
       // Joined consonants (level 7): the whole shape is matched, not its parts.
       const geometry = { ...w.compiled, segments: [], tokenOf: [] };
       w.compiled.segments.forEach((seg, k) => {
@@ -119,7 +126,11 @@ export function modelUnits(example) {
     }
     const cons = STROKE_BY_ID[consonants[0]];
     const ci = main.indexOf(consonants[0]);
-    const circles = main.flatMap((t, i) => (isCircleTok(t) ? [{ tok: t, at: i < ci ? 'start' : 'end', rot: circleRotation(cons) }] : []));
+    // tok is the circle's size (a or e); `r` marks the §71 left-motion r circle.
+    const circles = main.flatMap((t, i) => {
+      const c = circleOf(t);
+      return c ? [{ tok: c.size, r: c.reversed, at: i < ci ? 'start' : 'end', rot: circleRotation(cons) * (c.reversed ? -1 : 1) }] : [];
+    });
     const geometry = { ...w.compiled, segments: w.compiled.segments.filter((s) => s.type !== 'dot') };
     const outline = { kind: 'outline', word: w.text, tokens: main, allTokens: toks, consonant: cons, circles, compiled: geometry, start: geometry.start };
     if (toks[0] === 'h') units.push({ kind: 'dot', role: 'h', word: w.text, pos: dots[0].p, owner: outline });
@@ -187,7 +198,10 @@ export function cleanStrokes(us) {
     return !(extentOf(s.pts) < 0.15 && dur < 80 && gap < 150 && dist(s.pts[0], n.pts[0]) < 0.25);
   });
 }
-export const isDot = (s) => extentOf(s.pts) < DOT_MAX;
+// Small AND short: a small o hook (≈ 0.45 U across, but ≈ 0.7 U of travel) is not a dot.
+const DOT_TRAVEL_MAX = 0.45;
+const travelOf = (pts) => pts.reduce((sum, p, i) => (i ? sum + Math.hypot(p.x - pts[i - 1].x, p.y - pts[i - 1].y) : 0), 0);
+export const isDot = (s) => extentOf(s.pts) < DOT_MAX && travelOf(s.pts) < DOT_TRAVEL_MAX;
 
 // Hand jitter, smoothed away before measuring: the path is resampled every SMOOTH_STEP U
 // and averaged over ±SMOOTH_RADIUS samples. Without this a short line (n, t) wobbles enough
@@ -364,8 +378,9 @@ function assessOutline(model, user, scale) {
       const sideNow = Math.sign(cross(dir, sub(centroid(L.loop), L.joint)));
       if (sideNow && sideNow !== c.rot) {
         const n = { x: -dir.y * c.rot, y: dir.x * c.rot };
-        const rule = cons.primitives[0].type === 'arc' ? 'inside the curve (Manual §11)' : 'on the clockwise side (Manual §12)';
-        add('error', `The ${c.tok} circle is on the wrong side: it belongs ${compass(n)} of where it joins ${name}, ${rule}.`, 20);
+        const rule = c.r ? 'turned with left motion to add r (Manual §71)'
+          : cons.primitives[0].type === 'arc' ? 'inside the curve (Manual §11)' : 'on the clockwise side (Manual §12)';
+        add('error', `The ${c.tok} circle is on the wrong side: it belongs ${besideWords(n)} the point where it joins ${name}, ${rule}.`, 20);
       }
     }
   }
@@ -438,10 +453,12 @@ function distToPath(p, path) {
 function tokenPhrase(tokens, i) {
   const t = tokens[i];
   if (!isCircleTok(t)) return `the ${t === 'h' ? 'h-dot' : strokeName(STROKE_BY_ID[t])}`;
-  const nameAt = (k) => (tokens[k] ? strokeName(STROKE_BY_ID[tokens[k]]) : null);
+  const nameAt = (k) => (STROKE_BY_ID[tokens[k]] ? strokeName(STROKE_BY_ID[tokens[k]]) : null);
   const [p, n] = [nameAt(i - 1), nameAt(i + 1)];
-  if (p && n) return `the ${t}-circle between ${p} and ${n}`;
-  return `the ${t}-circle at the ${p ? 'end' : 'beginning'}`;
+  const { size, reversed } = circleOf(t);
+  const circle = `the ${size}-circle${reversed ? ' for r' : ''}`;
+  if (p && n) return `${circle} between ${p} and ${n}`;
+  return `${circle} at the ${p ? 'end' : 'beginning'}`;
 }
 
 export function assessShape(unit, user, { scale = 1 } = {}) {
@@ -450,7 +467,10 @@ export function assessShape(unit, user, { scale = 1 } = {}) {
   const add = (level, text, p) => { critiques.push({ level, text }); penalty += p; };
   const q = `“${unit.word}”`;
   const model = modelPath(unit);
-  const modelLen = pathLen(model.pts);
+  // The learner's ink is smoothed (smoothPath); the model is smoothed the same way before
+  // the shapes are compared, or a tight turn (the o hook) would count against a perfect copy.
+  const smoothModel = smoothPath(model.pts);
+  const modelLen = pathLen(smoothModel);
   const userLen = pathLen(user.pts);
   const result = { score: 0, critiques, readsAs: null, loops: {}, pieces: [], align: null };
   if (userLen < 0.12) {
@@ -465,8 +485,9 @@ export function assessShape(unit, user, { scale = 1 } = {}) {
   if (ratio > hi) add(ratio > 1.8 ? 'error' : 'warn', `Too big: about ${ratio.toFixed(1)}× the size of ${q}.`, Math.min(25, (Math.log(ratio) - Math.log(hi)) * 80));
   else if (ratio < lo) add(ratio < 0.55 ? 'error' : 'warn', `Too small: about ${ratio.toFixed(1)}× the size of ${q}.`, Math.min(25, (Math.log(1 / ratio) - Math.log(1 / lo)) * 80));
 
-  const d = shapeDistance(M.pts, modelLen, U.pts, userLen);
-  const dRev = shapeDistance([...M.pts].reverse(), modelLen, U.pts, userLen);
+  const MS = resample(smoothModel, SHAPE.samples);
+  const d = shapeDistance(MS.pts, modelLen, U.pts, userLen);
+  const dRev = shapeDistance([...MS.pts].reverse(), modelLen, U.pts, userLen);
   result.d = d;
   result.dRev = dRev;
   const reversed = dRev < 0.6 * d && dRev < SHAPE.reverseSmall;

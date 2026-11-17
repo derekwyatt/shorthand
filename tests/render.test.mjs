@@ -39,7 +39,8 @@ test('lines and arcs match their angle and length exactly', () => {
     const v = chord(c);
     near(Math.hypot(v.x, v.y), p.length, 1e-9, `${s.id} chord length`);
     assert.ok(angleDiff(deg(v), p.angle) < 1e-6, `${s.id} chord angle`);
-    if (p.type === 'arc') near(apexHeight(c), p.bulge * p.length, 1e-9, `${s.id} sagitta`);
+    // A measured shape (`ctrl`) states its depth to the nearest hundredth.
+    if (p.type === 'arc') near(apexHeight(c), p.bulge * p.length, p.ctrl ? 0.01 : 1e-9, `${s.id} sagitta`);
   }
 });
 

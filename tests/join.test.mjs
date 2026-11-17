@@ -3,30 +3,25 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { EXAMPLES } from '../app/data/examples.js';
 import { STROKE_BY_ID } from '../app/data/strokes.js';
-import { compileOutline, compileExample, JOIN_CIRCLE } from '../app/js/join.js';
+import { compileOutline, compileExample, JOIN_CIRCLE, circleOf } from '../app/js/join.js';
 import { cubicPoint, pathData } from '../app/js/render.js';
 
 const words = EXAMPLES.filter((e) => e.kind === 'word');
 const byTitle = (t) => words.find((w) => w.title === t);
 // Words of one consonant stroke, with circles only at its ends (Manual §11–12).
-const consonants = (outline) => outline.filter((t) => !['a', 'e', 'h'].includes(t));
+const consonants = (outline) => outline.filter((t) => t !== 'h' && !circleOf(t));
 const single = words.filter((w) => consonants(w.outline).length === 1);
 
-// The 4 cubic segments of each circle, in order, from a compiled outline.
+// The 4 cubic segments of each circle, in order, from a compiled outline. `tok` is the
+// circle's size (a or e); `reversed` marks the §71 r circle. §74 loops are skipped.
 function circles(example) {
   const c = compileOutline(example.outline);
-  const cubics = c.segments.filter((s) => s.type === 'cubic');
   const out = [];
-  let k = 0;
-  for (const tok of example.outline) {
-    if (tok === 'h') continue;
-    if (tok === 'a' || tok === 'e') {
-      out.push({ tok, segs: cubics.slice(k, k + 4) });
-      k += 4;
-    } else {
-      k += 1; // every stroke used in words is a single cubic
-    }
-  }
+  example.outline.forEach((tok, i) => {
+    const circle = circleOf(tok);
+    if (!circle || circle.loop) return;
+    out.push({ tok: circle.size, reversed: circle.reversed, segs: c.segments.filter((s, k) => c.tokenOf[k] === i && s.type === 'cubic') });
+  });
   return { compiled: c, circles: out };
 }
 function polygon(segs) {
@@ -52,7 +47,7 @@ test('every example compiles to finite geometry', () => {
 test('examples avoid strokes that are not yet verified', () => {
   for (const ex of EXAMPLES) {
     for (const tok of ex.outline) {
-      if (['a', 'e', 'h'].includes(tok)) continue;
+      if (tok === 'h' || circleOf(tok)) continue;
       assert.ok(!STROKE_BY_ID[tok].verify, `${ex.id} uses unverified stroke ${tok}`);
     }
   }
@@ -92,8 +87,10 @@ test('§11: on curves the circle sits inside the curve', () => {
 test('§12: on straight strokes the circle is written clockwise', () => {
   for (const w of single) {
     if (!w.outline.some((t) => ['m', 't', 'd'].includes(t))) continue;
-    for (const { segs } of circles(w).circles) {
-      assert.ok(signedArea(polygon(segs)) < 0, `${w.title}: circle is clockwise`);
+    for (const { segs, reversed } of circles(w).circles) {
+      // The §71 r circle is the exception: left motion.
+      if (reversed) assert.ok(signedArea(polygon(segs)) > 0, `${w.title}: r circle is counter-clockwise`);
+      else assert.ok(signedArea(polygon(segs)) < 0, `${w.title}: circle is clockwise`);
     }
   }
   // Spot checks of placement against the manual's p. 5 drawings.
@@ -116,7 +113,8 @@ test('§11 rotation follows the curve: k/g clockwise, r/l counter-clockwise', ()
 });
 
 test('h is a dot above its vowel circle, written first', () => {
-  for (const w of words.filter((x) => x.outline[0] === 'h')) {
+  // (h before the o hook is tested with the hook.)
+  for (const w of words.filter((x) => x.outline[0] === 'h' && circleOf(x.outline[1]))) {
     const { compiled, circles: cs } = circles(w);
     assert.equal(compiled.segments[0].type, 'dot', `${w.title}: dot comes first`);
     const dot = compiled.segments[0].p;
@@ -173,4 +171,72 @@ test('Unit 3 blends join like any other stroke', () => {
   assert.equal(join('remain').rotation, 1, 'remain: the circle sits above, outside the angle');
   assert.equal(join('minimum').section, 17, 'minimum: men e men, straight strokes in line');
   for (const t of ['added', 'today', 'meant', 'mend']) assert.ok(compileOutline(byTitle(t).outline).segments.length > 0, t);
+});
+
+// The o hook (Manual §65–67), measured from the p. 34 plates.
+const hookOf = (outline) => {
+  const c = compileOutline(outline);
+  const i = outline.indexOf('o');
+  return c.segments.filter((s, k) => c.tokenOf[k] === i && s.type === 'cubic');
+};
+const dir = (a, b) => Math.atan2(b.y - a.y, b.x - a.x) * (180 / Math.PI);
+
+test('the o hook is a small deep hook opening up and to the right', () => {
+  const [s] = hookOf(['o']);
+  const pts = Array.from({ length: 41 }, (_, i) => cubicPoint(s, i / 40));
+  const ys = pts.map((p) => p.y), xs = pts.map((p) => p.x);
+  const depth = -Math.min(...ys);
+  assert.ok(depth > 0.18 && depth < 0.26, `depth ${depth}`);
+  assert.ok(Math.min(...xs) < -0.1, 'its bottom lies behind its start (it goes down and back)');
+  assert.ok(s.p3.x > 0.2 && Math.abs(s.p3.y) < 0.05, 'it ends level with its start, to the right');
+  const exit = dir(s.c2, s.p3);
+  assert.ok(exit > 15 && exit < 60, `it rises to the right at the end (${exit.toFixed(0)}°)`);
+});
+
+test('§67: before n, m, r, l the hook turns to leave along the next stroke; not after a downstroke', () => {
+  const exitOf = (outline) => { const h = hookOf(outline); const s = h[h.length - 1]; return dir(s.c2, s.p3); };
+  assert.ok(Math.abs(exitOf(['o', 'n'])) < 1, 'on: the hook leaves horizontally into n');
+  assert.ok(Math.abs(exitOf(['n', 'o', 'n'])) < 1, 'known');
+  assert.ok(exitOf(['n', 'o']) > 15, 'no: a final hook keeps its slant');
+  // pour: after p the hook starts along the end of p, with no angle.
+  const c = compileOutline(['p', 'o', 'r']);
+  const pEnd = c.segments.filter((s, k) => c.tokenOf[k] === 0 && s.type === 'cubic').pop();
+  const [h] = hookOf(['p', 'o', 'r']);
+  const turn = Math.abs(dir(pEnd.c2, pEnd.p3) - dir(h.p0, h.c1));
+  assert.ok(turn < 1 || turn > 359, `pour: no angle between p and the hook (${turn.toFixed(1)}°)`);
+});
+
+test('the h dot sits above an o hook', () => {
+  const c = compileOutline(['h', 'o', 'm']);
+  const dot = c.segments.find((s) => s.type === 'dot');
+  assert.ok(dot && dot.p.y > 0.2, 'home: the dot is above the hook');
+});
+
+// §71 and §74: the left-motion r circle and its s loop.
+const signedAreaOf = (outline, i) => {
+  const c = compileOutline(outline);
+  const pts = c.segments.filter((s, k) => c.tokenOf[k] === i && s.type === 'cubic')
+    .flatMap((s) => Array.from({ length: 20 }, (_, j) => cubicPoint(s, j / 20)));
+  return pts.reduce((a, p, j) => { const q = pts[(j + 1) % pts.length]; return a + (p.x * q.y - q.x * p.y) / 2; }, 0);
+};
+
+test('§71: the r circle turns the other way from the ordinary circle, only on straight strokes', () => {
+  assert.ok(signedAreaOf(['m', 'a'], 1) < 0, 'may: right motion (clockwise, §12)');
+  assert.ok(signedAreaOf(['m', 'a-rev'], 1) > 0, 'mar: left motion (counter-clockwise)');
+  assert.ok(signedAreaOf(['t', 'a', 't'], 1) < 0 && signedAreaOf(['t', 'a-rev', 't'], 1) > 0, 'tat / tart (§17 reversed)');
+  assert.ok(signedAreaOf(['a-rev', 't'], 0) > 0, 'art: the r circle before the stroke');
+  assert.equal(compileOutline(['t', 'a-rev', 't']).joins[0].section, 71);
+  assert.throws(() => compileOutline(['k', 'a-rev']), /straight strokes/);
+});
+
+test('§74: the s loop is a narrow loop carrying on along the stroke, at the end only', () => {
+  const c = compileOutline(['n', 'e-rev-s']);
+  const loop = c.segments.filter((s, k) => c.tokenOf[k] === 1);
+  const pts = loop.flatMap((s) => Array.from({ length: 21 }, (_, j) => cubicPoint(s, j / 20)));
+  const xs = pts.map((p) => p.x), ys = pts.map((p) => p.y);
+  const long = Math.max(...xs) - Math.min(...xs), wide = Math.max(...ys) - Math.min(...ys);
+  assert.ok(Math.min(...xs) >= 0.9 - 1e-6, 'nears: the loop lies beyond the end of n');
+  assert.ok(long > 1.3 && long < 1.7 && wide > 0.25 && wide < 0.45, `e loop ${long.toFixed(2)} × ${wide.toFixed(2)} U`);
+  assert.ok(signedAreaOf(['n', 'e-rev-s'], 1) > 0, 'left motion, like the r circle');
+  assert.throws(() => compileOutline(['n', 'e-rev-s', 't']), /ends an outline/);
 });

@@ -19,10 +19,23 @@
 //        The Unit 6 plates round k-sh (action), f-m (formal, inform), f-g (forgot), b-g
 //        (big) and k-b (can be) the same way, so those pairs are rounded too.
 //   §52  The two s signs of ses are joined "as a blend": one smooth reverse curve.
+//   §67  "To avoid an unnecessary angle, the slant of the o-hook is modified slightly before
+//        n, m, r, and l": the hook is turned until it leaves along the next stroke's start.
+//        "When a downstroke comes before the o-hook, this rule does not apply, since the
+//        o-hook joins to downstrokes without an angle": after a downstroke the hook is
+//        turned to start along the downstroke's end (pour, bone, pole on p. 36).
+//   h    before a hook, the dot goes above the hook (home, hope).
+//   §71  "The circle is written with left motion to express r following the vowel" before and
+//        after straight strokes and between straight strokes in the same direction: the
+//        tokens a-rev and e-rev are the a and e circles turned the other way from §12 / §17.
+//        Only on straight strokes.
+//   §74  "The letter s is added to a final left-motion circle on straight strokes by changing
+//        the circle to a loop": a-rev-s, e-rev-s, a narrow loop carrying on along the stroke.
+//        Size measured on p. 40 (tears, nears, dares): e ≈ 1.5 × 0.4 U, a ≈ 2 × 0.6 U.
 // The angle threshold and the flattening factor are inferences (reference/manual-unit2.md).
 //
-// An outline is a list of tokens: a stroke id from data/strokes.js, 'a' or 'e' (circle)
-// or 'h' (dot). Geometry is in U with y up, like render.js.
+// An outline is a list of tokens: a stroke id from data/strokes.js, 'a' or 'e' (circle),
+// 'a-rev' or 'e-rev' (the §71 r circle) or 'h' (dot). Geometry is in U with y up, like render.js.
 import { STROKE_BY_ID } from '../data/strokes.js';
 import { compileStroke, tangent, bbox } from './render.js';
 
@@ -53,7 +66,25 @@ function roundJoin(prevSeg, nextSeg) {
   nextSeg.c1 = { x: nextSeg.p0.x + t.x * lb * k, y: nextSeg.p0.y + t.y * lb * k };
 }
 
-const isCircle = (tok) => tok === 'a' || tok === 'e';
+// A circle token as { size: 'a' | 'e', reversed, loop }, or null for any other token.
+export function circleOf(tok) {
+  const m = /^([ae])(?:(-rev)(-s)?)?$/.exec(tok ?? '');
+  return m ? { size: m[1], reversed: !!m[2], loop: !!m[3] } : null;
+}
+export const S_LOOP = { a: { length: 2.0, width: 0.6 }, e: { length: 1.5, width: 0.4 } };
+
+// §74: a narrow loop from `p` out along `t` and back, turning with rotation `s`.
+export function loopFrom(p, t, s, { length, width }) {
+  const n = { x: -t.y * s, y: t.x * s }; // the side the loop turns toward
+  const at = (a, b) => ({ x: p.x + t.x * a + n.x * b, y: p.y + t.y * a + n.y * b });
+  const tip = at(length, width * 0.5);
+  return [
+    { type: 'cubic', p0: p, c1: at(length * 0.45, -width * 0.25), c2: at(length * 1.02, -width * 0.1), p3: tip },
+    { type: 'cubic', p0: tip, c1: at(length * 0.98, width * 0.95), c2: at(length * 0.45, width * 0.8), p3: p },
+  ];
+}
+const isCircle = (tok) => circleOf(tok) !== null;
+const isStraight = (stroke) => stroke.primitives[0].type === 'line';
 const strokeAt = (outline, i) => {
   const tok = outline[i];
   if (tok === undefined || tok === 'h' || isCircle(tok)) return null;
@@ -118,9 +149,31 @@ export function circleFrom(p, t, s, r) {
   return { segments, center, r };
 }
 
-// The strokes of an outline, with §19/§21 flattening applied to directly joined equal curves.
+// n and m and their blends (want, o nd, p. 37, shows the hook turned before nd too).
+// After a downstroke the hook is the downstroke's end curling round: on the plates (pour,
+// bone, pole, ball, p. 36) that curl is about twice the size of a hook after a forward stroke.
+const HOOK_AFTER_DOWNSTROKE = 2;
+const HOOK_TURNS_BEFORE = new Set(['n', 'm', 'r', 'l', 'men', 'nd', 'md']);
+const isDownstroke = (stroke) => stroke.primitives[0].angle <= -90 && stroke.primitives[0].angle >= -150;
+
+// §67: the o hook turned by `turn` degrees.
+const turnedHook = (hook, turn) => ({ ...hook, turned: turn, primitives: hook.primitives.map((p) => ({ ...p, angle: p.angle + turn })) });
+
+// The strokes of an outline, with §19/§21 flattening applied to directly joined equal curves
+// and the §67 o hook turned.
 function outlineStrokes(outline) {
   const strokes = outline.map((_, i) => strokeAt(outline, i));
+  outline.forEach((tok, i) => {
+    if (tok !== 'o') return;
+    const hook = compileStroke(strokes[i]);
+    const prev = strokes[i - 1];
+    if (prev && isDownstroke(prev)) {
+      const turned = turnedHook(strokes[i], turnDegrees(tangent(hook, 'start'), tangent(compileStroke(prev), 'end')));
+      strokes[i] = { ...turned, primitives: turned.primitives.map((p) => ({ ...p, length: p.length * HOOK_AFTER_DOWNSTROKE })) };
+    } else if (HOOK_TURNS_BEFORE.has(outline[i + 1])) {
+      strokes[i] = turnedHook(strokes[i], turnDegrees(tangent(hook, 'end'), tangent(compileStroke(strokes[i + 1]), 'start')));
+    }
+  });
   strokes.forEach((s, i) => {
     const n = strokes[i + 1];
     if (!s || !n || !FLAT_PAIRS.has(`${outline[i]} ${outline[i + 1]}`)) return;
@@ -170,7 +223,21 @@ export function compileOutline(outline) {
         rotation = circleRotation(adj);
         t = prev ? tangent(compileStroke(prev), 'end') : tangent(compileStroke(next), 'start');
       }
-      const circle = circleFrom(pen, t, rotation, JOIN_CIRCLE[tok] / 2);
+      const { size, reversed, loop } = circleOf(tok);
+      if (reversed) {
+        // §71: left motion, the other way from the straight-stroke rule.
+        if (![prev, next].filter(Boolean).every(isStraight)) throw new Error(`the r circle joins only straight strokes (${outline.join(' ')})`);
+        rotation = -rotation;
+        if (joins.length && joins[joins.length - 1].index === i) Object.assign(joins[joins.length - 1], { section: 71, rotation });
+      }
+      if (loop) {
+        if (!reversed || next) throw new Error(`the s loop ends an outline (${outline.join(' ')})`);
+        const segs = loopFrom(pen, t, rotation, S_LOOP[size]);
+        segments.push(...segs);
+        owners.push(...segs.map(() => i));
+        return;
+      }
+      const circle = circleFrom(pen, t, rotation, JOIN_CIRCLE[size] / 2);
       segments.push(...circle.segments);
       owners.push(...circle.segments.map(() => i));
       if (pendingDot) {
@@ -184,11 +251,18 @@ export function compileOutline(outline) {
     if (ROUND_PAIRS.has(`${outline[i - 1]} ${tok}`) && segments.length) roundJoin(segments[segments.length - 1], c.segments[0]);
     segments.push(...c.segments);
     owners.push(...c.segments.map(() => i));
+    if (pendingDot && tok === 'o') {
+      // Above the hook: over the middle of its span, a gap above its top.
+      const b = bbox(c);
+      dots.push({ type: 'dot', p: { x: (b.minX + b.maxX) / 2, y: b.maxY + H_GAP } });
+      dotOwners.push(dotToken);
+      pendingDot = false;
+    }
     pen = c.end;
   });
   if (pendingDot) {
     // A dot on its own is the letter h / the brief form "a, an".
-    if (outline.length !== 1) throw new Error(`h must be followed by a vowel circle (${outline.join(' ')})`);
+    if (outline.length !== 1) throw new Error(`h must be followed by a vowel circle or the o hook (${outline.join(' ')})`);
     dots.push({ type: 'dot', p: pen });
     dotOwners.push(dotToken);
   }

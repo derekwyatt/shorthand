@@ -8,22 +8,22 @@ The app is plain ES modules loaded by `app/index.html`; there is no bundler. Mod
 | --- | --- |
 | `app/js/main.js` | Entry point. Routing between views, toolbar, persistence, export, per-line pickers. Creates the pad, the example panel, the assist overlay and the quiz. |
 | `app/js/ink.js` | `InkPad`: pointer capture, canvas drawing, undo/clear, `toJSON()` and `strokesFromJSON()`. |
-| `app/js/assess.js` | `assessAttempt()`: scores one repeat against the model outline and produces critiques. Also `guideUnits()` for the guide and shared helpers. |
+| `app/js/assess.js` | `assessAttempt()`: scores one repeat against the model outline and produces critiques. Matches outlines with joined consonants or an s loop as whole shapes (`assessShape()`), smooths the model as well as the learner's ink, and checks the r circle for left motion. Also `guideUnits()` for the guide and shared helpers. |
 | `app/js/repeats.js` | `assessRepeats()`: splits pad strokes into repeats, scores each, aggregates. `practiceLines()` and `repeatIndexFor()`. |
 | `app/js/assist.js` | Real-time guide, live warnings, per-stroke notes, green/red check overlay. |
 | `app/js/practice.js` | The example panel: enlarged and actual-size art, meaning, source, score badge, critiques. |
-| `app/js/lessons.js` | The Lessons view: unit dropdown, read / write / choose steps, progress. Shares the pad and reuses the example panel and `assessRepeats()`. |
+| `app/js/lessons.js` | The Lessons view (Units 1–9): unit dropdown, read / write / choose steps, progress. Shares the pad and reuses the example panel and `assessRepeats()`. |
 | `app/js/quiz.js` | Quiz UI (start screen, questions, summary) and result history. Shares the pad. |
 | `app/js/quizgen.js` | Seeded quiz generation, no DOM. Used by the dev server and, as a fallback, by the browser. |
-| `app/js/render.js` | Stroke primitives to cubic Bezier geometry (U, y up); SVG output and animation. |
-| `app/js/join.js` | Joins consonant strokes, vowel circles and the h dot into one outline (Manual §11–12 for circles at the ends, §14–22 for circles between strokes and joined curves). Rounds the angle into one shared direction, with no corner, for fr and fl (§39; vr and vl by inference), for the Unit 6 pairs the plates round (k-sh, f-m, f-g, b-g, k-b) and for the §52 ses blend. Handles shorten on sharp turns. |
+| `app/js/render.js` | Stroke primitives to cubic Bezier geometry (U, y up); SVG output and animation. An arc may carry `ctrl` (two control points) instead of the bulge/skew/spread form; the o and u hooks use it. |
+| `app/js/join.js` | Joins consonant strokes, vowel circles and the h dot into one outline (Manual §11–12 for circles at the ends, §14–22 for circles between strokes and joined curves). Turns the o hook (§67) before n, m, r, l and their blends so it leaves along the next stroke; after a downstroke it starts along the downstroke's end and is drawn twice the size (the curl on the p. 36 plates). Puts the h dot above a hook (home, hope). `circleOf(tok)` gives `{ size, reversed, loop }` for a circle token: `reversed` for the §71 r circle, `loop` for the §74 s loop. Rounds the angle into one shared direction, with no corner, for fr and fl (§39; vr and vl by inference), for the Unit 6 pairs the plates round (k-sh, f-m, f-g, b-g, k-b) and for the §52 ses blend. Handles shorten on sharp turns. |
 | `app/js/writer.js` | Learned writing-size scale, kept in localStorage. |
 | `app/js/backup.js` | Progress backup and restore: `exportProgress()`, `importProgress()` and `backupFileName()` (no DOM). `main.js` wires the Back up and Restore buttons. |
 | `app/js/gallery.js` | The Strokes view. |
 | `app/data/strokes.js` | The stroke table and look-alike families. |
-| `app/data/examples.js` | All practice examples, grouped in eleven levels. Units 4–6 are built from `data/units/`. |
-| `app/data/lessons.js` | The lesson steps for Manual Units 1–3; they refer to examples by id. Units 4–6 are turned into lessons from `data/units/`. |
-| `app/data/units/` | Manual Units 4–6 as plain data, one module per unit. `index.js` lists them in `UNITS` and gives each unit's Practice level (`levelOfUnit()`, unit + 5). |
+| `app/data/examples.js` | All practice examples, grouped in fourteen levels. Units 4–9 are built from `data/units/`. |
+| `app/data/lessons.js` | The lesson steps for Manual Units 1–3; they refer to examples by id. Units 4–9 are turned into lessons from `data/units/`. |
+| `app/data/units/` | Manual Units 4–9 as plain data, one module per unit. `index.js` lists them in `UNITS` and gives each unit's Practice level (`levelOfUnit()`, unit + 5). |
 | `app/data/plates.js` | Which examples have a printed plate (`plateFor()`), with its page, and the section plates used by lessons (`sectionPlate()`). |
 | `tools/plates.mjs` | Cuts `app/plates/*.png` from the scan using `tools/plates.json`. |
 | `tools/compare.mjs` | Sheet of each outline as the app draws it, beside the manual's plate (`node tools/compare.mjs`). |
@@ -68,7 +68,7 @@ Undo and Clear also call `onChange(null)`, so the same path re-evaluates the pad
 - In assessment and rendering geometry, lengths are in **U**, where 1 U is the length of the letter t, and y is up. Angles are degrees in the maths convention (0 is rightwards, 90 is up).
 - `unitPx = lineSpacing / U_PER_LINE`, with `U_PER_LINE = 3` (defined in `app/data/strokes.js`). The pad's default line spacing is 48 px, so 1 U is 16 px by default.
 - `toUserStrokes()` in `assess.js` converts pad strokes to U: `x / unitPx`, `-y / unitPx`. It accepts both live points (`{x, y, t}`) and exported points (`[x, y, t, p]`).
-- Stroke geometry in `data/strokes.js` is described by primitives (`line`, `arc`, `circle`) with an `angle` (direction of travel), `length` and `bulge` (sagitta as a fraction of the chord; positive bulges to the left of travel). `render.js` compiles these to cubic Bezier segments; `join.js` chains them with circles and dots.
+- Stroke geometry in `data/strokes.js` is described by primitives (`line`, `arc`, `circle`) with an `angle` (direction of travel), `length` and `bulge` (sagitta as a fraction of the chord; positive bulges to the left of travel), or `ctrl` (two measured control points in chord coordinates, as fractions of the chord; the o and u hooks use it, fitted to the 1200-dpi plates). `render.js` compiles these to cubic Bezier segments; `join.js` chains them with circles and dots.
 
 ## Pointer handling
 
@@ -78,10 +78,10 @@ Undo and Clear also call `onChange(null)`, so the same path re-evaluates the pad
 
 `assessAttempt(example, strokes, unitPx, { scale })` in `assess.js` is verification of a known target, not recognition.
 
-1. `modelUnits(example)` turns the example into units: outlines (one pen-down each, one consonant plus optional `a`/`e` circles) and dots (the h dot, and the brief form for "a").
-2. The user's strokes are converted to U, and tiny pen bounces are dropped. Strokes smaller than `DOT_MAX` (0.4 U) count as dots.
-3. Each learner stroke (except dots) is first smoothed (`smoothPath()`: resampled every 0.04 U and averaged over ±2 samples) so hand jitter doesn't make a short line look curved or a small circle turn the wrong way. The writer's size (`sizeRatio`) is measured from each outline's extent, not its path length, for the same reason. For each outline, the vowel circles are located first (loops at the start or end of the path). What remains is the consonant, which is measured for angle, length and bulge. The consonant is also classified against the single-stroke alphabet letters, to say what it actually reads as. The intended letter gets the benefit of the doubt: another letter only wins if it is clearer by `READS_AS_MARGIN`, so a slightly short m is critiqued as short rather than read as n. The a/e circle split has the same allowance (15%). A repeat passes at `PASS_SCORE` (70), exported from `assess.js` and used by Practice, Lessons and the Quiz.
-4. Critiques are produced for: wrong direction, too flat or steep, too long or short, curved when it should be straight (or the reverse), reading as another letter, missing circle, circle turning the wrong way, circle too large or small (a versus e), and circle on the wrong side. Each has a level (`error`, `warn`, `info`) and subtracts a penalty from 100.
+1. `modelUnits(example)` turns the example into units: outlines (one pen-down each: one consonant or hook, plus optional `a`/`e` circles) and dots (the h dot, and the brief form for "a"). Outlines of two or more consonants, and outlines with an s loop, are matched as whole shapes.
+2. The user's strokes are converted to U, and tiny pen bounces are dropped. A stroke counts as a dot only if it is both small (extent under `DOT_MAX`, 0.4 U) and short (under `DOT_TRAVEL_MAX`, 0.45 U of travel), so a small o hook is not taken for a dot.
+3. Each learner stroke (except dots) is first smoothed (`smoothPath()`: resampled every 0.04 U and averaged over ±2 samples) so hand jitter doesn't make a short line look curved or a small circle turn the wrong way. The model outline is smoothed the same way before shapes are compared. The writer's size (`sizeRatio`) is measured from each outline's extent, not its path length, for the same reason. For each outline, the vowel circles are located first (loops at the start or end of the path). What remains is the consonant, which is measured for angle, length and bulge. The consonant is also classified against the single-stroke alphabet letters, to say what it actually reads as. The intended letter gets the benefit of the doubt: another letter only wins if it is clearer by `READS_AS_MARGIN`, so a slightly short m is critiqued as short rather than read as n. The a/e circle split has the same allowance (15%). A repeat passes at `PASS_SCORE` (70), exported from `assess.js` and used by Practice, Lessons and the Quiz.
+4. Critiques are produced for: wrong direction, too flat or steep, too long or short, curved when it should be straight (or the reverse), reading as another letter, missing circle, circle turning the wrong way, circle too large or small (a versus e), and circle on the wrong side, and an r circle (`a-rev`, `e-rev`) drawn without left motion. Each has a level (`error`, `warn`, `info`) and subtracts a penalty from 100.
 5. Dots are matched by position; the h dot must be above the circle. Missing parts score zero for that unit; extra strokes subtract 8 each. Outlines weigh 1, dots 0.25.
 6. The result has `score` (0 to 100), `complete`, `critiques`, per-unit results, and a `sizeRatio` (how big the writer wrote relative to the example).
 
@@ -173,13 +173,13 @@ If storage is full or unavailable the app keeps working but nothing survives a r
 
 ## Adding an example
 
-Examples live in `app/data/examples.js`. Each has `id`, `kind` (`letter`, `brief`, `word`, `phrase` or `sentence`), `level` (1 to 11), `title`, `outline` (a list of tokens), `meaning` (a list of strings) and `source`. Sentences also have `words`, a list of `{ text, tokens, brief, phrase }`. Phrase examples (Unit 6) are written by the unit modules in `data/units/`, not added here.
+Examples live in `app/data/examples.js`. Each has `id`, `kind` (`letter`, `brief`, `word`, `phrase` or `sentence`), `level` (1 to 14), `title`, `outline` (a list of tokens), `meaning` (a list of strings) and `source`. Sentences also have `words`, a list of `{ text, tokens, brief, phrase }`. Phrase examples (Units 6 to 9) are written by the unit modules in `data/units/`, not added here.
 
-An outline token is a stroke id from `app/data/strokes.js`, `a` or `e` (vowel circles), or `h` (the dot). Strokes marked `verify` in the stroke table are deliberately left out of examples until they are checked against the sources.
+An outline token is a stroke id from `app/data/strokes.js` (including the o hook, `o`), `a` or `e` (vowel circles), `a-rev` or `e-rev` (the §71 r circle: the a or e circle written with left motion, counter-clockwise, on straight strokes only), `a-rev-s` or `e-rev-s` (the §74 s loop: that circle made a narrow loop at the end of an outline), or `h` (the dot). Strokes marked `verify` in the stroke table are deliberately left out of examples until they are checked against the sources (the u hook is one, until Unit 10).
 
 To add a word:
 
-1. Make sure the outline can be built by the rules in `join.js`: consonant strokes joined in order, circles at either end (Manual §11 for curves, §12 for straight strokes) or between two strokes (§14–18), and optionally a leading `h`. Outlines of one consonant are scored part by part; outlines of two or more are scored as a whole shape (`assessShape()`).
+1. Make sure the outline can be built by the rules in `join.js`: consonant strokes joined in order, circles at either end (Manual §11 for curves, §12 for straight strokes) or between two strokes (§14–18), and optionally a leading `h`. Outlines of one consonant are scored part by part; outlines of two or more consonants, or with an s loop, are scored as a whole shape (`assessShape()`).
 2. Add an entry to `WORDS` (level 3, from the Manual) or `WORDS_3B` / `WORDS_4` (built by the same rules), as `[word, outline, rule, note]`; or to `WORDS_7` / `WORDS_8` (Manual Units 2 and 3, transcribed in `reference/`), as `[title, outline, rule, page, note]`. Use `R11` or `R12` for the rule text, and `H` as the note for words starting with h. The `source` is set by the list you add to.
 3. To use the word in sentences, it is picked up automatically from those lists by `WORD_TOKENS`.
 

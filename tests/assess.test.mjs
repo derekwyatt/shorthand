@@ -289,3 +289,15 @@ test('hand jitter is smoothed away: a wobbly knee is still n + e, at its real si
   assert.ok(r.score >= 90, `${r.score}: ${texts(r)}`);
   assert.ok(r.sizeRatio > 0.85 && r.sizeRatio < 1.15, `size ${r.sizeRatio}`);
 });
+
+test('a small o hook is a stroke, not a dot', () => {
+  const e = ex('letter-o');
+  // A plain cup 0.34 U across: under the dot size, but it travels like a stroke.
+  const cup = [];
+  for (let i = 0; i <= 20; i++) { const a = Math.PI + (i / 20) * Math.PI; cup.push({ x: 100 + (0.17 + 0.17 * Math.cos(a)) * UNIT, y: 300 - 0.2 * Math.sin(a) * UNIT, t: i * 8 }); }
+  const r = assessAttempt(e, [{ points: cup }], UNIT);
+  assert.ok(r.score >= 90, `${r.score}: ${texts(r)}`);
+  // Upside down it is not an o.
+  const flipped = cup.map((p) => ({ ...p, y: 600 - p.y }));
+  assert.ok(assessAttempt(e, [{ points: flipped }], UNIT).score < 70);
+});

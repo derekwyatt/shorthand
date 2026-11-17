@@ -12,7 +12,7 @@ import { STROKE_BY_ID } from './strokes.js';
 
 const SOUND = {
   k: 'k as in kit', g: 'hard g as in go', r: 'r as in run', l: 'l as in let',
-  n: 'n as in no', m: 'm as in me', t: 't as in top', d: 'd as in day',
+  o: 'ŏ as in rot, aw as in raw, ō as in wrote (Manual §65)', n: 'n as in no', m: 'm as in me', t: 't as in top', d: 'd as in day',
   'th-over': 'th as in thin or then (the "over" form)', 'th-under': 'th as in thin or then (the "under" form)',
   h: 'h as in hat. Written as a dot above the vowel that follows',
   's-left': 's or z as in see, zoo (the left-curving form)', 's-right': 's or z as in see, zoo (the right-curving form)',
@@ -28,7 +28,7 @@ const LETTER_ORDER = [
   // Manual Chapter I, Unit 1 first, then the rest of the alphabet.
   'k', 'g', 'r', 'l', 'n', 'm', 't', 'd', 'th-over', 'th-under', 'h',
   's-left', 's-right', 'p', 'b', 'f', 'v', 'sh', 'ch', 'j', 'ng', 'nk',
-  'men', 'ted', 'ten', 'tem', 'nd', 'md',
+  'men', 'ted', 'ten', 'tem', 'nd', 'md', 'o',
 ];
 
 import { UNITS, levelOfUnit } from './units/index.js';
@@ -251,6 +251,8 @@ const BRIEF_8 = [
 
 function tokenName(t) {
   if (t === 'a' || t === 'e') return `${t}-circle`;
+  if (t === 'a-rev' || t === 'e-rev') return `${t[0]}-circle with left motion (r)`;
+  if (t === 'a-rev-s' || t === 'e-rev-s') return `${t[0]}-circle with left motion made a loop (r + s)`;
   if (t === 'h') return 'h-dot';
   return STROKE_BY_ID[t].label;
 }

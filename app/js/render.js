@@ -47,11 +47,18 @@ function lineCubic(p0, angle, length) {
 
 // A symmetric cubic whose control points sit at 1/3 and 2/3 along the chord, raised
 // by h. Its apex is 0.75·h above the chord, so h = 4/3 · sagitta.
-function arcCubic(p0, { angle, length, bulge, skew = 0, spread = 0 }) {
+// `ctrl` ([[along, across], [along, across]], fractions of the chord, across positive to
+// the left of travel) replaces both control points with measured ones, for shapes the
+// symmetric form cannot fit (the o hook).
+function arcCubic(p0, { angle, length, bulge, skew = 0, spread = 0, ctrl = null }) {
   const d = { x: Math.cos(rad(angle)), y: Math.sin(rad(angle)) };
   const n = { x: -d.y, y: d.x }; // left of the direction of travel
   const h = (4 / 3) * bulge * length;
   const p3 = add(p0, mul(d, length));
+  if (ctrl) {
+    const at = ([a, b]) => add(add(p0, mul(d, a * length)), mul(n, b * length));
+    return { type: 'cubic', p0, c1: at(ctrl[0]), c2: at(ctrl[1]), p3 };
+  }
   return {
     type: 'cubic', p0,
     c1: add(add(p0, mul(d, (1 / 3 - spread) * length)), mul(n, h * (1 - skew))),

@@ -99,10 +99,20 @@ export const STROKES = [
   { id: 'md', label: 'md', sounds: ['md', 'mt', 'emt', 'emd'], size: 'long', primitives: [arc(TH, 3.4, -0.2)], briefForms: [] },
 
   // Vowel hooks, written left to right.
+  // The o hook (Manual §65): a small deep hook opening up and to the right. From its start
+  // the pen goes steeply down and back, turns in a narrow bottom and rises at about 30°.
+  // Control points are the mean least-squares fit of four 1200 dpi plates (lone ŏ, no,
+  // law, low; p. 34); depth ≈ 0.9 of the chord. Size: the chord is ≈ 0.28 U, between the
+  // scales given by the n (0.25) and the d (0.32) printed beside the hooks.
   { id: 'o', label: 'o', sounds: ['o (as in on, own, ought)'], size: 'small',
-    primitives: [arc(0, 0.5, -0.55, { spread: 0.12 })], briefForms: ['of', 'all'], verify: 'writing direction and opening angle' },
+    primitives: [arc(-6, 0.28, -0.9, { ctrl: [[-1.4, -1.42], [0.36, -0.97]] })], briefForms: ['of', 'all'] },
+  // The oo hook (Manual §91): "the upper part" of the same figure, the o hook turned over and
+  // written the other way: it rises at about 30°, turns over a narrow top and comes down
+  // steeply back. Mirrored control points, (a, b) -> (1 - a, -b), agree with fits of who
+  // and blue (p. 48); the lone ŭ and ŏ in the two tables are the same size. Its joinings
+  // are not checked yet (Unit 10).
   { id: 'u', label: 'u', sounds: ['u (as in up, use, ooze)', 'initial w'], size: 'small',
-    primitives: [arc(0, 0.5, 0.55, { spread: 0.12 })], briefForms: ['you', 'your'], verify: 'writing direction and opening angle' },
+    primitives: [arc(-6, 0.28, 0.9, { ctrl: [[0.64, 0.97], [2.4, 1.42]] })], briefForms: ['you', 'your'], verify: 'joinings (Unit 10)' },
 
   // Down-forward lines.
   { id: 'ng', label: 'ng', sounds: ['ng'], size: 'short', primitives: [line(NG, 1.15)], briefForms: [] },
