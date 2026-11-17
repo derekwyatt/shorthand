@@ -1547,6 +1547,22 @@ const PAGES = {
   'word-initial-r': 141,
   'word-initial-t': 141,
   'word-initial-v': 141,
+  // Unit 34
+  'word-ala': 146,
+  'word-calif': 146,
+  'word-del': 146,
+  'word-fla': 146,
+  'word-idaho': 146,
+  'word-md': 146,
+  'word-mich': 146,
+  'word-mo': 146,
+  'word-n-dak': 146,
+  'word-okla': 147,
+  'word-p-i': 147,
+  'word-vt': 147,
+  'word-va': 147,
+  'word-omaha': 148,
+  'word-erie': 149,
 };
 
 // Examples drawn with the plate of another: brief forms share the alphabet row of their

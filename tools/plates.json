@@ -1523,6 +1523,21 @@
     {"id": "word-initial-p", "page": 141, "box": [378, 320, 400, 366]},
     {"id": "word-initial-r", "page": 141, "box": [377, 412, 406, 441]},
     {"id": "word-initial-t", "page": 141, "box": [378, 495, 402, 534]},
-    {"id": "word-initial-v", "page": 141, "box": [505, 265, 532, 311]}
+    {"id": "word-initial-v", "page": 141, "box": [505, 265, 532, 311]},
+    {"id": "word-ala", "page": 146, "box": [197, 304, 264, 328]},
+    {"id": "word-calif", "page": 146, "box": [197, 472, 275, 499]},
+    {"id": "word-del", "page": 146, "box": [192, 581, 272, 624]},
+    {"id": "word-fla", "page": 146, "box": [208, 683, 264, 709]},
+    {"id": "word-idaho", "page": 146, "box": [371, 331, 424, 376]},
+    {"id": "word-md", "page": 146, "box": [368, 673, 432, 709]},
+    {"id": "word-mich", "page": 146, "box": [380, 772, 427, 794]},
+    {"id": "word-mo", "page": 146, "box": [547, 392, 597, 411]},
+    {"id": "word-n-dak", "page": 146, "box": [536, 749, 611, 789]},
+    {"id": "word-okla", "page": 147, "box": [163, 157, 240, 181]},
+    {"id": "word-p-i", "page": 147, "box": [180, 280, 213, 315]},
+    {"id": "word-vt", "page": 147, "box": [504, 106, 539, 145]},
+    {"id": "word-va", "page": 147, "box": [496, 141, 539, 197]},
+    {"id": "word-omaha", "page": 148, "box": [503, 258, 560, 284]},
+    {"id": "word-erie", "page": 149, "box": [231, 587, 276, 612]}
   ]
 }
