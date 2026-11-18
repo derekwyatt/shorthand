@@ -9,42 +9,15 @@ import { execFileSync } from 'node:child_process';
 import { readdirSync, readFileSync, writeFileSync, mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, basename } from 'node:path';
-import { inflateSync, deflateSync } from 'node:zlib';
+import { decodePng, encodeGray } from './png.mjs';
 
 const [src, out] = process.argv.slice(2);
 if (!src || !out) throw new Error('usage: node tools/upscale.mjs <gif dir> <out dir>');
 const tmp = mkdtempSync(join(tmpdir(), 'upscale-'));
 
-// The darkness (0 = paper, 1 = ink) of an 8-bit RGBA, non-interlaced PNG (what sips writes).
+// The darkness (0 = paper, 1 = ink) of a PNG (what sips writes), transparency counting as paper.
 function readDarkness(file) {
-  const buf = readFileSync(file);
-  let pos = 8, w = 0, h = 0, depth = 0, type = 0;
-  const idat = [];
-  while (pos < buf.length) {
-    const len = buf.readUInt32BE(pos);
-    const kind = buf.toString('ascii', pos + 4, pos + 8);
-    const body = buf.subarray(pos + 8, pos + 8 + len);
-    if (kind === 'IHDR') { w = body.readUInt32BE(0); h = body.readUInt32BE(4); depth = body[8]; type = body[9]; }
-    if (kind === 'IDAT') idat.push(body);
-    pos += 12 + len;
-  }
-  const ch = { 6: 4, 2: 3, 4: 2, 0: 1 }[type];
-  if (depth !== 8 || !ch) throw new Error(`${file}: PNG type ${type}/${depth}`);
-  const raw = inflateSync(Buffer.concat(idat));
-  const stride = w * ch;
-  const px = Buffer.alloc(stride * h);
-  for (let y = 0; y < h; y++) {
-    const f = raw[y * (stride + 1)];
-    for (let i = 0; i < stride; i++) {
-      const x = raw[y * (stride + 1) + 1 + i];
-      const a = i >= ch ? px[y * stride + i - ch] : 0;
-      const b = y ? px[(y - 1) * stride + i] : 0;
-      const c = i >= ch && y ? px[(y - 1) * stride + i - ch] : 0;
-      const p = a + b - c, pa = Math.abs(p - a), pb = Math.abs(p - b), pc = Math.abs(p - c);
-      const pred = [0, a, b, (a + b) >> 1, pa <= pb && pa <= pc ? a : pb <= pc ? b : c][f];
-      px[y * stride + i] = (x + pred) & 0xff;
-    }
-  }
+  const { w, h, channels: ch, px } = decodePng(readFileSync(file));
   const d = new Float32Array(w * h);
   for (let i = 0; i < w * h; i++) {
     const o = i * ch;
@@ -124,36 +97,9 @@ function normalise({ w, h, d }, r) {
 }
 const ink = (v) => tone(v, 0.56, 0.14); // a little over half: the softening widens strokes
 
-const CRC = Array.from({ length: 256 }, (_, n) => { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; return c >>> 0; });
-const crc32 = (buf) => { let c = 0xffffffff; for (const b of buf) c = CRC[(c ^ b) & 0xff] ^ (c >>> 8); return (c ^ 0xffffffff) >>> 0; };
-function chunk(type, body) {
-  const head = Buffer.alloc(8); head.writeUInt32BE(body.length, 0); head.write(type, 4, 'ascii');
-  const crc = Buffer.alloc(4); crc.writeUInt32BE(crc32(Buffer.concat([head.subarray(4), body])), 0);
-  return Buffer.concat([head, body, crc]);
-}
-// 8-bit grayscale PNG on white, ink rounded to 32 levels (the page blends it onto its paper
-// with mix-blend-mode: multiply). Rows are filtered with "Sub" or "Up", whichever compresses
-// the picture better.
-function encode({ w, h, d }) {
-  const ihdr = Buffer.alloc(13); ihdr.writeUInt32BE(w, 0); ihdr.writeUInt32BE(h, 4); ihdr[8] = 8; ihdr[9] = 0;
-  const stride = w;
-  const px = Buffer.alloc(stride * h);
-  for (let i = 0; i < w * h; i++) px[i] = 255 - Math.min(255, Math.round(ink(d[i]) * 31) * 8.25);
-  const filtered = (type) => {
-    const raw = Buffer.alloc((stride + 1) * h);
-    for (let y = 0; y < h; y++) {
-      raw[y * (stride + 1)] = type;
-      for (let i = 0; i < stride; i++) {
-        const v = px[y * stride + i];
-        const ref = type === 1 ? (i >= 1 ? px[y * stride + i - 1] : 0) : (y ? px[(y - 1) * stride + i] : 0);
-        raw[y * (stride + 1) + 1 + i] = (v - ref) & 0xff;
-      }
-    }
-    return deflateSync(raw, { level: 9 });
-  };
-  const [a, b] = [filtered(1), filtered(2)];
-  return Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), chunk('IHDR', ihdr), chunk('IDAT', a.length < b.length ? a : b), chunk('IEND', Buffer.alloc(0))]);
-}
+// Grayscale on white, ink rounded to 32 levels (the page blends it onto its paper with
+// mix-blend-mode: multiply).
+const encode = ({ w, h, d }) => encodeGray(w, h, Buffer.from(Array.from(d, (v) => 255 - Math.min(255, Math.round(ink(v) * 31) * 8.25))), [1, 2]);
 
 let n = 0, bytes = 0;
 for (const f of readdirSync(src).filter((x) => x.endsWith('.gif')).sort()) {

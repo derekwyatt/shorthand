@@ -11,7 +11,7 @@ import { mkdtempSync, rmSync, mkdirSync, writeFileSync, readFileSync, readdirSyn
 import { tmpdir } from 'node:os';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { deflateSync } from 'node:zlib';
+import { encodeGray } from './png.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repo = join(here, '..');
@@ -152,58 +152,8 @@ function clean(img, { paper = PAPER, black = null, ink = INK, pad = PAD } = {}) 
   return { w: ow, h: oh, data: out };
 }
 
-const CRC_TABLE = Array.from({ length: 256 }, (_, n) => {
-  let c = n;
-  for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
-  return c >>> 0;
-});
-function crc32(buf) {
-  let c = 0xffffffff;
-  for (const b of buf) c = CRC_TABLE[(c ^ b) & 0xff] ^ (c >>> 8);
-  return (c ^ 0xffffffff) >>> 0;
-}
-
-function chunk(type, body) {
-  const head = Buffer.alloc(8);
-  head.writeUInt32BE(body.length, 0);
-  head.write(type, 4, 'ascii');
-  const crc = Buffer.alloc(4);
-  crc.writeUInt32BE(crc32(Buffer.concat([head.subarray(4), body])), 0);
-  return Buffer.concat([head, body, crc]);
-}
-
-// 8-bit grayscale PNG with 16 grey levels (plenty for ink edges, and half the size), its rows
-// filtered with whichever of Sub, Up and Paeth compresses the picture best.
-const paeth = (a, b, c) => {
-  const p = a + b - c, pa = Math.abs(p - a), pb = Math.abs(p - b), pc = Math.abs(p - c);
-  return pa <= pb && pa <= pc ? a : pb <= pc ? b : c;
-};
-function encodePng({ w, h, data }) {
-  const ihdr = Buffer.alloc(13);
-  ihdr.writeUInt32BE(w, 0);
-  ihdr.writeUInt32BE(h, 4);
-  ihdr[8] = 8; // bit depth
-  ihdr[9] = 0; // grayscale
-  const px = Buffer.from(data.map((v) => Math.round(v / 17) * 17));
-  const filtered = (type) => {
-    const raw = Buffer.alloc((w + 1) * h);
-    for (let y = 0; y < h; y++) {
-      raw[y * (w + 1)] = type;
-      for (let x = 0; x < w; x++) {
-        const a = x ? px[y * w + x - 1] : 0, b = y ? px[(y - 1) * w + x] : 0, c = x && y ? px[(y - 1) * w + x - 1] : 0;
-        raw[y * (w + 1) + 1 + x] = (px[y * w + x] - (type === 1 ? a : type === 2 ? b : paeth(a, b, c))) & 0xff;
-      }
-    }
-    return deflateSync(raw, { level: 9 });
-  };
-  const idat = [1, 2, 4].map(filtered).reduce((m, x) => (x.length < m.length ? x : m));
-  return Buffer.concat([
-    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
-    chunk('IHDR', ihdr),
-    chunk('IDAT', idat),
-    chunk('IEND', Buffer.alloc(0)),
-  ]);
-}
+// 16 grey levels: plenty for ink edges, and half the size.
+const encodePng = ({ w, h, data }) => encodeGray(w, h, Buffer.from(data.map((v) => Math.round(v / 17) * 17)));
 
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
 
