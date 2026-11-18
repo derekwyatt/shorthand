@@ -52,6 +52,15 @@ export function actualSizeStrip(examples, { lineSpacing: ls, labels = true, onPi
   return box;
 }
 
+// An example drawn enlarged to fit a box: at most `maxUnit` px per U, `width` px wide and
+// `height` px of ink tall (very short or narrow outlines count as 0.3 U, so a dot is not huge).
+export function enlargedSVG(example, { maxUnit, width, height, pad, strokeWidth, label = `Gregg shorthand for ${example.title}` }) {
+  const compiled = compileExample(example);
+  const box = bbox(compiled);
+  const unit = Math.min(maxUnit, width / Math.max(box.maxX - box.minX, 0.3), height / Math.max(box.maxY - box.minY, 0.3));
+  return renderCompiledSVG(compiled, { unit, pad, strokeWidth, label });
+}
+
 // The badge colour for a score.
 export const scoreClass = (score) => (score >= 85 ? 'good' : score >= 65 ? 'close' : 'poor');
 
@@ -95,10 +104,7 @@ export function createExamplePanel({ art, title, meaning, source, counter, score
     const panelW = art.clientWidth || 300;
 
     // Enlarged: fit the panel width, at most 60 px per U and 100 px of ink height.
-    const wU = Math.max(box.maxX - box.minX, 0.3);
-    const hU = Math.max(box.maxY - box.minY, 0.3);
-    const bigUnit = Math.min(60, (panelW - 48) / wU, 100 / hU);
-    const bigSvg = renderCompiledSVG(compiled, { unit: bigUnit, pad: 24, strokeWidth: 4, label: `${label}, enlarged` });
+    const bigSvg = enlargedSVG(example, { maxUnit: 60, width: panelW - 48, height: 100, pad: 24, strokeWidth: 4, label: `${label}, enlarged` });
     big.replaceChildren(bigSvg);
 
     // Actual size: the lowest point of the outline sits on a ruled line.

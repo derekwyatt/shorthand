@@ -4,7 +4,6 @@ import { buildReference } from './reference.js';
 import { createExamplePanel } from './practice.js';
 import { EXAMPLES, LEVELS } from '../data/examples.js';
 import { U_PER_LINE } from '../data/strokes.js';
-import { assessAttempt } from './assess.js';
 import { assessRepeats, repeatIndexFor, practiceLines } from './repeats.js';
 import { createAssist } from './assist.js';
 import { createQuiz } from './quiz.js';

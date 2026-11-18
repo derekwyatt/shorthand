@@ -1,10 +1,9 @@
 // Quiz mode: start screen, questions (read / write / look-alike series), summary. Shares the ink pad.
 import { EXAMPLES, LEVELS } from '../data/examples.js';
-import { compileExample } from './join.js';
-import { bbox, renderCompiledSVG, animateStroke, cubicPoint, pathData } from './render.js';
+import { animateStroke, cubicPoint, pathData } from './render.js';
 import { assessAttempt, PASS_SCORE } from './assess.js';
 import { generateQuiz } from './quizgen.js';
-import { actualSizeStrip, scoreClass, printedOutline } from './practice.js';
+import { actualSizeStrip, enlargedSVG, scoreClass, printedOutline } from './practice.js';
 import { getWriterScale, learnWriterScale } from './writer.js';
 import { el, button, svgEl } from './dom.js';
 
@@ -104,12 +103,7 @@ export function createQuiz({ panel, pad, assist, unitPx }) {
   }
 
   function enlarged(example, animate) {
-    const compiled = compileExample(example);
-    const box = bbox(compiled);
-    const wU = Math.max(box.maxX - box.minX, 0.3);
-    const hU = Math.max(box.maxY - box.minY, 0.3);
-    const unit = Math.min(60, ((panel.clientWidth || 300) - 80) / wU, 100 / hU);
-    const svg = renderCompiledSVG(compiled, { unit, pad: 24, strokeWidth: 4, label: `Gregg shorthand for ${example.title}` });
+    const svg = enlargedSVG(example, { maxUnit: 60, width: (panel.clientWidth || 300) - 80, height: 100, pad: 24, strokeWidth: 4 });
     if (animate) animateStroke(svg);
     return el('div', { className: 'ex-big' }, svg);
   }

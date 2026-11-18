@@ -9,9 +9,8 @@ import { LESSONS, PASS_SCORE, stepKey, exampleFor, isTask } from '../data/lesson
 import { sectionPlate, readingPlate } from '../data/plates.js';
 import { MANUAL_TEXT } from '../data/manual.js';
 import { renderBlocks } from './manualtext.js';
-import { compileExample } from './join.js';
-import { bbox, renderCompiledSVG, animateStroke } from './render.js';
-import { createExamplePanel, actualSizeStrip, printedOutline } from './practice.js';
+import { animateStroke } from './render.js';
+import { createExamplePanel, actualSizeStrip, enlargedSVG, printedOutline } from './practice.js';
 import { assessRepeats } from './repeats.js';
 import { getWriterScale, learnWriterScale } from './writer.js';
 import { el, button } from './dom.js';
@@ -157,12 +156,7 @@ export function createLessons({ panel, pad, assist, unitPx }) {
 
   function figure(id, { animate = true, caption = true, plate = caption } = {}) {
     const example = exampleFor(id);
-    const compiled = compileExample(example);
-    const box = bbox(compiled);
-    const wU = Math.max(box.maxX - box.minX, 0.3);
-    const hU = Math.max(box.maxY - box.minY, 0.3);
-    const unit = Math.min(40, 180 / wU, 80 / hU);
-    const svg = renderCompiledSVG(compiled, { unit, pad: 16, strokeWidth: 3.5, label: `Gregg shorthand for ${example.title}` });
+    const svg = enlargedSVG(example, { maxUnit: 40, width: 180, height: 80, pad: 16, strokeWidth: 3.5 });
     if (animate) animateStroke(svg);
     const fig = el('figure', { className: 'lesson-fig', title: 'Tap to replay' }, svg);
     fig.replay = () => animateStroke(svg);
@@ -518,11 +512,7 @@ export function createLessons({ panel, pad, assist, unitPx }) {
     if (screen === 'summary') renderSummary();
     else {
       const s = step();
-      if (s.type === 'read') renderRead(s);
-      else if (s.type === 'reading') renderReading(s);
-      else if (s.type === 'speed') renderSpeed(s);
-      else if (s.type === 'write') renderWrite(s);
-      else renderChoose(s);
+      ({ read: renderRead, reading: renderReading, speed: renderSpeed, write: renderWrite, choose: renderChoose })[s.type](s);
     }
     renderHeading();
     renderNav();
