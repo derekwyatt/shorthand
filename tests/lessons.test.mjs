@@ -7,7 +7,7 @@ import { LESSONS, stepKey, exampleFor, isTask } from '../app/data/lessons.js';
 import { EXAMPLES } from '../app/data/examples.js';
 import { READINGS } from '../app/data/reading.js';
 import { readingPlate } from '../app/data/plates.js';
-import { splitSentences, keyItems } from '../app/js/lessons.js';
+import { splitSentences, keyItems, shuffled } from '../app/js/lessons.js';
 import fs from 'node:fs';
 
 test('the units, in order from Unit 1, each with read, write and choose steps', () => {
@@ -27,7 +27,9 @@ test('every step refers to existing examples and has a unique key in its unit', 
       const key = stepKey(s);
       assert.ok(!keys.has(key), `${l.id}: duplicate step ${key}`);
       keys.add(key);
-      if (s.type === 'reading') {
+      if (s.type === 'speed') {
+        assert.equal(s.speed.unit, l.unit, key);
+      } else if (s.type === 'reading') {
         assert.equal(s.reading.unit, l.unit, key);
         assert.equal(s, l.steps.at(-1), `${key} closes the unit`);
       } else if (s.type === 'read') {
@@ -134,4 +136,12 @@ test('the Manual text: every unit, figures that exist, paragraph anchors in orde
     }
   }
   assert.ok(last >= 247, 'paragraphs run to the end of the Manual');
+});
+
+test('reading-question choices are shuffled: the answer is not always first', () => {
+  const choose = LESSONS.flatMap((l) => l.steps.filter((s) => s.type === 'choose'));
+  for (const s of choose.slice(0, 5)) assert.deepEqual([...shuffled(s.choices, stepKey(s))].sort(), [...s.choices].sort());
+  assert.deepEqual(shuffled(['a', 'b', 'c', 'd'], 'k', 7), shuffled(['a', 'b', 'c', 'd'], 'k', 7), 'stable for a step');
+  const first = choose.filter((s) => shuffled(s.choices, stepKey(s), 12345)[0] === s.example).length;
+  assert.ok(first < choose.length * 0.4, `answer first in ${first} of ${choose.length}`);
 });

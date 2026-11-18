@@ -21,6 +21,27 @@ function el(tag, props = {}, ...children) {
   node.append(...children);
   return node;
 }
+// The choices of a reading question in an order of their own: the data lists the answer
+// first. The order is fixed for a step within a session (so Back and Next don't reshuffle it)
+// and differs between sessions.
+const SALT = Math.floor(Math.random() * 2 ** 31);
+export function shuffled(list, key, salt = SALT) {
+  let h = salt >>> 0;
+  for (const ch of key) h = Math.imul(h ^ ch.charCodeAt(0), 2654435761) >>> 0;
+  const rand = () => {
+    h = (h + 0x6d2b79f5) >>> 0;
+    let x = Math.imul(h ^ (h >>> 15), 1 | h);
+    x ^= x + Math.imul(x ^ (x >>> 7), 61 | x);
+    return ((x ^ (x >>> 14)) >>> 0) / 2 ** 32;
+  };
+  const out = [...list];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+
 // The unit whose text holds the Manual's paragraph n.
 const PARA_UNIT = new Map(Object.entries(MANUAL_TEXT).flatMap(([u, d]) => d.blocks.flatMap(([, html]) => [...html.matchAll(/id="m(\d+)"/g)].map((m) => [Number(m[1]), Number(u)]))));
 const unitOfParagraph = (n) => PARA_UNIT.get(n) ?? null;
@@ -123,6 +144,7 @@ export function createLessons({ panel, pad, assist, unitPx }) {
     persist();
     renderUnits();
     renderNav();
+    renderHeading();
   }
 
   // The manual's printed outline for an example, or null if it does not print it.
@@ -218,7 +240,7 @@ export function createLessons({ panel, pad, assist, unitPx }) {
     return { row, set: (done, total) => {
       fill.style.width = `${total ? (100 * done) / total : 0}%`;
       count.textContent = `${done}/${total}`;
-      row.title = `${done} of ${total} exercises done`;
+      row.title = `${done} of ${total} steps done`;
     } };
   };
   const unitBar = progressRow('This unit');
@@ -246,10 +268,10 @@ export function createLessons({ panel, pad, assist, unitPx }) {
           el('div', { className: 'lesson-subtitle', textContent: lesson.subtitle })),
         button('Whole unit', 'quiz-btn key-btn', () => openManual(lesson.unit))),
     );
-    const c = counts(lesson);
-    unitBar.set(c.done, c.total);
-    const all = LESSONS.map((l) => counts(l)).reduce((a, x) => ({ done: a.done + x.done, total: a.total + x.total }), { done: 0, total: 0 });
-    courseBar.set(all.done, all.total);
+    // Every step counts here (read steps once seen); the unit picker counts exercises only.
+    const stepsDone = (l) => { const done = doneSet(l); return l.steps.filter((x) => done.has(stepKey(x))).length; };
+    unitBar.set(stepsDone(lesson), lesson.steps.length);
+    courseBar.set(LESSONS.reduce((n, l) => n + stepsDone(l), 0), LESSONS.reduce((n, l) => n + l.steps.length, 0));
   }
 
   function renderNav() {
@@ -324,7 +346,7 @@ export function createLessons({ panel, pad, assist, unitPx }) {
     const fig = figure(s.example, { caption: false });
     replayers = [fig.replay];
     const answered = isDone(s);
-    const choices = el('div', { className: 'quiz-choices' }, ...s.choices.map((id) => {
+    const choices = el('div', { className: 'quiz-choices' }, ...shuffled(s.choices, stepKey(s)).map((id) => {
       const b = button(exampleFor(id).title, 'choice', () => pick(id, b));
       b.dataset.id = id;
       if (answered && id === s.example) b.classList.add('correct');
