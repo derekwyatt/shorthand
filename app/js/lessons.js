@@ -145,7 +145,6 @@ export function createLessons({ panel, pad, assist, unitPx }) {
     persist();
     renderUnits();
     renderNav();
-    renderHeading();
   }
 
   // The manual's printed outline for an example, or null if it does not print it.
@@ -233,15 +232,16 @@ export function createLessons({ panel, pad, assist, unitPx }) {
   units.setAttribute('aria-label', 'Unit');
   units.addEventListener('change', () => openUnit(LESSONS.find((l) => String(l.unit) === units.value)));
   const heading = el('div', { className: 'lesson-head' });
-  // Two labelled bars: exercises done in this unit, and in the whole course.
+  // Two labelled bars showing where you are, not what is done: the step within this unit, and
+  // that step's place in the whole course.
   const progressRow = (label) => {
     const fill = el('span');
     const count = el('span', { className: 'progress-count' });
     const row = el('div', { className: 'progress-row' }, el('span', { className: 'progress-label', textContent: label }), el('div', { className: 'lesson-bar' }, fill), count);
-    return { row, set: (done, total) => {
-      fill.style.width = `${total ? (100 * done) / total : 0}%`;
-      count.textContent = `${done}/${total}`;
-      row.title = `${done} of ${total} steps done`;
+    return { row, set: (at, total) => {
+      fill.style.width = `${total ? (100 * at) / total : 0}%`;
+      count.textContent = `${at}/${total}`;
+      row.title = `Step ${at} of ${total}`;
     } };
   };
   const unitBar = progressRow('This unit');
@@ -269,10 +269,10 @@ export function createLessons({ panel, pad, assist, unitPx }) {
           el('div', { className: 'lesson-subtitle', textContent: lesson.subtitle })),
         button('Whole unit', 'quiz-btn key-btn', () => openManual(lesson.unit))),
     );
-    // Every step counts here (read steps once seen); the unit picker counts exercises only.
-    const stepsDone = (l) => { const done = doneSet(l); return l.steps.filter((x) => done.has(stepKey(x))).length; };
-    unitBar.set(stepsDone(lesson), lesson.steps.length);
-    courseBar.set(LESSONS.reduce((n, l) => n + stepsDone(l), 0), LESSONS.reduce((n, l) => n + l.steps.length, 0));
+    const at = screen === 'summary' ? lesson.steps.length : index + 1;
+    const before = LESSONS.slice(0, LESSONS.indexOf(lesson)).reduce((n, l) => n + l.steps.length, 0);
+    unitBar.set(at, lesson.steps.length);
+    courseBar.set(before + at, LESSONS.reduce((n, l) => n + l.steps.length, 0));
   }
 
   function renderNav() {
