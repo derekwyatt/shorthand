@@ -7,6 +7,7 @@
 // Progress (current step and steps done) is kept in localStorage; strokes are not.
 import { LESSONS, PASS_SCORE, stepKey, exampleFor, isTask } from '../data/lessons.js';
 import { plateFor, sectionPlate, readingPlate } from '../data/plates.js';
+import { MANUAL_TEXT } from '../data/manual.js';
 import { compileExample } from './join.js';
 import { bbox, renderCompiledSVG, animateStroke } from './render.js';
 import { createExamplePanel, actualSizeStrip } from './practice.js';
@@ -20,6 +21,10 @@ function el(tag, props = {}, ...children) {
   node.append(...children);
   return node;
 }
+// The unit whose text holds the Manual's paragraph n.
+const PARA_UNIT = new Map(Object.entries(MANUAL_TEXT).flatMap(([u, d]) => d.blocks.flatMap(([, html]) => [...html.matchAll(/id="m(\d+)"/g)].map((m) => [Number(m[1]), Number(u)]))));
+const unitOfParagraph = (n) => PARA_UNIT.get(n) ?? null;
+
 // Sentences of a key paragraph, splitting after . ? ! (not after Mr., Mrs., Dr., St. or initials).
 export function splitSentences(text) {
   const out = [];
@@ -205,7 +210,20 @@ export function createLessons({ panel, pad, assist, unitPx }) {
   units.setAttribute('aria-label', 'Unit');
   units.addEventListener('change', () => openUnit(LESSONS.find((l) => String(l.unit) === units.value)));
   const heading = el('div', { className: 'lesson-head' });
-  const bar = el('div', { className: 'lesson-bar' }, el('span'));
+  // Two labelled bars: exercises done in this unit, and in the whole course.
+  const progressRow = (label) => {
+    const fill = el('span');
+    const count = el('span', { className: 'progress-count' });
+    const row = el('div', { className: 'progress-row' }, el('span', { className: 'progress-label', textContent: label }), el('div', { className: 'lesson-bar' }, fill), count);
+    return { row, set: (done, total) => {
+      fill.style.width = `${total ? (100 * done) / total : 0}%`;
+      count.textContent = `${done}/${total}`;
+      row.title = `${done} of ${total} exercises done`;
+    } };
+  };
+  const unitBar = progressRow('This unit');
+  const courseBar = progressRow('All units');
+  const bar = el('div', { className: 'lesson-progress' }, unitBar.row, courseBar.row);
   const body = el('div', { className: 'lesson-body' });
   const nav = el('div', { className: 'ex-nav lesson-nav' });
   // Navigation sits at the top, below the unit picker, and stays there as the step scrolls.
@@ -222,12 +240,16 @@ export function createLessons({ panel, pad, assist, unitPx }) {
   function renderHeading() {
     const where = screen === 'summary' ? 'Summary' : `Step ${index + 1} of ${lesson.steps.length}`;
     heading.replaceChildren(
-      el('div', { className: 'ex-counter', textContent: `${lesson.title} · Manual ${lesson.pages} · ${where}` }),
-      el('div', { className: 'lesson-subtitle', textContent: lesson.subtitle }),
+      el('div', { className: 'lesson-head' },
+        el('div', {},
+          el('div', { className: 'ex-counter', textContent: `${lesson.title} · Manual ${lesson.pages} · ${where}` }),
+          el('div', { className: 'lesson-subtitle', textContent: lesson.subtitle })),
+        button('Whole unit', 'quiz-btn key-btn', () => openManual(lesson.unit))),
     );
     const c = counts(lesson);
-    bar.firstChild.style.width = `${c.total ? (100 * c.done) / c.total : 0}%`;
-    bar.title = `${c.done} of ${c.total} exercises done`;
+    unitBar.set(c.done, c.total);
+    const all = LESSONS.map((l) => counts(l)).reduce((a, x) => ({ done: a.done + x.done, total: a.total + x.total }), { done: 0, total: 0 });
+    courseBar.set(all.done, all.total);
   }
 
   function renderNav() {
@@ -268,7 +290,7 @@ export function createLessons({ panel, pad, assist, unitPx }) {
     pad.load([]);
     body.replaceChildren(
       el('h2', { className: 'lesson-title', textContent: s.title }),
-      el('div', { className: 'ex-source', textContent: s.ref }),
+      manualRef(s.ref),
       ...s.text.map((t) => el('p', { className: 'lesson-text', textContent: t })),
       ...sectionPlates(s.plates),
       ...(figures.length ? [
@@ -424,6 +446,49 @@ export function createLessons({ panel, pad, assist, unitPx }) {
       ...x.figures.map(figure),
       el('p', { className: 'ex-caption', textContent: 'From Gregg Speed Studies, Anniversary Edition (1929), a companion to the Manual: its drills train the movements of the pen.' }),
     );
+  }
+
+  // A step's source line; "Manual §46, p. 23" opens the unit's text at paragraph 46.
+  function manualRef(ref) {
+    const m = /§\s*(\d+)/.exec(ref);
+    if (!m) return el('div', { className: 'ex-source', textContent: ref });
+    const link = el('button', { type: 'button', className: 'ex-source manual-ref', textContent: `${ref} · read it in the Manual ›`, title: 'Show this paragraph in the full text of the unit' });
+    link.onclick = () => openManual(unitOfParagraph(Number(m[1])) ?? lesson.unit, Number(m[1]));
+    return link;
+  }
+
+  // The Manual's own text of a unit, with its figures, full screen; scrolled to paragraph `para`.
+  function openManual(unit, para = null) {
+    const doc = MANUAL_TEXT[unit];
+    if (!doc) return;
+    const l = LESSONS.find((x) => x.unit === unit);
+    const text = el('article', { className: 'manual-text' },
+      el('h2', { textContent: `Unit ${unit}${doc.title ? `: ${doc.title}` : ''}` }),
+      ...doc.blocks.map(([align, html]) => {
+        const p = el('p', { className: align === 'center' ? 'center' : '' });
+        p.innerHTML = html;
+        // The site's figures are small: show them 1.4 times as large (still no wider than the text).
+        for (const img of p.querySelectorAll('img[width]')) {
+          img.width = Math.round(img.width * 1.4);
+          img.removeAttribute('height');
+        }
+        return p;
+      }),
+      el('p', { className: 'ex-caption', textContent: 'The Anniversary Manual (1929), as transcribed by J. Andrew Owen at greggshorthand.github.io.' }));
+    const close = () => shade.remove();
+    const shade = el('div', { className: 'reader manual-reader', role: 'dialog', ariaLabel: `Manual, Unit ${unit}` },
+      el('div', { className: 'reader-bar' },
+        el('strong', { textContent: `Manual · Unit ${unit} · ${l?.pages ?? ''}` }),
+        ...[unit - 1, unit + 1].filter((u) => MANUAL_TEXT[u]).map((u) => button(u < unit ? `◀ Unit ${u}` : `Unit ${u} ▶`, 'quiz-btn key-btn', () => { close(); openManual(u); })),
+        button('Close ✕', 'quiz-btn key-btn', close)),
+      el('div', { className: 'reader-key manual-scroll' }, text));
+    document.body.append(shade);
+    const target = para && text.querySelector(`#m${para}`);
+    if (target) {
+      const block = target.closest('p');
+      block.classList.add('flash');
+      block.scrollIntoView({ block: 'start' });
+    }
   }
 
   // Full screen: the page (tap it to switch between fitting the width and 2×) beside the key.

@@ -364,7 +364,11 @@ body:not(.view-learn) .lesson-panel { display: none; }
 .lesson-nav { position: sticky; top: -14px; z-index: 2; margin: 0 -16px; padding: 6px 16px; background: #f3efe2; border-bottom: 1px solid #d9d2bb; }
 .lesson-nav button { min-height: 36px; padding: 4px 8px; font-size: 15px; }
 .lesson-subtitle { font-size: 15px; color: #555; line-height: 1.3; }
-.lesson-bar { height: 6px; border-radius: 3px; background: #e2dccb; overflow: hidden; flex: 0 0 auto; }
+.lesson-progress { display: flex; flex-direction: column; gap: 4px; }
+.progress-row { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #666; }
+.progress-label { flex: 0 0 64px; }
+.progress-count { flex: 0 0 auto; min-width: 52px; text-align: right; font-variant-numeric: tabular-nums; }
+.lesson-bar { height: 6px; border-radius: 3px; background: #e2dccb; overflow: hidden; flex: 1 1 auto; }
 .lesson-bar span { display: block; height: 100%; width: 0; background: #2e7d32; transition: width 0.3s; }
 .lesson-body { display: flex; flex-direction: column; gap: 8px; }
 .lesson-title { margin: 4px 0 0; font-size: 26px; }
@@ -380,7 +384,8 @@ body:not(.view-learn) .lesson-panel { display: none; }
 /* Plates: the manual's own printed outlines, cut from the scan (grayscale on white). */
 .plate { display: block; max-width: 100%; height: auto; mix-blend-mode: multiply; }
 .ex-plate:empty { display: none; }
-.ex-plate { display: flex; justify-content: center; padding: 6px; border-radius: 8px; background: #fff; }
+.ex-plate { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px; border-radius: 8px; background: #fff; }
+.ex-plate .ex-caption { align-self: flex-start; }
 .ex-plate .plate { max-height: 64px; }
 /* Fit the box: a plate can be a wide row of the alphabet chart. */
 .lesson-fig .plate { width: 100%; max-height: 40px; object-fit: contain; margin: 2px 0; }
@@ -431,3 +436,19 @@ body:not(.view-learn) .lesson-panel { display: none; }
 .speed-fig .reading-tools { position: static; background: none; }
 .writing-list { margin: 0; padding-left: 28px; display: flex; flex-direction: column; gap: 6px; }
 .speed-fig .plate { max-height: none; }
+/* The Manual's text of a unit, full screen. */
+.lesson-head { display: flex; align-items: flex-start; gap: 8px; }
+.lesson-head > div { flex: 1; }
+.manual-ref { display: block; padding: 0; border: 0; background: none; text-align: left; font: inherit; font-size: 12px; color: #2b6cb0; cursor: pointer; }
+.manual-reader { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); }
+.manual-scroll { background: #fdfcf6; }
+.manual-text { max-width: 760px; margin: 0 auto; padding: 8px 4px 48px; font-size: 18px; line-height: 1.5; color: #222; }
+.manual-text h2 { font-size: 26px; margin: 12px 0; }
+.manual-text p { margin: 0 0 12px; }
+.manual-text p.center { text-align: center; }
+.manual-text img { max-width: 100%; height: auto; vertical-align: middle; mix-blend-mode: multiply; }
+.manual-text .flash { animation: flash 2.5s ease-out; border-radius: 6px; }
+@keyframes flash { from { background: #fff1a8; } to { background: transparent; } }
+@media (max-width: 760px), (orientation: portrait) {
+  .manual-reader { grid-template-rows: auto minmax(0, 1fr); }
+}

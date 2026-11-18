@@ -116,3 +116,22 @@ test('key lines hide sentence by sentence, or word by word in a word list', () =
   assert.deepEqual(keyItems('He can go, but not today.'), ['He can go, but not today.']);
   assert.deepEqual(keyItems('of: of-the, of-it, of-our.'), ['of: of-the,', 'of-it,', 'of-our.']);
 });
+
+test('the Manual text: every unit, figures that exist, paragraph anchors in order', async () => {
+  const { MANUAL_TEXT } = await import('../app/data/manual.js');
+  let last = 0;
+  for (let u = 1; u <= 36; u++) {
+    const doc = MANUAL_TEXT[u];
+    assert.ok(doc && doc.blocks.length > 3, `Unit ${u} text`);
+    for (const [align, html] of doc.blocks) {
+      assert.ok(align === null || align === 'center', `Unit ${u}: align ${align}`);
+      assert.ok(!/<(?!\/?(?:em|strong|br|img|span)\b)/.test(html), `Unit ${u}: unexpected tag in ${html.slice(0, 60)}`);
+      for (const [, src] of html.matchAll(/src="([^"]+)"/g)) assert.ok(fs.existsSync(new URL(`../app/${src}`, import.meta.url)), `Unit ${u}: ${src}`);
+      for (const [, n] of html.matchAll(/id="m(\d+)"/g)) {
+        assert.ok(Number(n) > last, `Unit ${u}: paragraph ${n} after ${last}`);
+        last = Number(n);
+      }
+    }
+  }
+  assert.ok(last >= 247, 'paragraphs run to the end of the Manual');
+});
