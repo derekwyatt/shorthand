@@ -24,7 +24,10 @@ self.addEventListener('activate', (event) => {
 function fromNetwork(request) {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error('slow network')), NETWORK_WAIT);
-    fetch(request).then((res) => {
+    // Always ask the server (a cheap "not modified" when nothing changed): GitHub Pages lets
+    // the browser keep files 10 minutes, which would otherwise serve a stale or mixed version
+    // right after an update.
+    fetch(request, { cache: 'no-cache' }).then((res) => {
       clearTimeout(timer);
       if (res.ok) {
         const copy = res.clone();
