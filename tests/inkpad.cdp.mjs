@@ -92,10 +92,21 @@ try {
     mkdirSync(COVERAGE_DIR, { recursive: true });
     for (const result of covScripts) writeFileSync(join(COVERAGE_DIR, `coverage-chrome-${covN++}.json`), JSON.stringify({ result }));
   };
-  if (COVERAGE_DIR) {
-    await send('Profiler.enable');
+  // A reload starts a new page whose scripts the running coverage no longer counts, so
+  // coverage is taken before each reload (snap) and started again after it.
+  const startCoverage = async () => {
+    if (!COVERAGE_DIR) return;
+    await send('Profiler.stopPreciseCoverage').catch(() => {});
     await send('Profiler.startPreciseCoverage', { callCount: true, detailed: true });
+  };
+  if (COVERAGE_DIR) {
+    // Scripts from a cache (HTTP, V8's code cache, the service worker's) skip the counters.
+    await send('Profiler.enable');
+    await send('Network.enable');
+    await send('Network.setCacheDisabled', { cacheDisabled: true });
+    await send('Network.setBypassServiceWorker', { bypass: true });
   }
+  await startCoverage();
   await send('Page.navigate', { url: `http://127.0.0.1:${HTTP_PORT}/index.html` });
   await waitReady();
   await evaluate(`localStorage.clear()`);
@@ -103,6 +114,7 @@ try {
   await send('Page.reload');
   await sleep(300);
   await waitReady();
+  await startCoverage();
 
   const rect = await evaluate(`(() => { const r = document.getElementById('ink').getBoundingClientRect(); return { x: r.left, y: r.top, w: r.width, h: r.height }; })()`);
   check(rect.w > 500 && rect.h > 400, `canvas fills the page (${Math.round(rect.w)}x${Math.round(rect.h)})`);
@@ -190,6 +202,7 @@ try {
   await send('Page.reload');
   await sleep(300);
   await waitReady();
+  await startCoverage();
   check((await evaluate(`document.getElementById('stats').textContent`)).startsWith('3 strokes'), 'strokes restored after reload');
   const inkedAfter = await evaluate(`(() => { const c = document.getElementById('ink'); const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i]) n++; return n; })()`);
   check(inkedAfter > 50, 'restored strokes are redrawn');
@@ -621,9 +634,11 @@ try {
   check(await evaluate(`document.querySelectorAll('#lesson-panel .choice.correct').length === 1 && document.querySelector('#lesson-panel .ex-meaning p') !== null`), 'the right pick is marked and its meaning shown');
   check(await evaluate(`document.querySelectorAll('#lesson-panel .lesson-actual .strip-label').length === 1 && /write “g”/.test(document.querySelector('#lesson-panel .lesson-try')?.textContent)`),
     'once answered, the outline is shown at actual size and can be tried on the pad');
+  await snap();
   await evaluate(`location.reload()`);
   await sleep(500);
   await waitReady();
+  await startCoverage();
   await sleep(300);
   ls = await lessonText();
   check(/Step 7 of/.test(ls.counter) && await evaluate(`document.querySelectorAll('#lesson-panel .choice.correct').length === 1`), `after a reload the lesson resumes at the same step, answered (${ls.counter})`);
@@ -638,6 +653,170 @@ try {
   const backupKeys = await evaluate(`import('/js/backup.js').then((m) => Object.keys(m.exportProgress(localStorage).data))`);
   check(backupKeys.includes('gregg.practice.v2'), `the backup includes the practice progress (${backupKeys})`);
 
+  // Lessons: the Manual's text full screen, a reading step and its reader, a Speed Studies
+  // step, and the summary of a unit.
+  await evaluate(`location.hash = '#learn'`);
+  await sleep(200);
+  // `test`: a condition on the step `s`, as source.
+  const goStep = (test) => evaluate(`(async () => {
+    const { LESSONS } = await import('./data/lessons.js');
+    const ok = (s) => ${test};
+    const l = LESSONS.find((x) => x.steps.some(ok));
+    const i = l.steps.findIndex(ok);
+    const sel = document.querySelector('#lesson-panel .lesson-unit');
+    sel.value = String(l.unit); sel.dispatchEvent(new Event('change'));
+    for (let k = 0; k < 200 && !document.querySelector('#lesson-panel .ex-counter').textContent.includes('Step ' + (i + 1) + ' of'); k++) {
+      const label = document.querySelector('#lesson-panel .ex-counter').textContent;
+      const at = Number(/Step (\\d+)/.exec(label)?.[1] ?? Infinity); // the summary is past the last step
+      document.querySelector(at > i + 1 ? '#lesson-panel .ex-nav button' : '#lesson-panel .lesson-next').click();
+    }
+    return document.querySelector('#lesson-panel .ex-counter').textContent;
+  })()`);
+  await click('#lesson-panel .manual-ref');
+  await sleep(200);
+  const manual = await evaluate(`(() => { const r = document.querySelector('.manual-reader'); return { open: !!r, flash: !!r?.querySelector('.flash'), next: [...(r?.querySelectorAll('button') ?? [])].map((b) => b.textContent) }; })()`);
+  check(manual.open && manual.flash && manual.next.some((x) => /Unit \d+ ▶/.test(x)), `"read it in the Manual" opens the unit's text at its paragraph (${JSON.stringify(manual)})`);
+  const nextUnit = Number(/Unit (\d+) ▶/.exec(manual.next.join(' '))[1]);
+  await evaluate(`[...document.querySelectorAll('.manual-reader button')].find((b) => /▶/.test(b.textContent)).click()`);
+  await sleep(150);
+  check(await evaluate(`/Unit ${nextUnit}\\b/.test(document.querySelector('.manual-reader .reader-bar strong').textContent)`), 'the Manual reader goes on to the next unit');
+  await evaluate(`[...document.querySelectorAll('.manual-reader button')].find((b) => /Close/.test(b.textContent)).click()`);
+  check(await evaluate(`!document.querySelector('.reader')`), 'Close shuts the Manual reader');
+
+  await goStep(`s.type === 'reading'`);
+  const reading = await evaluate(`(() => {
+    const body = document.querySelector('#lesson-panel');
+    const hidden = () => body.querySelectorAll('.key-hidden').length;
+    const before = hidden();
+    [...body.querySelectorAll('button')].find((b) => b.textContent === 'Show next').click();
+    const afterNext = hidden();
+    [...body.querySelectorAll('button')].find((b) => b.textContent === 'Show all').click();
+    const afterAll = hidden();
+    return { before, afterNext, afterAll, plates: body.querySelectorAll('.reading-plate').length };
+  })()`);
+  check(reading.plates >= 1 && reading.before > 1 && reading.afterNext === reading.before - 1 && reading.afterAll === 0,
+    `a reading step shows its page and hides the key sentence by sentence (${JSON.stringify(reading)})`);
+  await click('#lesson-panel .reading-plate');
+  await sleep(150);
+  const reader = await evaluate(`(() => { const r = document.querySelector('.reader'); const page = r?.querySelector('.reader-page'); page?.click(); return { open: !!r, key: !!r?.querySelector('.reading-keybox'), big: page?.classList.contains('big') }; })()`);
+  check(reader.open && reader.key && reader.big, `the page opens full screen beside its key, and zooms (${JSON.stringify(reader)})`);
+  await evaluate(`[...document.querySelectorAll('.reader button')].find((b) => /Close/.test(b.textContent)).click()`);
+  check(await evaluate(`!document.querySelector('.reader') && !!document.querySelector('#lesson-panel .reading-keybox')`), 'closing the reader puts the key back in the lesson');
+
+  await goStep(`s.type === 'speed' && s.speed.figures.length > 0`);
+  const speed = await evaluate(`(() => ({ title: document.querySelector('#lesson-panel .lesson-title')?.textContent, figs: document.querySelectorAll('#lesson-panel .speed-fig').length, source: document.querySelector('#lesson-panel .ex-source')?.textContent }))()`);
+  check(speed.title && speed.figs >= 1 && /Speed Stud/.test(speed.source), `a Speed Studies step shows its drills (${JSON.stringify(speed)})`);
+  await click('#lesson-panel .speed-plate');
+  await sleep(100);
+  check(await evaluate(`!!document.querySelector('.reader .reader-page img')`), 'a drill enlarges full screen');
+  await evaluate(`[...document.querySelectorAll('.reader button')].find((b) => /Close/.test(b.textContent)).click()`);
+
+  // The summary lists the skipped exercises, each a way back to it.
+  const unitEnd = await evaluate(`(async () => {
+    const { LESSONS } = await import('./data/lessons.js');
+    const l = LESSONS[LESSONS.length - 1];
+    const sel = document.querySelector('#lesson-panel .lesson-unit');
+    sel.value = String(l.unit); sel.dispatchEvent(new Event('change'));
+    for (let k = 0; k < l.steps.length + 2 && !/Summary/.test(document.querySelector('#lesson-panel .ex-counter').textContent); k++) document.querySelector('#lesson-panel .lesson-next').click();
+    const left = document.querySelectorAll('#lesson-panel .lesson-left .choice');
+    const counter = document.querySelector('#lesson-panel .ex-counter').textContent;
+    const bars = [...document.querySelectorAll('#lesson-panel .progress-count')].map((x) => x.textContent);
+    const back = left.length;
+    left[0]?.click();
+    return { counter, back, bars, after: document.querySelector('#lesson-panel .ex-counter').textContent, total: l.steps.length };
+  })()`);
+  check(/Summary/.test(unitEnd.counter) && unitEnd.back > 0 && /Step \d+ of/.test(unitEnd.after) && unitEnd.bars[0] === `${unitEnd.total}/${unitEnd.total}`,
+    `the last screen sums up the unit, lists what was skipped and goes back to it (${JSON.stringify(unitEnd)})`);
+
+  // Reference: every section opens; the brief forms can be searched; units can be picked.
+  await evaluate(`location.hash = '#ref'`);
+  await sleep(300);
+  const ref = await evaluate(`(async () => {
+    const out = {};
+    for (const b of document.querySelectorAll('.ref-menu button')) {
+      b.click();
+      out[b.dataset.id] = document.querySelector('.ref-body').children.length;
+    }
+    document.querySelector('.ref-menu button[data-id="briefs"]').click();
+    const search = document.querySelector('.ref-search');
+    search.value = 'about'; search.dispatchEvent(new Event('input'));
+    out.found = document.querySelectorAll('.ref-brief:not([hidden])').length;
+    out.count = document.querySelector('.ref-body .ex-caption').textContent;
+    document.querySelector('.ref-menu button[data-id="units"]').click();
+    const pick = document.querySelector('.ref-body select');
+    pick.value = '3'; pick.dispatchEvent(new Event('change'));
+    out.unit3 = /Unit 3|^\\s*\\d/.test(document.querySelector('.ref-body .manual-text').textContent) && document.querySelector('.ref-body .manual-text').textContent.length > 500;
+    return out;
+  })()`);
+  check(Object.keys(ref).length >= 7 && Object.entries(ref).filter(([k]) => !['found', 'count', 'unit3'].includes(k)).every(([, n]) => n >= 2), `every reference section has content (${JSON.stringify(ref)})`);
+  check(ref.found >= 1 && ref.found < 10 && /of 320/.test(ref.count), `the brief-form search filters the chart (${ref.found}, ${ref.count})`);
+  check(ref.unit3, 'the Manual can be read unit by unit in Reference');
+
+  // Settings: the menu opens and closes; a theme recolours the app and the pad's pen.
+  await evaluate(`location.hash = '#pad'`);
+  await sleep(200);
+  await click('#menu-btn');
+  check(await evaluate(`!document.getElementById('menu').hidden && document.getElementById('menu-btn').getAttribute('aria-expanded') === 'true'`), 'the Settings button opens the menu');
+  const themed = await evaluate(`(() => {
+    const paper = getComputedStyle(document.body).backgroundColor;
+    document.querySelector('.theme-pick[data-theme="night"]').click();
+    const night = { attr: document.documentElement.dataset.theme, bg: getComputedStyle(document.body).backgroundColor, pen: document.querySelector('#ink') && getComputedStyle(document.documentElement).getPropertyValue('--pen').trim(), saved: JSON.parse(localStorage.getItem('gregg.ui.v1')).theme, checked: document.querySelector('.theme-pick[aria-checked="true"]').dataset.theme };
+    document.querySelector('.theme-pick[data-theme="auto"]').click();
+    const auto = document.documentElement.hasAttribute('data-theme');
+    document.querySelector('.theme-pick[data-theme="paper"]').click();
+    return { paper, night, auto };
+  })()`);
+  check(themed.night.attr === 'night' && themed.night.bg !== themed.paper && themed.night.pen === '#b8d2ff' && themed.night.saved === 'night' && themed.night.checked === 'night' && themed.auto === false,
+    `themes recolour the app, are remembered, and Auto follows the device (${JSON.stringify(themed)})`);
+  await evaluate(`document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))`);
+  check(await evaluate(`document.getElementById('menu').hidden`), 'Escape closes the menu');
+  await click('#menu-btn');
+  await evaluate(`document.querySelector('.page').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))`);
+  check(await evaluate(`document.getElementById('menu').hidden`), 'a tap outside closes the menu');
+
+  // The handle between panel and pad resizes the panel, within limits, and remembers it.
+  const split = await evaluate(`(async () => {
+    const s = document.getElementById('split');
+    const area = document.getElementById('practice').getBoundingClientRect();
+    const panel = () => document.querySelector('.example-panel').getBoundingClientRect().width;
+    const before = panel();
+    s.setPointerCapture = () => {};
+    s.dispatchEvent(new PointerEvent('pointerdown', { pointerId: 7, clientX: area.left + before, clientY: 300, bubbles: true }));
+    s.dispatchEvent(new PointerEvent('pointermove', { pointerId: 7, clientX: area.left + 250, clientY: 300, bubbles: true }));
+    s.dispatchEvent(new PointerEvent('pointerup', { pointerId: 7, bubbles: true }));
+    await new Promise((r) => requestAnimationFrame(r));
+    const dragged = panel();
+    s.dispatchEvent(new PointerEvent('pointerdown', { pointerId: 8, clientX: 0, clientY: 300, bubbles: true }));
+    s.dispatchEvent(new PointerEvent('pointermove', { pointerId: 8, clientX: area.right, clientY: 300, bubbles: true }));
+    s.dispatchEvent(new PointerEvent('pointerup', { pointerId: 8, bubbles: true }));
+    await new Promise((r) => requestAnimationFrame(r));
+    const widest = panel();
+    s.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));
+    await new Promise((r) => requestAnimationFrame(r));
+    const keyed = panel();
+    const saved = JSON.parse(localStorage.getItem('gregg.ui.v1')).pane.w;
+    s.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    await new Promise((r) => requestAnimationFrame(r));
+    return { before, dragged, widest, keyed, saved, reset: panel(), area: area.width };
+  })()`);
+  check(Math.abs(split.dragged - 250) < 20 && split.widest <= 0.6 * split.area + 2 && split.keyed < split.widest && split.saved < 0.6 && Math.abs(split.reset - split.before) < 2,
+    `dragging the handle resizes the panel, the pad keeps 40%, arrows nudge it, double-tap resets (${JSON.stringify(split)})`);
+
+  // Export hands a file to the browser (a download where there is no share sheet).
+  const saved2 = await evaluate(`(async () => {
+    const names = [];
+    const orig = HTMLAnchorElement.prototype.click;
+    HTMLAnchorElement.prototype.click = function () { names.push(this.download); };
+    document.getElementById('export').click();
+    await new Promise((r) => setTimeout(r, 100));
+    document.getElementById('backup').click();
+    await new Promise((r) => setTimeout(r, 100));
+    HTMLAnchorElement.prototype.click = orig;
+    return { names, status: document.getElementById('ex-status').textContent };
+  })()`);
+  check(saved2.names.length === 2 && /^gregg-.*\.json$/.test(saved2.names[0]) && /\.json$/.test(saved2.names[1]) && /Exported/.test(saved2.status),
+    `Export JSON and Back up save files, and the example is marked saved2 (${JSON.stringify(saved2)})`);
+
   // Reset clears everything (after confirming).
   await evaluate(`location.hash = '#pad'`);
   await sleep(200);
@@ -649,6 +828,7 @@ try {
   await evaluate(`window.confirm = () => true; document.getElementById('reset-all').click()`);
   await sleep(500);
   await waitReady();
+  await startCoverage();
   const after = await evaluate(`(() => {
     const p = JSON.parse(localStorage.getItem('gregg.practice.v2') || '{}');
     return { attempts: Object.keys(p.attempts || {}).length, quiz: localStorage.getItem('gregg.quiz.v1'), writer: localStorage.getItem('gregg.writer.v1'), lessons: localStorage.getItem('gregg.lessons.v1'), title: document.getElementById('ex-title').textContent };
@@ -659,6 +839,7 @@ try {
   check(consoleErrors.length === 0, `no console errors${consoleErrors.length ? `: ${consoleErrors.join(' | ')}` : ''}`);
   await snap();
   flushCoverage();
+  if (COVERAGE_DIR) await send('Network.setBypassServiceWorker', { bypass: false });
 
   // Offline: once the service worker has saved the app, it loads with no network.
   const cached = await evaluate(`(async () => {
@@ -672,6 +853,7 @@ try {
   await send('Page.reload');
   await sleep(500);
   await waitReady();
+  await startCoverage();
   const offline = await evaluate(`(async () => {
     location.hash = '#learn';
     await new Promise((r) => setTimeout(r, 300));

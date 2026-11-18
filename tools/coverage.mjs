@@ -11,5 +11,5 @@ const run = (cmd, args, env = {}) => {
 run('node', ['--test', ...readdirSync('tests').filter((f) => f.endsWith('.test.mjs')).map((f) => 'tests/' + f)], { NODE_V8_COVERAGE: tmp });
 run('node', ['tests/inkpad.cdp.mjs'], { COVERAGE_DIR: tmp });
 run('npx', ['c8', 'report', '--temp-directory', tmp, '--reports-dir', 'coverage', '--all', '--src', 'app',
-  '--include', 'app/js/**', '--include', 'app/data/**', '--check-coverage', '--lines', '80',
+  '--include', 'app/js/**', '--include', 'app/data/**', '--check-coverage', '--lines', '95', '--functions', '90',
   '--reporter', 'text', '--reporter', 'html', '--reporter', 'text-summary']);
