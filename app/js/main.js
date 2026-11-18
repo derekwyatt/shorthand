@@ -11,6 +11,7 @@ import { createQuiz } from './quiz.js';
 import { createLessons } from './lessons.js';
 import { exportProgress, importProgress, backupFileName } from './backup.js';
 import { getWriterScale, learnWriterScale } from './writer.js';
+import { el, saveFile } from './dom.js';
 
 // v2: strokes are kept per example. (v1 kept one global page; it is ignored.)
 const STORE_KEY = 'gregg.practice.v2';
@@ -84,14 +85,7 @@ guideInput.addEventListener('change', () => {
 const levelSelect = $('level-select');
 for (const [label, levels] of [['Basics', LEVELS.filter((l) => !l.unit)], ['Manual units', LEVELS.filter((l) => l.unit)]]) {
   if (!levels.length) continue;
-  const group = document.createElement('optgroup');
-  group.label = label;
-  for (const l of levels) {
-    const o = new Option(`${l.id} · ${l.name}`, String(l.id));
-    o.title = l.description;
-    group.append(o);
-  }
-  levelSelect.append(group);
+  levelSelect.append(el('optgroup', { label }, ...levels.map((l) => el('option', { value: String(l.id), textContent: `${l.id} · ${l.name}`, title: l.description }))));
 }
 levelSelect.addEventListener('change', () => goTo(EXAMPLES.findIndex((e) => e.level === Number(levelSelect.value))));
 applySpacing(saved.lineSpacing);
@@ -118,26 +112,9 @@ $('ex-prev').addEventListener('click', () => goTo(index - 1));
 $('ex-next').addEventListener('click', () => goTo(index + 1));
 $('ex-replay').addEventListener('click', () => panel.replay());
 // Back up: share sheet where available (lets the user pick Drive / Files), else a download.
-$('backup').addEventListener('click', async () => {
+$('backup').addEventListener('click', () => {
   const text = JSON.stringify(exportProgress(localStorage), null, 2);
-  const name = backupFileName(new Date());
-  const file = new File([text], name, { type: 'application/json' });
-  if (navigator.canShare?.({ files: [file] })) {
-    try {
-      await navigator.share({ files: [file] });
-      return;
-    } catch (err) {
-      if (err?.name === 'AbortError') return;
-    }
-  }
-  const url = URL.createObjectURL(file);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = name;
-  document.body.append(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  saveFile(new File([text], backupFileName(new Date()), { type: 'application/json' }));
 });
 $('restore').addEventListener('click', () => $('restore-file').click());
 $('restore-file').addEventListener('change', async (e) => {
@@ -291,7 +268,7 @@ function renderLinePicks(all, picked) {
   }
   box.replaceChildren(...all.map((line, i) => {
     const n = i + 1;
-    const b = Object.assign(document.createElement('button'), { type: 'button', className: 'line-pick', textContent: String(n), title: picked === n ? 'Show stats for every line' : `Show stats for line ${n} only` });
+    const b = el('button', { type: 'button', className: 'line-pick', textContent: String(n), title: picked === n ? 'Show stats for every line' : `Show stats for line ${n} only` });
     b.style.top = `${line.y}px`;
     b.setAttribute('aria-pressed', String(picked === n));
     b.addEventListener('click', () => {
@@ -364,29 +341,10 @@ async function exportJSON() {
   const name = `gregg-${payload.example.id}-${stamp}.json`;
   const file = new File([json], name, { type: 'application/json' });
 
-  const markExported = () => {
-    saved.attempts[payload.example.id] = { strokes: payload.strokes, exportedAt: Date.now() };
-    persist();
-    showStatus();
-  };
-
-  // On the iPad the share sheet (AirDrop, Files, Mail) is the most useful target.
-  if (navigator.canShare?.({ files: [file] })) {
-    try {
-      await navigator.share({ files: [file], title: name });
-      markExported();
-      return;
-    } catch (err) {
-      if (err.name === 'AbortError') return;
-    }
-  }
-  const url = URL.createObjectURL(file);
-  const a = Object.assign(document.createElement('a'), { href: url, download: name });
-  document.body.append(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-  markExported();
+  if (!(await saveFile(file))) return;
+  saved.attempts[payload.example.id] = { strokes: payload.strokes, exportedAt: Date.now() };
+  persist();
+  showStatus();
 }
 
 // Offline: the service worker keeps every file of the app on the device (see sw.js).

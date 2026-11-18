@@ -46,6 +46,11 @@
   <main id="practice" class="practice view" data-view="pad quiz learn">
     <aside class="example-panel" aria-label="Example to copy">
       <select id="level-select" class="level-select" aria-label="Level"></select>
+      <div class="ex-nav">
+        <button id="ex-prev" type="button">◀ Prev</button>
+        <button id="ex-replay" type="button">Replay</button>
+        <button id="ex-next" type="button">Next ▶</button>
+      </div>
       <div id="ex-counter" class="ex-counter"></div>
       <div id="ex-art" class="example-art"></div>
       <h2 id="ex-title" class="ex-title"></h2>
@@ -60,11 +65,6 @@
       <div id="ex-meaning" class="ex-meaning"></div>
       <div id="ex-source" class="ex-source"></div>
       <div id="ex-status" class="ex-status" aria-live="polite"></div>
-      <div class="ex-nav">
-        <button id="ex-prev" type="button">◀ Prev</button>
-        <button id="ex-replay" type="button">Replay</button>
-        <button id="ex-next" type="button">Next ▶</button>
-      </div>
     </aside>
     <aside id="quiz-panel" class="example-panel quiz-panel" aria-label="Quiz" hidden></aside>
     <aside id="lesson-panel" class="example-panel lesson-panel" aria-label="Lesson"></aside>

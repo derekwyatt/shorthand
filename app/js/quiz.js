@@ -4,9 +4,9 @@ import { compileExample } from './join.js';
 import { bbox, renderCompiledSVG, animateStroke, cubicPoint, pathData } from './render.js';
 import { assessAttempt, PASS_SCORE } from './assess.js';
 import { generateQuiz } from './quizgen.js';
-import { actualSizeStrip } from './practice.js';
-import { plateFor } from '../data/plates.js';
+import { actualSizeStrip, scoreClass, printedOutline } from './practice.js';
 import { getWriterScale, learnWriterScale } from './writer.js';
+import { el, button, svgEl } from './dom.js';
 
 const STORE_KEY = 'gregg.quiz.v1';
 const KEEP = 20;
@@ -16,16 +16,8 @@ const LEVEL_OPTIONS = LEVELS.map((l) => [String(l.id), `${l.id} · ${l.name}`]);
 const TYPE_OPTIONS = [['read', 'Read'], ['write', 'Write'], ['series', 'Look-alike series']];
 const SERIES_UNIT = 22; // px per U, shared by every row of a series reveal
 const SERIES_MARGIN = 10;
-const SVG_NS = 'http://www.w3.org/2000/svg';
 const BY_ID = new Map(EXAMPLES.map((e) => [e.id, e]));
 
-function el(tag, props = {}, ...children) {
-  const node = Object.assign(document.createElement(tag), props);
-  node.append(...children);
-  return node;
-}
-
-const button = (text, className, onClick) => el('button', { type: 'button', className, textContent: text, onclick: onClick });
 const meaningLines = (example) => example.meaning.map((line) => el('p', { textContent: line }));
 
 function loadResults() {
@@ -47,11 +39,6 @@ function saveResult(result) {
 
 const checkedValues = (box) => [...box.querySelectorAll('input:checked')].map((i) => i.value);
 
-function scoreClass(score) {
-  if (score >= 85) return 'good';
-  return score >= 65 ? 'close' : 'poor';
-}
-
 function scoreBlock(result) {
   const cls = scoreClass(result.score);
   const badge = el('div', { className: `score ${result.complete ? cls : 'empty'}`, textContent: result.complete ? String(result.score) : `${result.written}/${result.expected}` });
@@ -70,12 +57,6 @@ function choiceButton(id, onPick) {
 
 const questionPoints = (question) => (question.type === 'series' ? question.exampleIds.length : 1);
 const answerPoints = (answer) => (answer?.members ? answer.members.filter((m) => m.correct).length : Number(!!answer?.correct));
-
-function svgEl(name, attrs = {}) {
-  const node = document.createElementNS(SVG_NS, name);
-  for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, v);
-  return node;
-}
 
 // Learner ink (pad px, y down) as U-space points (y up).
 const inkInU = (strokes, unitPx) => strokes.map((s) => s.points.map((p) => ({ x: p.x / unitPx, y: -p.y / unitPx })));
@@ -253,10 +234,10 @@ export function createQuiz({ panel, pad, assist, unitPx }) {
       status.className = `quiz-result ${correct ? 'good' : 'bad'}`;
       status.textContent = correct ? 'Correct' : `Not quite: it says “${example.title}”`;
       // The manual's printed outline (it names the word, so only after answering).
-      const plate = plateFor(example.id);
-      reveal.replaceChildren(...meaningLines(example), ...(plate ? [
-        el('div', { className: 'ex-caption', textContent: `In the manual, p. ${plate.page}` }),
-        el('div', { className: 'ex-plate' }, el('img', { srcset: plate.srcset, className: 'plate', alt: `The manual's printed outline for ${example.title}, page ${plate.page}` })),
+      const printed = printedOutline(example);
+      reveal.replaceChildren(...meaningLines(example), ...(printed ? [
+        el('div', { className: 'ex-caption', textContent: `In the manual, p. ${printed.page}` }),
+        el('div', { className: 'ex-plate' }, printed),
       ] : []));
       panel.append(nextButton());
     }
@@ -291,16 +272,7 @@ export function createQuiz({ panel, pad, assist, unitPx }) {
       showResult(result, correct);
     }
 
-    function assess() {
-      try {
-        return assessAttempt(example, pad.strokes, unitPx(), { scale: getWriterScale() });
-      } catch (err) {
-        console.error('assessment failed', err);
-        return null;
-      }
-    }
-
-    checkBtn = button('Check', 'quiz-btn', () => grade(assess()));
+    checkBtn = button('Check', 'quiz-btn', () => grade(assess(example, pad.strokes)));
     checkBtn.disabled = !pad.strokes.length;
     actions.append(checkBtn, button('I don’t know', 'quiz-btn alt', () => grade(null)));
     panel.replaceChildren(header(), el('div', { className: 'quiz-prompt', textContent: question.prompt }), actions, status, feedback);
@@ -334,7 +306,8 @@ export function createQuiz({ panel, pad, assist, unitPx }) {
     );
   }
 
-  function assessMember(example, strokes) {
+  // A scored attempt, or null if it could not be assessed.
+  function assess(example, strokes) {
     try {
       return assessAttempt(example, strokes, unitPx(), { scale: getWriterScale() });
     } catch (err) {
@@ -345,7 +318,7 @@ export function createQuiz({ panel, pad, assist, unitPx }) {
 
   function finishSeries(question, state) {
     state.members = question.exampleIds.map((id, i) => {
-      const result = assessMember(BY_ID.get(id), state.strokes[i]);
+      const result = assess(BY_ID.get(id), state.strokes[i]);
       const correct = !!result && result.complete && result.score >= PASS_SCORE;
       return { id, result, correct };
     });

@@ -3,12 +3,8 @@
 import { MANUAL_TEXT, FRONT_MATTER } from '../data/manual.js';
 import { BRIEF_FORMS } from '../data/briefs.js';
 import { renderBlocks } from './manualtext.js';
+import { el, button } from './dom.js';
 
-function el(tag, props = {}, ...children) {
-  const node = Object.assign(document.createElement(tag), props);
-  node.append(...children);
-  return node;
-}
 
 const SOURCE = 'From J. Andrew Owen’s Anniversary Manual site, greggshorthand.github.io.';
 
@@ -83,9 +79,8 @@ export function buildReference(root) {
     body.scrollTop = 0;
   };
   menu.append(...SECTIONS.map((s) => {
-    const b = el('button', { type: 'button', textContent: s.title });
+    const b = button(s.title, '', () => open(s));
     b.dataset.id = s.id;
-    b.onclick = () => open(s);
     return b;
   }));
   root.replaceChildren(menu, body);

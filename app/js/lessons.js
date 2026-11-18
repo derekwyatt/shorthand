@@ -6,22 +6,18 @@
 // read steps also show their outlines at actual size, on ruled lines like the pad's.
 // Progress (current step and steps done) is kept in localStorage; strokes are not.
 import { LESSONS, PASS_SCORE, stepKey, exampleFor, isTask } from '../data/lessons.js';
-import { plateFor, sectionPlate, readingPlate } from '../data/plates.js';
+import { sectionPlate, readingPlate } from '../data/plates.js';
 import { MANUAL_TEXT } from '../data/manual.js';
 import { renderBlocks } from './manualtext.js';
 import { compileExample } from './join.js';
 import { bbox, renderCompiledSVG, animateStroke } from './render.js';
-import { createExamplePanel, actualSizeStrip } from './practice.js';
+import { createExamplePanel, actualSizeStrip, printedOutline } from './practice.js';
 import { assessRepeats } from './repeats.js';
 import { getWriterScale, learnWriterScale } from './writer.js';
+import { el, button } from './dom.js';
 
 const STORE_KEY = 'gregg.lessons.v1';
 
-function el(tag, props = {}, ...children) {
-  const node = Object.assign(document.createElement(tag), props);
-  node.append(...children);
-  return node;
-}
 // The choices of a reading question in an order of their own: the data lists the answer
 // first. The order is fixed for a step within a session (so Back and Next don't reshuffle it)
 // and differs between sessions.
@@ -71,8 +67,6 @@ export function keyItems(line) {
 
 const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII', 'XIII', 'XIV', 'XV', 'XVI', 'XVII', 'XVIII', 'XIX', 'XX'];
 const roman = (n) => ROMAN[n] ?? String(n);
-
-const button = (text, className, onClick) => el('button', { type: 'button', className, textContent: text, onclick: onClick });
 
 function loadProgress() {
   const defaults = { unit: LESSONS[0].id, at: {}, done: {} };
@@ -147,14 +141,6 @@ export function createLessons({ panel, pad, assist, unitPx }) {
     renderNav();
   }
 
-  // The manual's printed outline for an example, or null if it does not print it.
-  function plateImg(id) {
-    const p = plateFor(id);
-    if (!p) return null;
-    const example = exampleFor(id);
-    return el('img', { srcset: p.srcset, className: 'plate', alt: `The manual's printed outline for ${example.title}, page ${p.page}`, title: `As printed in the manual, p. ${p.page}` });
-  }
-
   // Section plates of a rule: whole figures or tables from the manual.
   function sectionPlates(ids) {
     if (!ids.length) return [];
@@ -181,7 +167,7 @@ export function createLessons({ panel, pad, assist, unitPx }) {
     const fig = el('figure', { className: 'lesson-fig', title: 'Tap to replay' }, svg);
     fig.replay = () => animateStroke(svg);
     fig.onclick = fig.replay;
-    const printed = plate ? plateImg(id) : null;
+    const printed = plate ? printedOutline(example) : null;
     if (printed) fig.append(printed);
     if (caption) fig.append(el('figcaption', { textContent: example.title }));
     return fig;
@@ -248,7 +234,7 @@ export function createLessons({ panel, pad, assist, unitPx }) {
   const courseBar = progressRow('All units');
   const bar = el('div', { className: 'lesson-progress' }, unitBar.row, courseBar.row);
   const body = el('div', { className: 'lesson-body' });
-  const nav = el('div', { className: 'ex-nav lesson-nav' });
+  const nav = el('div', { className: 'ex-nav' });
   // Navigation sits at the top, below the unit picker, and stays there as the step scrolls.
   panel.replaceChildren(units, nav, heading, bar, body);
 
@@ -357,10 +343,10 @@ export function createLessons({ panel, pad, assist, unitPx }) {
     const reveal = () => {
       for (const b of choices.children) b.disabled = true;
       meaning.replaceChildren(...example.meaning.map((line) => el('p', { textContent: line })));
-      const printed = plateImg(s.example);
+      const printed = printedOutline(example);
       ruled.replaceChildren(...stripSection([s.example]));
       after.replaceChildren(
-        ...(printed ? [el('div', { className: 'ex-caption', textContent: `In the manual, p. ${plateFor(s.example).page}` }), el('div', { className: 'ex-plate' }, printed)] : []),
+        ...(printed ? [el('div', { className: 'ex-caption', textContent: `In the manual, p. ${printed.page}` }), el('div', { className: 'ex-plate' }, printed)] : []),
         ...trySection([s.example]));
       select(s.example);
     };

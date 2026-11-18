@@ -9,8 +9,8 @@
 import { guideUnits, cleanStrokes, toUserStrokes, isDot, angleText, strokeName, DOT_MAX } from './assess.js';
 import { pathData, pathLength, bbox } from './render.js';
 import { compileExample } from './join.js';
+import { svgEl } from './dom.js';
 
-const SVG_NS = 'http://www.w3.org/2000/svg';
 const DEG = 180 / Math.PI;
 const GUIDE_AFTER = 0.6; // U of pen travel before a stroke counts as "not a dot"
 const wrap = (a) => ((((a + 180) % 360) + 360) % 360) - 180;
@@ -53,24 +53,12 @@ export function createAssist({ overlay, check, hint, model, modelOf, unitPx, ena
     const u = unitPx() * scale;
     const baseline = Math.max(1, Math.ceil(((box.maxY - box.minY) * u + 4) / lineSpacing)) * lineSpacing;
     const origin = { x: MODEL_LEFT - box.minX * u, y: baseline + box.minY * u };
-    const path = document.createElementNS(SVG_NS, 'path');
-    path.setAttribute('d', pathData(compiled, u, origin));
-    path.setAttribute('class', 'model-path');
+    const path = svgEl('path', { d: pathData(compiled, u, origin), class: 'model-path' });
     const dots = compiled.segments.filter((s) => s.type === 'dot').map((s) => {
-      if (s.dash) {
-        const l = document.createElementNS(SVG_NS, 'line');
-        const x = origin.x + s.p.x * u, y = origin.y - s.p.y * u, half = (s.dash * u) / 2;
-        const a = ((s.angle ?? 0) * Math.PI) / 180, hx = half * Math.cos(a), hy = half * Math.sin(a);
-        l.setAttribute('x1', x - hx); l.setAttribute('x2', x + hx); l.setAttribute('y1', y + hy); l.setAttribute('y2', y - hy);
-        l.setAttribute('class', 'model-path');
-        return l;
-      }
-      const c = document.createElementNS(SVG_NS, 'circle');
-      c.setAttribute('cx', origin.x + s.p.x * u);
-      c.setAttribute('cy', origin.y - s.p.y * u);
-      c.setAttribute('r', 2.8);
-      c.setAttribute('class', 'model-dot');
-      return c;
+      const x = origin.x + s.p.x * u, y = origin.y - s.p.y * u;
+      if (!s.dash) return svgEl('circle', { cx: x, cy: y, r: 2.8, class: 'model-dot' });
+      const half = (s.dash * u) / 2, a = ((s.angle ?? 0) * Math.PI) / 180, hx = half * Math.cos(a), hy = half * Math.sin(a);
+      return svgEl('line', { x1: x - hx, x2: x + hx, y1: y + hy, y2: y - hy, class: 'model-path' });
     });
     model.replaceChildren(path, ...dots);
   }
@@ -78,10 +66,7 @@ export function createAssist({ overlay, check, hint, model, modelOf, unitPx, ena
   function drawGuide(unit, at) {
     const u = unitPx();
     const s = unit.compiled.start;
-    const path = document.createElementNS(SVG_NS, 'path');
-    path.setAttribute('d', pathData(unit.compiled, u, { x: at.x - s.x * u, y: at.y + s.y * u }));
-    path.setAttribute('class', 'guide-path');
-    overlay.replaceChildren(path);
+    overlay.replaceChildren(svgEl('path', { d: pathData(unit.compiled, u, { x: at.x - s.x * u, y: at.y + s.y * u }), class: 'guide-path' }));
   }
 
   // Index of the outline the learner is about to write = outlines (not dots) already written.
@@ -195,18 +180,9 @@ export function createAssist({ overlay, check, hint, model, modelOf, unitPx, ena
         const cls = c.ok ? 'ok' : 'bad';
         if (c.kind === 'outline') {
           const d = pathData({ segments: c.segments }, u, { x: 0, y: 0 });
-          if (!d) continue;
-          const el = document.createElementNS(SVG_NS, 'path');
-          el.setAttribute('d', d);
-          el.setAttribute('class', `check-path ${cls}`);
-          nodes.push(el);
+          if (d) nodes.push(svgEl('path', { d, class: `check-path ${cls}` }));
         } else {
-          const el = document.createElementNS(SVG_NS, 'circle');
-          el.setAttribute('cx', c.p.x * u);
-          el.setAttribute('cy', -c.p.y * u);
-          el.setAttribute('r', 2.6);
-          el.setAttribute('class', `check-dot ${cls}`);
-          nodes.push(el);
+          nodes.push(svgEl('circle', { cx: c.p.x * u, cy: -c.p.y * u, r: 2.6, class: `check-dot ${cls}` }));
         }
       }
       check.replaceChildren(...nodes);

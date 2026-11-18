@@ -52,6 +52,7 @@ self.PRECACHE = [
   'js/assess.js',
   'js/assist.js',
   'js/backup.js',
+  'js/dom.js',
   'js/gallery.js',
   'js/ink.js',
   'js/join.js',

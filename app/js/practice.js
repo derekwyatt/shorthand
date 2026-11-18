@@ -5,10 +5,9 @@ import { LEVELS } from '../data/examples.js';
 import { plateFor } from '../data/plates.js';
 import { compileExample, translateCompiled } from './join.js';
 import { bbox, renderCompiledSVG, animateStroke } from './render.js';
-
+import { el, svgEl } from './dom.js';
 
 const STRIP_GAP = 2.5; // U between outlines in an actual-size strip
-const SVG_NS = 'http://www.w3.org/2000/svg';
 
 // Examples at actual size, side by side, each resting on a rule: how they look on the pad at
 // `lineSpacing`. `labels` names each one under its outline; `onPick(example)` makes each
@@ -33,11 +32,6 @@ export function actualSizeStrip(examples, { lineSpacing: ls, labels = true, onPi
   const compiled = { segments: placed.flatMap((p) => p.c.segments), start: placed[0].c.start, end: placed[placed.length - 1].c.end };
   const label = labels ? `Actual size: ${examples.map((e) => e.title).join(', ')}` : 'An outline at actual size';
   const svg = renderCompiledSVG(compiled, { unit, width, height, origin, strokeWidth: 2.2, label });
-  const svgEl = (name, attrs) => {
-    const node = document.createElementNS(SVG_NS, name);
-    for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, v);
-    return node;
-  };
   for (const p of placed) {
     if (labels) {
       const text = svgEl('text', { x: origin.x + ((p.from + p.to) / 2) * unit, y: baselineY + Math.max(0.55 * ls, 18), 'text-anchor': 'middle', class: 'strip-label' });
@@ -52,10 +46,23 @@ export function actualSizeStrip(examples, { lineSpacing: ls, labels = true, onPi
       svg.append(hit);
     }
   }
-  const box = Object.assign(document.createElement('div'), { className: 'ex-actual lesson-actual' });
+  const box = el('div', { className: 'ex-actual lesson-actual' });
   box.style.height = `${height}px`;
   box.append(svg);
   return box;
+}
+
+// The badge colour for a score.
+export const scoreClass = (score) => (score >= 85 ? 'good' : score >= 65 ? 'close' : 'poor');
+
+// The manual's printed outline for an example (an <img> with its page as `.page`), or null
+// if the manual does not print it.
+export function printedOutline(example) {
+  const p = plateFor(example.id);
+  if (!p) return null;
+  const img = el('img', { srcset: p.srcset, className: 'plate', alt: `The manual's printed outline for ${example.title}, page ${p.page}`, title: `As printed in the manual, p. ${p.page}` });
+  img.page = p.page;
+  return img;
 }
 
 export function createExamplePanel({ art, title, meaning, source, counter, score, verdict, hint, critiques }) {
@@ -64,18 +71,15 @@ export function createExamplePanel({ art, title, meaning, source, counter, score
 
   // Views of the same outline: enlarged (shape and direction), as printed in the manual
   // (when it prints it), and actual size on ruled lines (how big to write it on the pad).
-  const big = Object.assign(document.createElement('div'), { className: 'ex-big' });
-  const plate = Object.assign(document.createElement('div'), { className: 'ex-plate' });
-  const actual = Object.assign(document.createElement('div'), { className: 'ex-actual' });
-  const caption = (text) => Object.assign(document.createElement('div'), { className: 'ex-caption', textContent: text });
+  const big = el('div', { className: 'ex-big' });
+  const plate = el('div', { className: 'ex-plate' });
+  const actual = el('div', { className: 'ex-actual' });
+  const caption = (text) => el('div', { className: 'ex-caption', textContent: text });
   art.replaceChildren(caption('Enlarged: green = start, red = end'), big, plate, caption('Actual size: write it this big'), actual);
 
   function showPlate(example) {
-    const p = plateFor(example.id);
-    plate.replaceChildren(...(p ? [
-      caption(`In the manual, p. ${p.page}`),
-      Object.assign(document.createElement('img'), { srcset: p.srcset, className: 'plate', alt: `The manual's printed outline for ${example.title}, page ${p.page}` }),
-    ] : []));
+    const img = printedOutline(example);
+    plate.replaceChildren(...(img ? [caption(`In the manual, p. ${img.page}`), img] : []));
   }
 
   function draw({ animate }) {
@@ -119,7 +123,7 @@ export function createExamplePanel({ art, title, meaning, source, counter, score
       current = { example, index, total, lineSpacing };
       counter.textContent = `Level ${example.level} · ${LEVELS[example.level - 1].name} · ${index + 1} of ${total}`;
       title.textContent = example.title;
-      meaning.replaceChildren(...example.meaning.map((line) => Object.assign(document.createElement('p'), { textContent: line })));
+      meaning.replaceChildren(...example.meaning.map((line) => el('p', { textContent: line })));
       source.textContent = `Source: ${example.source}`;
       showPlate(example);
       draw({ animate });
@@ -145,17 +149,14 @@ export function createExamplePanel({ art, title, meaning, source, counter, score
         score.textContent = `${result.written}/${result.expected}`;
         verdict.textContent = `${line ? `Line ${line} \u00b7 ` : ''}Keep going: ${result.written} of ${result.expected} parts written.`;
       } else {
-        let cls = 'poor';
-        if (result.score >= 85) cls = 'good';
-        else if (result.score >= 65) cls = 'close';
-        score.className = `score ${cls}`;
+        score.className = `score ${scoreClass(result.score)}`;
         score.textContent = String(result.score);
         const progress = result.latestComplete ? '' : ` \u00b7 repeat ${result.count} in progress`;
         verdict.textContent = `${line ? `Line ${line} \u00b7 ` : ''}${result.count} ${result.count === 1 ? 'repeat' : 'repeats'} \u00b7 ${result.correctCount} correct \u00b7 best ${result.best}${progress}`;
       }
       let items = result.critiques;
       if (!items.length) items = [{ level: 'ok', text: result.complete ? 'Every part matches the example.' : 'So far so good.' }];
-      critiques.replaceChildren(...items.map((c) => Object.assign(document.createElement('li'), { className: c.level, textContent: c.text })));
+      critiques.replaceChildren(...items.map((c) => el('li', { className: c.level, textContent: c.text })));
     },
   };
 }

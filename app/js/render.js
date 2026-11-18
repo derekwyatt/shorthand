@@ -4,6 +4,8 @@
 // Geometry functions work in U with y up and need no DOM (they are unit-tested
 // in Node). SVG functions convert to pixels with y down.
 
+import { svgEl } from './dom.js';
+
 const rad = (deg) => (deg * Math.PI) / 180;
 const add = (a, b) => ({ x: a.x + b.x, y: a.y + b.y });
 const mul = (a, k) => ({ x: a.x * k, y: a.y * k });
@@ -187,12 +189,8 @@ export function penStrokes(compiled) {
   return runs.map((segments) => ({ segments, start: segments[0].p0, end: segments[segments.length - 1].p3 }));
 }
 
-const SVG_NS = 'http://www.w3.org/2000/svg';
-const el = (name, attrs = {}) => {
-  const node = document.createElementNS(SVG_NS, name);
-  for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, v);
-  return node;
-};
+// SVG elements, by attribute.
+const el = svgEl;
 
 // Builds an <svg> showing one stroke at `unit` px per U. Returns the element; the
 // pieces needed for animation are on `svg.parts`.
