@@ -19,6 +19,7 @@ const outDir = join(repo, 'app', 'plates');
 const PDFTOPPM = process.env.PDFTOPPM || (existsSync('/opt/homebrew/bin/pdftoppm') ? '/opt/homebrew/bin/pdftoppm' : 'pdftoppm');
 const BASE_DPI = 80;
 const DPI = 300;
+const HI_DPI = 600; // word, letter and section plates (shown at 300 dpi, as 2x images)
 const PAPER = 200; // lighter than this becomes white
 const INK = 140; // darker than this counts as ink
 const MIN_INK = 2; // ink pixels needed for a row or column to count
@@ -75,8 +76,54 @@ function render(page, box, tmp, dpi = DPI, file = pdf) {
   return parsePgm(readFileSync(`${prefix}.pgm`));
 }
 
+// The Manual's scan is only about 190 ppi: cut at 300 dpi or more its strokes are blocky,
+// with stair-stepped edges and specks of paper inside them. `smooth` redraws a cut made at
+// `s` times the wanted resolution: a blur about a scan pixel wide fills the specks and
+// rounds the steps off, a steep tone curve around half ink redraws crisp edges (hairlines,
+// which never reach half ink, keep a strengthened copy of themselves), and averaging s×s
+// blocks back down anti-aliases them.
+const SCAN_PPI = 190;
+function boxBlur(d, w, h, r) {
+  const out = new Float32Array(w * h), tmp = new Float32Array(w * h), n = 2 * r + 1;
+  for (let y = 0; y < h; y++) {
+    let acc = 0;
+    for (let x = -r; x <= r; x++) acc += d[y * w + Math.min(w - 1, Math.max(0, x))];
+    for (let x = 0; x < w; x++) {
+      tmp[y * w + x] = acc / n;
+      acc += d[y * w + Math.min(w - 1, x + r + 1)] - d[y * w + Math.max(0, x - r)];
+    }
+  }
+  for (let x = 0; x < w; x++) {
+    let acc = 0;
+    for (let y = -r; y <= r; y++) acc += tmp[Math.min(h - 1, Math.max(0, y)) * w + x];
+    for (let y = 0; y < h; y++) {
+      out[y * w + x] = acc / n;
+      acc += tmp[Math.min(h - 1, y + r + 1) * w + x] - tmp[Math.max(0, y - r) * w + x];
+    }
+  }
+  return out;
+}
+function smooth({ w, h, data }, s, dpi) {
+  let d = Float32Array.from(data, (v) => 1 - v / 255);
+  // Three box passes of radius r: a near-Gaussian of about one scan pixel.
+  const r = Math.max(1, Math.round((1.0 * dpi / SCAN_PPI) / 1.15));
+  for (let k = 0; k < 3; k++) d = boxBlur(d, w, h, r);
+  const tone = (v) => {
+    const t = Math.min(1, Math.max(0, (v - 0.4) / 0.3));
+    return Math.max(t * t * (3 - 2 * t), Math.min(1, Math.max(0, v - 0.2) * 1.6));
+  };
+  const W = Math.floor(w / s), H = Math.floor(h / s);
+  const out = Buffer.alloc(W * H);
+  for (let Y = 0; Y < H; Y++) for (let X = 0; X < W; X++) {
+    let n = 0;
+    for (let j = 0; j < s; j++) for (let i = 0; i < s; i++) n += tone(d[(Y * s + j) * w + X * s + i]);
+    out[Y * W + X] = Math.round(255 * (1 - n / (s * s)));
+  }
+  return { w: W, h: H, data: out };
+}
+
 // Whiten paper noise, then crop to the ink plus padding. Returns null if there is no ink.
-function clean(img, { paper = PAPER, black = null, ink = INK } = {}) {
+function clean(img, { paper = PAPER, black = null, ink = INK, pad = PAD } = {}) {
   const { w, h, data } = img;
   for (let i = 0; i < data.length; i++) {
     if (data[i] >= paper) data[i] = 255;
@@ -94,10 +141,10 @@ function clean(img, { paper = PAPER, black = null, ink = INK } = {}) {
   const top = first(rows);
   const left = first(cols);
   if (top < 0 || left < 0) return null;
-  const y0 = Math.max(0, top - PAD);
-  const y1 = Math.min(h - 1, last(rows) + PAD);
-  const x0 = Math.max(0, left - PAD);
-  const x1 = Math.min(w - 1, last(cols) + PAD);
+  const y0 = Math.max(0, top - pad);
+  const y1 = Math.min(h - 1, last(rows) + pad);
+  const x0 = Math.max(0, left - pad);
+  const x1 = Math.min(w - 1, last(cols) + pad);
   const ow = x1 - x0 + 1;
   const oh = y1 - y0 + 1;
   const out = Buffer.alloc(ow * oh);
@@ -125,25 +172,35 @@ function chunk(type, body) {
   return Buffer.concat([head, body, crc]);
 }
 
-// 8-bit grayscale PNG, every row filtered with "Up" (type 2).
+// 8-bit grayscale PNG with 16 grey levels (plenty for ink edges, and half the size), its rows
+// filtered with whichever of Sub, Up and Paeth compresses the picture best.
+const paeth = (a, b, c) => {
+  const p = a + b - c, pa = Math.abs(p - a), pb = Math.abs(p - b), pc = Math.abs(p - c);
+  return pa <= pb && pa <= pc ? a : pb <= pc ? b : c;
+};
 function encodePng({ w, h, data }) {
   const ihdr = Buffer.alloc(13);
   ihdr.writeUInt32BE(w, 0);
   ihdr.writeUInt32BE(h, 4);
   ihdr[8] = 8; // bit depth
   ihdr[9] = 0; // grayscale
-  const raw = Buffer.alloc((w + 1) * h);
-  for (let y = 0; y < h; y++) {
-    raw[y * (w + 1)] = 2;
-    for (let x = 0; x < w; x++) {
-      const up = y ? data[(y - 1) * w + x] : 0;
-      raw[y * (w + 1) + 1 + x] = (data[y * w + x] - up) & 0xff;
+  const px = Buffer.from(data.map((v) => Math.round(v / 17) * 17));
+  const filtered = (type) => {
+    const raw = Buffer.alloc((w + 1) * h);
+    for (let y = 0; y < h; y++) {
+      raw[y * (w + 1)] = type;
+      for (let x = 0; x < w; x++) {
+        const a = x ? px[y * w + x - 1] : 0, b = y ? px[(y - 1) * w + x] : 0, c = x && y ? px[(y - 1) * w + x - 1] : 0;
+        raw[y * (w + 1) + 1 + x] = (px[y * w + x] - (type === 1 ? a : type === 2 ? b : paeth(a, b, c))) & 0xff;
+      }
     }
-  }
+    return deflateSync(raw, { level: 9 });
+  };
+  const idat = [1, 2, 4].map(filtered).reduce((m, x) => (x.length < m.length ? x : m));
   return Buffer.concat([
     Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
     chunk('IHDR', ihdr),
-    chunk('IDAT', deflateSync(raw, { level: 9 })),
+    chunk('IDAT', idat),
     chunk('IEND', Buffer.alloc(0)),
   ]);
 }
@@ -184,7 +241,7 @@ try {
       const src = c.source ? config.sources[c.source] : null;
       const img = src
         ? clean(render(c.page, c.box, tmp, c.dpi, join(repo, src.pdf)), { paper: src.paper, black: src.black, ink: src.ink })
-        : clean(render(c.page + config.pageOffset, c.box, tmp, c.dpi));
+        : clean(smooth(render(c.page + config.pageOffset, c.box, tmp, (c.dpi ?? HI_DPI) * 2), 2, (c.dpi ?? HI_DPI) * 2), { pad: c.dpi ? PAD : PAD * 2 });
       if (!img) throw new Error('no ink found');
       const png = encodePng(img);
       writeFileSync(join(outDir, `${c.id}.png`), png);

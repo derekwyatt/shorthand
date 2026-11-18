@@ -1621,11 +1621,14 @@ export const SECTION_PLATES = {
 };
 
 const src = (file) => `plates/${file}.png`;
+// Word, letter and section plates are cut at 600 dpi, twice the size they are shown at:
+// `srcset` (a 2x image) keeps them at that size and lets a sharp screen use every pixel.
+const hi = (file) => ({ src: src(file), srcset: `${src(file)} 2x` });
 
-// The plate for an example: { src, page }, or null when the manual does not print it.
+// The plate for an example: { src, srcset, page }, or null when the manual does not print it.
 export function plateFor(exampleId) {
   const file = ALIASES[exampleId] ?? exampleId;
-  return PAGES[file] ? { src: src(file), page: PAGES[file] } : null;
+  return PAGES[file] ? { ...hi(file), page: PAGES[file] } : null;
 }
 
 // A Reading and Dictation Practice page (data/reading.js), cut whole.
@@ -1633,5 +1636,5 @@ export const readingPlate = (id) => ({ src: src(id) });
 
 export function sectionPlate(id) {
   const p = SECTION_PLATES[id];
-  return p ? { src: src(id), ...p } : null;
+  return p ? { ...hi(id), ...p } : null;
 }

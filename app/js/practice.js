@@ -74,7 +74,7 @@ export function createExamplePanel({ art, title, meaning, source, counter, score
     const p = plateFor(example.id);
     plate.replaceChildren(...(p ? [
       caption(`In the manual, p. ${p.page}`),
-      Object.assign(document.createElement('img'), { src: p.src, className: 'plate', alt: `The manual's printed outline for ${example.title}, page ${p.page}` }),
+      Object.assign(document.createElement('img'), { srcset: p.srcset, className: 'plate', alt: `The manual's printed outline for ${example.title}, page ${p.page}` }),
     ] : []));
   }
 

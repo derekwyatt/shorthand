@@ -153,7 +153,7 @@ export function createLessons({ panel, pad, assist, unitPx }) {
     const p = plateFor(id);
     if (!p) return null;
     const example = exampleFor(id);
-    return el('img', { src: p.src, className: 'plate', alt: `The manual's printed outline for ${example.title}, page ${p.page}`, title: `As printed in the manual, p. ${p.page}` });
+    return el('img', { srcset: p.srcset, className: 'plate', alt: `The manual's printed outline for ${example.title}, page ${p.page}`, title: `As printed in the manual, p. ${p.page}` });
   }
 
   // Section plates of a rule: whole figures or tables from the manual.
@@ -164,7 +164,7 @@ export function createLessons({ panel, pad, assist, unitPx }) {
       ...ids.map((id) => {
         const p = sectionPlate(id);
         return el('figure', { className: 'lesson-plate' },
-          el('img', { src: p.src, className: 'plate', alt: `${p.caption}, as printed in the manual, page ${p.page}` }),
+          el('img', { srcset: p.srcset, className: 'plate', alt: `${p.caption}, as printed in the manual, page ${p.page}` }),
           el('figcaption', { textContent: `${p.caption} (p. ${p.page})` }));
       }),
     ];

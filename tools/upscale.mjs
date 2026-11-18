@@ -104,9 +104,25 @@ const tone = (v, mid = 0.5, half = 0.17) => {
   return t * t * (3 - 2 * t);
 };
 
-// Hairlines (the shorthand in the word tables) never reach half ink once resampled: the tone
-// curve alone would break them into dashes, so the resampled ink, strengthened, is kept too.
-const ink = (v) => Math.max(tone(v), Math.min(1, Math.max(0, v - 0.08) * 2));
+// Ink relative to the darkest ink nearby. The hairlines of the word tables never reach half
+// ink once softened, so an absolute threshold would grey them out or break them into dashes;
+// measured against their own darkest point they are redrawn solid, while thick strokes
+// (whose neighbourhood is full ink) are unchanged.
+function normalise({ w, h, d }, r) {
+  const row = new Float32Array(w * h), m = new Float32Array(w * h);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    let v = 0;
+    for (let k = Math.max(0, x - r); k <= Math.min(w - 1, x + r); k++) v = Math.max(v, d[y * w + k]);
+    row[y * w + x] = v;
+  }
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    let v = 0;
+    for (let k = Math.max(0, y - r); k <= Math.min(h - 1, y + r); k++) v = Math.max(v, row[k * w + x]);
+    m[y * w + x] = v;
+  }
+  return { w, h, d: d.map((v, i) => (m[i] < 0.12 ? 0 : v / m[i])) };
+}
+const ink = (v) => tone(v, 0.56, 0.14); // a little over half: the softening widens strokes
 
 const CRC = Array.from({ length: 256 }, (_, n) => { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; return c >>> 0; });
 const crc32 = (buf) => { let c = 0xffffffff; for (const b of buf) c = CRC[(c ^ b) & 0xff] ^ (c >>> 8); return (c ^ 0xffffffff) >>> 0; };
@@ -146,7 +162,9 @@ for (const f of readdirSync(src).filter((x) => x.endsWith('.gif')).sort()) {
   const img = readDarkness(png);
   // Shown at 1.4× (2× on a retina screen, so 3× covers both); the large pages at 2×.
   const s = Math.max(img.w, img.h) > 250 ? 2 : 3;
-  const outBuf = encode(soften(resample(img, s), s));
+  // About 0.7 of a source pixel of blur (binomial passes of variance 1/2 each) fills the
+  // specks and irons out the steps; the tone curve then redraws the edges.
+  const outBuf = encode(normalise(soften(resample(img, s), Math.round(2 * (0.7 * s) ** 2)), Math.round(1.5 * s)));
   writeFileSync(join(out, basename(f, '.gif') + '.png'), outBuf);
   n++; bytes += outBuf.length;
 }

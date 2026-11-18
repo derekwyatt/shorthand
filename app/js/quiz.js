@@ -256,7 +256,7 @@ export function createQuiz({ panel, pad, assist, unitPx }) {
       const plate = plateFor(example.id);
       reveal.replaceChildren(...meaningLines(example), ...(plate ? [
         el('div', { className: 'ex-caption', textContent: `In the manual, p. ${plate.page}` }),
-        el('div', { className: 'ex-plate' }, el('img', { src: plate.src, className: 'plate', alt: `The manual's printed outline for ${example.title}, page ${plate.page}` })),
+        el('div', { className: 'ex-plate' }, el('img', { srcset: plate.srcset, className: 'plate', alt: `The manual's printed outline for ${example.title}, page ${plate.page}` })),
       ] : []));
       panel.append(nextButton());
     }
