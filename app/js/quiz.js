@@ -83,11 +83,11 @@ function overlaySVG(strokes, result, unitPx) {
   const px = (p) => `${(origin.x + p.x * SERIES_UNIT).toFixed(1)},${(origin.y - p.y * SERIES_UNIT).toFixed(1)}`;
   const svg = svgEl('svg', { class: 'series-art', width: Math.ceil(w), height: Math.ceil(h), viewBox: `0 0 ${Math.ceil(w)} ${Math.ceil(h)}`, role: 'img' });
   for (const c of check) {
-    const colour = c.ok ? '#2e7d32' : '#c62828';
-    if (c.kind === 'dot') svg.append(svgEl('circle', { cx: origin.x + c.p.x * SERIES_UNIT, cy: origin.y - c.p.y * SERIES_UNIT, r: 3, fill: colour }));
-    else svg.append(svgEl('path', { d: pathData({ segments: c.segments }, SERIES_UNIT, origin), fill: 'none', stroke: colour, 'stroke-width': 2, 'stroke-linecap': 'round' }));
+    const cls = c.ok ? 'ok' : 'bad';
+    if (c.kind === 'dot') svg.append(svgEl('circle', { cx: origin.x + c.p.x * SERIES_UNIT, cy: origin.y - c.p.y * SERIES_UNIT, r: 3, class: cls }));
+    else svg.append(svgEl('path', { d: pathData({ segments: c.segments }, SERIES_UNIT, origin), 'stroke-width': 2, 'stroke-linecap': 'round', class: cls }));
   }
-  for (const pts of ink) svg.append(svgEl('polyline', { points: pts.map(px).join(' '), fill: 'none', stroke: '#1565c0', 'stroke-width': 2.5, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }));
+  for (const pts of ink) svg.append(svgEl('polyline', { points: pts.map(px).join(' '), fill: 'none', class: 'learner', 'stroke-width': 2.5, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }));
   return svg;
 }
 

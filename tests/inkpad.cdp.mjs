@@ -181,7 +181,7 @@ try {
   // Line spacing control updates the rules and later strokes.
   await evaluate(`(() => { const r = document.getElementById('spacing'); r.value = 64; r.dispatchEvent(new Event('input')); })()`);
   check(await evaluate(`getComputedStyle(document.documentElement).getPropertyValue('--line-spacing').trim()`) === '64px', 'line spacing control sets the CSS rule spacing');
-  await pen(line(600, 300, 650, 300));
+  await pen(line(400, 300, 450, 300));
   s = await stored();
   check(s.data.strokes[2]?.lineSpacing === 64, 'new strokes record the new line spacing');
 

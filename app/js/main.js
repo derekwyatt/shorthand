@@ -12,6 +12,7 @@ import { createLessons } from './lessons.js';
 import { exportProgress, importProgress, backupFileName } from './backup.js';
 import { getWriterScale, learnWriterScale } from './writer.js';
 import { el, saveFile } from './dom.js';
+import { createUi } from './ui.js';
 
 // v2: strokes are kept per example. (v1 kept one global page; it is ignored.)
 const STORE_KEY = 'gregg.practice.v2';
@@ -69,6 +70,7 @@ const panel = createExamplePanel({
   score: $('ex-score'), verdict: $('ex-verdict'), hint: $('ex-repeat-hint'), critiques: $('ex-critiques'),
 });
 const assist = createAssist({ overlay: $('guide'), check: $('check'), hint: $('hint'), model: $('model'), modelOf: () => ({ example: inQuiz() ? null : guidedExample(), scale: getWriterScale(), lineSpacing: pad.lineSpacing }), unitPx, nextIndex: (strokes, point) => repeatIndexFor(guidedExample(), strokes, point, { unitPx: unitPx(), lineSpacing: pad.lineSpacing, scale: getWriterScale() }), enabled: () => guideInput.checked && !inQuiz() && !!guidedExample() });
+createUi({ menuButton: $('menu-btn'), menu: $('menu'), themes: $('themes'), split: $('split'), area: $('practice'), onTheme: () => pad.redraw() });
 const quiz = createQuiz({ panel: $('quiz-panel'), pad, assist, unitPx });
 const lessons = createLessons({ panel: $('lesson-panel'), pad, assist, unitPx });
 

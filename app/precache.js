@@ -65,6 +65,7 @@ self.PRECACHE = [
   'js/reference.js',
   'js/render.js',
   'js/repeats.js',
+  'js/ui.js',
   'js/writer.js',
   'manifest.webmanifest',
   'manual/alphabet.png',

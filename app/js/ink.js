@@ -137,8 +137,10 @@ export class InkPad {
     ctx.lineJoin = 'round';
   }
 
+  // Redraws every stroke; also picks up the theme's pen colour (css --pen).
   redraw() {
     const { ctx, canvas } = this;
+    this.inkColor = getComputedStyle(canvas).getPropertyValue('--pen').trim() || this.inkColor;
     ctx.save();
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, canvas.width, canvas.height);

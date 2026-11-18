@@ -27,22 +27,37 @@
     <div class="tools for-pad">
       <button id="undo" type="button">Undo</button>
       <button id="clear" type="button">Clear</button>
-      <button id="export" type="button">Export JSON</button>
-      <label class="ctl">Line spacing
-        <input id="spacing" type="range" min="32" max="96" step="4">
-        <output id="spacing-out"></output>
-      </label>
-      <label class="ctl"><input id="finger" type="checkbox"> Finger ink</label>
-      <label class="ctl guide-ctl"><input id="guide-on" type="checkbox"> Guide</label>
     </div>
     <div class="tools for-strokes">
       <button id="replay-all" type="button">Replay all</button>
     </div>
-    <button id="backup" type="button" title="Save all progress to a file (lessons, practice, quiz history, writing size)">Back up</button>
-    <button id="restore" type="button" title="Load progress from a backup file, replacing what is here">Restore</button>
-    <input id="restore-file" type="file" accept="application/json,.json" hidden>
-    <button id="reset-all" class="danger" type="button" title="Clear all practice, scores, quiz history and your learned writing size">Reset</button>
+    <button id="menu-btn" class="menu-btn" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="menu" title="Theme, writing and progress settings">⚙<span class="menu-label"> Settings</span></button>
   </header>
+  <div id="menu" class="menu" role="dialog" aria-label="Settings" hidden>
+    <section>
+      <h3>Theme</h3>
+      <div id="themes" class="theme-picks" role="radiogroup" aria-label="Theme"></div>
+    </section>
+    <section class="for-pad">
+      <h3>Writing</h3>
+      <label class="ctl">Line spacing
+        <input id="spacing" type="range" min="32" max="96" step="4">
+        <output id="spacing-out"></output>
+      </label>
+      <label class="ctl"><input id="finger" type="checkbox"> Finger ink <small>(off: only a pen or the mouse writes)</small></label>
+      <label class="ctl guide-ctl"><input id="guide-on" type="checkbox"> Guide <small>(the example on the top rule, hints as you write)</small></label>
+      <button id="export" type="button">Export JSON</button>
+    </section>
+    <section>
+      <h3>Progress</h3>
+      <div class="menu-row">
+        <button id="backup" type="button" title="Save all progress to a file (lessons, practice, quiz history, writing size)">Back up</button>
+        <button id="restore" type="button" title="Load progress from a backup file, replacing what is here">Restore</button>
+        <button id="reset-all" class="danger" type="button" title="Clear all practice, scores, quiz history and your learned writing size">Reset</button>
+      </div>
+      <input id="restore-file" type="file" accept="application/json,.json" hidden>
+    </section>
+  </div>
   <main id="practice" class="practice view" data-view="pad quiz learn">
     <aside class="example-panel" aria-label="Example to copy">
       <select id="level-select" class="level-select" aria-label="Level"></select>
@@ -68,6 +83,7 @@
     </aside>
     <aside id="quiz-panel" class="example-panel quiz-panel" aria-label="Quiz" hidden></aside>
     <aside id="lesson-panel" class="example-panel lesson-panel" aria-label="Lesson"></aside>
+    <div id="split" class="split" role="separator" tabindex="0" aria-label="Drag to resize the panel and the pad" title="Drag to resize (double-tap to reset)"><span></span></div>
     <div id="page" class="page">
       <svg id="model" class="guide-layer" aria-hidden="true"></svg>
       <svg id="guide" class="guide-layer" aria-hidden="true"></svg>
