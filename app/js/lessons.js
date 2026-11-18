@@ -317,7 +317,7 @@ export function createLessons({ panel, pad, assist, unitPx }) {
       ...s.text.map((t) => el('p', { className: 'lesson-text', textContent: t })),
       ...sectionPlates(s.plates),
       ...(figures.length ? [
-        el('div', { className: 'ex-caption', textContent: 'Enlarged (green dot = start, red arrow = end), and as printed in the manual' }),
+        el('div', { className: 'ex-caption', textContent: 'Enlarged (green = start, red = end), and as printed in the manual' }),
         el('div', { className: 'lesson-figs' }, ...figures.map((f) => f.fig)),
         ...stripSection(s.show),
         ...trySection(s.show),

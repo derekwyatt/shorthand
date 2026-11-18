@@ -68,7 +68,7 @@ export function createExamplePanel({ art, title, meaning, source, counter, score
   const plate = Object.assign(document.createElement('div'), { className: 'ex-plate' });
   const actual = Object.assign(document.createElement('div'), { className: 'ex-actual' });
   const caption = (text) => Object.assign(document.createElement('div'), { className: 'ex-caption', textContent: text });
-  art.replaceChildren(caption('Enlarged: green dot = start, red arrow = end'), big, plate, caption('Actual size: write it this big'), actual);
+  art.replaceChildren(caption('Enlarged: green = start, red = end'), big, plate, caption('Actual size: write it this big'), actual);
 
   function showPlate(example) {
     const p = plateFor(example.id);

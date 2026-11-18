@@ -27,7 +27,7 @@ const writeAll = (...ids) => ids.map((id) => write(id));
 const UNIT_1 = [
   read('Written by sound', 'Manual §1, p. 1', [
     '“Shorthand is written by sound; thus aim is written am (long sound of a), cat is written kat, knee is written ne.”',
-    'Each figure shows an outline enlarged: the green dot is where the pen starts and the red arrow where it ends. Under the figures the same outlines are drawn at actual size, on rules spaced like the pad’s: write them that big.',
+    'Each figure shows an outline enlarged: the stroke is green where the pen starts and red where it ends. Under the figures the same outlines are drawn at actual size, on rules spaced like the pad’s: write them that big.',
     'Every outline in a lesson can be tried on the pad: write it and the score and notes appear below. Tap another outline to try that one instead.',
   ], ['word-aim', 'word-knee']),
   read('Consonants in pairs', 'Manual §2–3, p. 1', [

@@ -45,7 +45,8 @@ export const FAMILIES = [
 ];
 
 export const STROKES = [
-  // Vowel circles. Ovals tilted with the writing slope. Isolated direction: verify.
+  // Vowel circles. Ovals tilted with the writing slope; standing alone (the chart, p. 16) they
+  // are rounder than when joined in words (JOIN_OVAL in join.js). Isolated direction: verify.
   { id: 'a', label: 'a', sounds: ['a (as in at, arm, ate)'], size: 'large',
     primitives: [{ type: 'circle', width: 1.05, height: 0.8, tilt: 25, dir: 'ccw' }],
     briefForms: [], verify: 'direction of an isolated circle' },
@@ -66,41 +67,46 @@ export const STROKES = [
   { id: 'd', label: 'd', sounds: ['d'], size: 'medium', primitives: [line(UP, 2.6)], briefForms: ['would'] },
   { id: 'ted', label: 'ted', sounds: ['ted', 'ded', 'det'], size: 'long', primitives: [line(UP, 4.5)], briefForms: ['did', 'date'] },
 
-  // Forward curves, convex upward (top of the Gregg ellipse: deeper toward the end).
-  { id: 'k', label: 'k', sounds: ['k'], size: 'short', primitives: [arc(0, 1.7, 0.18, { skew: 0.3 })], briefForms: ['can'] },
-  { id: 'g', label: 'g', sounds: ['g (hard)'], size: 'long', primitives: [arc(0, 3.5, 0.17, { skew: 0.3 })], briefForms: ['go', 'good'] },
+  // The curves are not arcs of a circle. Each has a tight turn at one end and runs out
+  // nearly straight at the other: fitted, as one cubic each, to the alphabet chart (p. 16,
+  // 600 dpi; reference/stroke-geometry.md). `ctrl` is the fit; `bulge` is its greatest depth.
+  // Lengths and angles are those measured before, which the fits confirm.
 
-  // Forward curves, convex downward (bottom of the ellipse: deeper toward the start).
-  { id: 'r', label: 'r', sounds: ['r'], size: 'short', primitives: [arc(0, 1.6, -0.18, { skew: -0.3 })], briefForms: ['are', 'our'] },
-  { id: 'l', label: 'l', sounds: ['l'], size: 'long', primitives: [arc(0, 3.2, -0.15, { skew: -0.3 })], briefForms: ['will', 'well'] },
+  // Forward curves: k and g rise almost straight and turn tightly down at the end; r and l
+  // turn tightly at the start and run out almost straight.
+  { id: 'k', label: 'k', sounds: ['k'], size: 'short', primitives: [arc(0, 1.7, 0.17, { ctrl: [[0.27, 0.13], [1.12, 0.31]] })], briefForms: ['can'] },
+  { id: 'g', label: 'g', sounds: ['g (hard)'], size: 'long', primitives: [arc(0, 3.5, 0.156, { ctrl: [[0.32, 0.16], [1.11, 0.25]] })], briefForms: ['go', 'good'] },
+  { id: 'r', label: 'r', sounds: ['r'], size: 'short', primitives: [arc(0, 1.6, -0.18, { ctrl: [[0, -0.34], [0.74, -0.11]] })], briefForms: ['are', 'our'] },
+  { id: 'l', label: 'l', sounds: ['l'], size: 'long', primitives: [arc(0, 3.2, -0.15, { ctrl: [[-0.07, -0.26], [0.63, -0.13]] })], briefForms: ['will', 'well'] },
   // §136 ld: "giving l a swinging upward turn at the finish" (old, fold, held, p. 74): the l
   // runs on nearly level, then rises steeply at the end, about 70° on the plates.
   { id: 'ld', label: 'ld', sounds: ['ld'], size: 'long', primitives: [arc(22, 3.4, -0.1725, { ctrl: [[0.3, -0.21], [0.8, -0.25]] })], briefForms: [] },
 
-  // Downward curves, convex left, "(".
-  { id: 's-left', label: 's', sounds: ['s', 'z'], size: 'tiny', primitives: [arc(DOWN, 0.7, -0.25)], briefForms: [] },
-  { id: 'p', label: 'p', sounds: ['p'], size: 'short', primitives: [arc(DOWN, 1.7, -0.2)], briefForms: ['put'] },
-  { id: 'b', label: 'b', sounds: ['b'], size: 'long', primitives: [arc(DOWN, 3.2, -0.2)], briefForms: ['be', 'by', 'but'] },
+  // Downward curves, convex left, "(": p and b turn tightly at the bottom.
+  { id: 's-left', label: 's', sounds: ['s', 'z'], size: 'tiny', primitives: [arc(DOWN, 0.7, -0.25, { ctrl: [[0.13, -0.24], [0.92, -0.41]] })], briefForms: [] },
+  { id: 'p', label: 'p', sounds: ['p'], size: 'short', primitives: [arc(DOWN, 1.7, -0.17, { ctrl: [[0.11, -0.1], [0.99, -0.33]] })], briefForms: ['put'] },
+  { id: 'b', label: 'b', sounds: ['b'], size: 'long', primitives: [arc(DOWN, 3.2, -0.16, { ctrl: [[0.14, -0.09], [0.96, -0.31]] })], briefForms: ['be', 'by', 'but'] },
 
-  // Downward curves, convex right, ")".
-  { id: 's-right', label: 's', sounds: ['s', 'z'], size: 'tiny', primitives: [arc(DOWN, 0.7, 0.25)], briefForms: ['is', 'his'] },
-  { id: 'f', label: 'f', sounds: ['f'], size: 'short', primitives: [arc(DOWN, 1.9, 0.2)], briefForms: ['for'] },
-  { id: 'v', label: 'v', sounds: ['v'], size: 'long', primitives: [arc(DOWN, 3.2, 0.2)], briefForms: ['have'] },
+  // Downward curves, convex right, ")": f and v turn tightly at the top.
+  { id: 's-right', label: 's', sounds: ['s', 'z'], size: 'tiny', primitives: [arc(DOWN, 0.7, 0.24, { ctrl: [[0.02, 0.49], [0.84, 0.08]] })], briefForms: ['is', 'his'] },
+  { id: 'f', label: 'f', sounds: ['f'], size: 'short', primitives: [arc(DOWN, 1.9, 0.193, { ctrl: [[-0.21, 0.31], [0.83, 0.2]] })], briefForms: ['for'] },
+  { id: 'v', label: 'v', sounds: ['v'], size: 'long', primitives: [arc(DOWN, 3.2, 0.14, { ctrl: [[0.07, 0.26], [0.77, 0.1]] })], briefForms: ['have'] },
 
   // Downward lines.
   { id: 'sh', label: 'sh', sounds: ['sh', 'zh'], size: 'short', primitives: [line(DOWN, 0.85)], briefForms: ['shall', 'ship'] },
   { id: 'ch', label: 'ch', sounds: ['ch'], size: 'medium', primitives: [line(DOWN, 1.7)], briefForms: ['which', 'change'] },
   { id: 'j', label: 'j', sounds: ['j', 'soft g'], size: 'long', primitives: [line(DOWN, 3.1)], briefForms: [] },
 
-  // Upward curves, convex up-left.
-  { id: 'th-over', label: 'th', sounds: ['th'], size: 'short', primitives: [arc(TH, 1.05, 0.25)], briefForms: ['the'] },
-  { id: 'ten', label: 'ten', sounds: ['ten', 'den', 'tn', 'dn'], size: 'medium', primitives: [arc(TH, 2.3, 0.22)], briefForms: [] },
-  { id: 'tem', label: 'tem', sounds: ['tem', 'dem', 'tm', 'dm'], size: 'long', primitives: [arc(TH, 3.8, 0.2)], briefForms: ['time'] },
+  // Upward curves, convex up-left. Flatter than they were drawn here before (the chart's
+  // th, ten and tem are 0.12–0.15 deep, not 0.20–0.25).
+  { id: 'th-over', label: 'th', sounds: ['th'], size: 'short', primitives: [arc(TH, 1.05, 0.12, { ctrl: [[0.13, 0.17], [0.75, 0.14]] })], briefForms: ['the'] },
+  { id: 'ten', label: 'ten', sounds: ['ten', 'den', 'tn', 'dn'], size: 'medium', primitives: [arc(TH, 2.3, 0.15, { ctrl: [[0.11, 0.23], [0.84, 0.16]] })], briefForms: [] },
+  { id: 'tem', label: 'tem', sounds: ['tem', 'dem', 'tm', 'dm'], size: 'long', primitives: [arc(TH, 3.8, 0.13, { ctrl: [[0.1, 0.21], [0.85, 0.13]] })], briefForms: ['time'] },
 
   // Upward curves, convex down-right.
-  { id: 'th-under', label: 'th', sounds: ['th'], size: 'short', primitives: [arc(TH, 1.05, -0.25)], briefForms: ['their', 'there'] },
-  { id: 'nd', label: 'nd', sounds: ['nd', 'nt', 'ent', 'end'], size: 'medium', primitives: [arc(TH, 2.4, -0.22)], briefForms: ['and', 'end'] },
-  { id: 'md', label: 'md', sounds: ['md', 'mt', 'emt', 'emd'], size: 'long', primitives: [arc(TH, 3.4, -0.2)], briefForms: [] },
+  { id: 'th-under', label: 'th', sounds: ['th'], size: 'short', primitives: [arc(TH, 1.05, -0.14, { ctrl: [[-0.12, -0.16], [0.9, -0.21]] })], briefForms: ['their', 'there'] },
+  { id: 'nd', label: 'nd', sounds: ['nd', 'nt', 'ent', 'end'], size: 'medium', primitives: [arc(TH, 2.4, -0.14, { ctrl: [[0.18, -0.23], [0.77, -0.13]] })], briefForms: ['and', 'end'] },
+  { id: 'md', label: 'md', sounds: ['md', 'mt', 'emt', 'emd'], size: 'long', primitives: [arc(TH, 3.4, -0.13, { ctrl: [[0.16, -0.15], [0.75, -0.19]] })], briefForms: [] },
 
   // Vowel hooks, written left to right.
   // The o hook (Manual §65): a small deep hook opening up and to the right. From its start

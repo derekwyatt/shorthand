@@ -53,15 +53,28 @@
 import { STROKE_BY_ID } from '../data/strokes.js';
 import { compileStroke, cubicPoint, tangent, bbox } from './render.js';
 
-// Diameters of joined circles in U (measured: a ≈ 0.8–1.05 U, e ≈ 0.4 U).
-export const JOIN_CIRCLE = { a: 0.95, e: 0.38 };
+// Joined circles are ovals, not round. On the 600-dpi plates the large circle beside a straight
+// stroke is about twice as long as it is high, its long axis along that stroke (aim, ate, make,
+// calm; pp. 5, 7); between curves it is rounder and still follows the direction of the joint
+// (air, ail, gay). The small circle is only a little oval (team). Axes in U; `round` is the
+// minor axis between curves.
+export const JOIN_OVAL = { a: { major: 1.15, minor: 0.55, round: 0.85 }, e: { major: 0.42, minor: 0.34, round: 0.36 } };
+const OVAL_TILT = 20; // a typical joint direction, for the size the recogniser expects
+// Half the width and half the height of an oval's bounding box.
+export function ovalExtent({ major, minor }, tilt = OVAL_TILT) {
+  const c = Math.cos(tilt * Math.PI / 180), s = Math.sin(tilt * Math.PI / 180);
+  return { x: Math.hypot(major / 2 * c, minor / 2 * s), y: Math.hypot(major / 2 * s, minor / 2 * c) };
+}
+// The size of a joined circle in U, as the mean of its box's width and height: what the
+// recogniser compares a written circle with.
+export const JOIN_CIRCLE = Object.fromEntries(Object.entries(JOIN_OVAL).map(([k, o]) => { const e = ovalExtent(o); return [k, e.x + e.y]; }));
 const H_GAP = 0.35; // space between the h dot and the top of its circle, in U
 // Between two strokes, a turn of at least this many degrees counts as an angle (§14).
 export const ANGLE_THRESHOLD = 20;
 // §19/§21: equal curves joined directly are drawn this much flatter (bulge factor).
 export const JOINED_CURVE_FLATTEN = 0.75;
 const FLAT_PAIRS = new Set(['k r', 'g l', 'r k', 'l k']);
-const ROUND_PAIRS = new Set(['f r', 'f l', 'v r', 'v l', 'k sh', 'f m', 'f g', 'b g', 'k b', 's-left s-right', 's-right s-left', 'u s-right', 's-right u']);
+const ROUND_PAIRS = new Set(['p r', 'p l', 'b r', 'b l', 'f r', 'f l', 'v r', 'v l', 'k sh', 'f m', 'f g', 'b g', 'k b', 's-left s-right', 's-right s-left', 'u s-right', 's-right u']);
 
 // §39: bend the end of the previous stroke and the start of the next so that both run
 // along the average of their directions where they meet (a rounded turn, no corner).
@@ -160,16 +173,24 @@ export function circleJoinRule(prev, next) {
   return { section: 18, rotation: circleRotation(next), delta };
 }
 
-// A full circle of radius r that leaves `p` heading along unit vector `t`, turning
-// with rotation `s`, and returns to `p` with the same heading.
-export function circleFrom(p, t, s, r) {
-  const n = { x: -t.y, y: t.x };
-  const center = { x: p.x + s * n.x * r, y: p.y + s * n.y * r };
-  const th0 = Math.atan2(p.y - center.y, p.x - center.x);
+// A full oval with axes `major` and `minor` in U, its long axis along t, that leaves `p`
+// heading along unit vector `t`, turning with rotation `s`, and returns to `p` with the same
+// heading. `r` is its half-height, for placing a dot above it.
+export function circleFrom(p, t, s, { major, minor }) {
+  const tilt = Math.atan2(t.y, t.x) * 180 / Math.PI;
+  const rx = major / 2, ry = minor / 2;
+  const c = Math.cos(tilt * Math.PI / 180), sn = Math.sin(tilt * Math.PI / 180);
+  const rot = (v) => ({ x: v.x * c - v.y * sn, y: v.x * sn + v.y * c });
+  // The point of the oval whose direction of travel is t.
+  const tl = { x: t.x * c + t.y * sn, y: -t.x * sn + t.y * c };
+  const th0 = Math.atan2(-s * tl.x / rx, s * tl.y / ry);
+  const local = (th) => rot({ x: rx * Math.cos(th), y: ry * Math.sin(th) });
+  const l0 = local(th0);
+  const center = { x: p.x - l0.x, y: p.y - l0.y };
+  const at = (th) => { const v = local(th); return { x: center.x + v.x, y: center.y + v.y }; };
+  const d = (th) => rot({ x: -rx * Math.sin(th), y: ry * Math.cos(th) });
   const step = (s * Math.PI) / 2;
   const k = (4 / 3) * Math.tan(step / 4);
-  const at = (th) => ({ x: center.x + r * Math.cos(th), y: center.y + r * Math.sin(th) });
-  const d = (th) => ({ x: -r * Math.sin(th), y: r * Math.cos(th) });
   const segments = [];
   for (let i = 0; i < 4; i++) {
     const a = th0 + i * step;
@@ -184,7 +205,7 @@ export function circleFrom(p, t, s, r) {
   }
   segments[0].p0 = p;
   segments[3].p3 = p;
-  return { segments, center, r };
+  return { segments, center, r: ovalExtent({ major, minor }, tilt).y };
 }
 
 // n and m and their blends (want, o nd, p. 37, shows the hook turned before nd too).
@@ -196,6 +217,33 @@ const isDownstroke = (stroke) => stroke.primitives[0].angle <= -90 && stroke.pri
 
 // §67: the o hook turned by `turn` degrees.
 const turnedHook = (hook, turn) => ({ ...hook, turned: turn, primitives: hook.primitives.map((p) => ({ ...p, angle: p.angle + turn })) });
+
+// A curve drawn flatter by JOINED_CURVE_FLATTEN; measured control points are drawn in toward
+// the chord by the same factor.
+const flatten = (p) => ({
+  ...p,
+  bulge: p.bulge * JOINED_CURVE_FLATTEN,
+  ...(p.ctrl && { ctrl: p.ctrl.map(([a, b]) => [a, b * JOINED_CURVE_FLATTEN]) }),
+});
+
+// A measured curve with its tight turn at the start (`at` = 'start') or end relaxed: that end's
+// handle points along the run of the stroke instead. Where a circle joins that end the circle
+// takes the place of the turn (air, ail, cake; pp. 5-7): the r after the circle of air runs
+// out almost straight, and the k of cake sweeps into its circle.
+const RELAX = 0.5, KEEP = 0.75; // handle along the run; depth kept
+function relaxed(stroke, at) {
+  const primitives = stroke.primitives.map((p) => {
+    if (!p.ctrl) return p;
+    const [[a1, b1], [a2, b2]] = p.ctrl;
+    // Along the run of the stroke, keeping most of the turn's depth (array, p. 6, keeps a
+    // visible dip in its r; happy, a full p).
+    const ctrl = at === 'start'
+      ? [[a2 * RELAX, b1 * KEEP], [a2, b2]]
+      : [[a1, b1], [1 + (a1 - 1) * RELAX, b2 * KEEP]];
+    return { ...p, ctrl };
+  });
+  return { ...stroke, primitives };
+}
 
 // The strokes of an outline, with §19/§21 flattening applied to directly joined equal curves
 // and the §67 o hook turned.
@@ -229,8 +277,17 @@ function outlineStrokes(outline) {
     for (const k of [i, i + 1]) {
       const st = strokes[k];
       if (st.flattened) continue;
-      strokes[k] = { ...st, flattened: true, primitives: st.primitives.map((p) => ({ ...p, bulge: p.bulge * JOINED_CURVE_FLATTEN })) };
+      strokes[k] = { ...st, flattened: true, primitives: st.primitives.map(flatten) };
     }
+  });
+  // A circle in place of a curve's tight turn.
+  strokes.forEach((s, i) => {
+    if (!s?.primitives?.[0]?.ctrl || !['arc'].includes(s.primitives[0].type) || ['o', 'u', 'ld', 'def', 'jnt'].includes(outline[i])) return;
+    // Only the end with the turn: the one whose control point stands further off the chord.
+    const [[, b1], [, b2]] = s.primitives[0].ctrl;
+    const tight = Math.abs(b1) > Math.abs(b2) ? 'start' : 'end';
+    const beside = tight === 'start' ? outline[i - 1] : outline[i + 1];
+    if (isCircle(beside ?? '')) strokes[i] = relaxed(strokes[i], tight);
   });
   return strokes;
 }
@@ -390,7 +447,9 @@ function compileCore(outline) {
         owners.push(...segs.map(() => i));
         return;
       }
-      const circle = circleFrom(pen, t, rotation, JOIN_CIRCLE[size] / 2);
+      const oval = JOIN_OVAL[size];
+      const flat = [prev, next].some((x) => x && isStraight(x));
+      const circle = circleFrom(pen, t, rotation, { major: oval.major, minor: flat ? oval.minor : oval.round });
       segments.push(...circle.segments);
       owners.push(...circle.segments.map(() => i));
       if (circleOf(tok).broken && !next) {

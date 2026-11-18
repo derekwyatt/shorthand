@@ -16,9 +16,9 @@ const SECTIONS = [
   { id: 'beginner', title: 'A Talk with the Beginner', render: () => doc('A Talk with the Beginner', FRONT_MATTER.beginner) },
   { id: 'about', title: 'About Gregg Shorthand', render: () => doc('About Gregg Shorthand', FRONT_MATTER.about) },
   { id: 'preface', title: 'Preface', render: () => doc('Preface', FRONT_MATTER.preface) },
-  { id: 'alphabet', title: 'The alphabet', render: () => picture('The Alphabet', ['manual/alphabet.gif'], 'The Gregg alphabet: every consonant and vowel sign') },
+  { id: 'alphabet', title: 'The alphabet', render: () => picture('The Alphabet', ['manual/alphabet.png'], 'The Gregg alphabet: every consonant and vowel sign') },
   { id: 'briefs', title: 'Brief forms', render: briefs },
-  { id: 'phrases', title: 'Most-used phrases', render: () => picture('Most-Used Anniversary Phrases', ['manual/anphras1.gif', 'manual/anphras2.gif'], 'Most-used phrases in shorthand') },
+  { id: 'phrases', title: 'Most-used phrases', render: () => picture('Most-Used Anniversary Phrases', ['manual/anphras1.png', 'manual/anphras2.png'], 'Most-used phrases in shorthand') },
   { id: 'units', title: 'The Manual, unit by unit', render: units },
 ];
 

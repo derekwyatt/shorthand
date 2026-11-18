@@ -153,5 +153,5 @@ test('the Reference brief-form chart and pictures point at real images', async (
     assert.ok(words && letters && w > 0 && h > 0, words);
     assert.ok(fs.existsSync(new URL(`../app/manual/${file}`, import.meta.url)), `${words}: ${file}`);
   }
-  for (const f of ['alphabet.gif', 'anphras1.gif', 'anphras2.gif']) assert.ok(fs.existsSync(new URL(`../app/manual/${f}`, import.meta.url)), f);
+  for (const f of ['alphabet.png', 'anphras1.png', 'anphras2.png']) assert.ok(fs.existsSync(new URL(`../app/manual/${f}`, import.meta.url)), f);
 });

@@ -213,16 +213,23 @@ export function renderCompiledSVG(compiled, {
 
   const svg = el('svg', { viewBox: `0 0 ${fmt(width)} ${fmt(height)}`, width: fmt(width), height: fmt(height), class: 'stroke-svg' });
   svg.setAttribute('aria-label', label);
-  // One path per pen-down stroke, each with its own start mark and end arrow.
+  // One path per pen-down stroke. Its first stretch is drawn over in green (the start) and its
+  // last in red (the end), at the ink's own width.
   const parts = { svg, compiled, strokes: [], dots: [] };
+  const ends = [];
 
   for (const run of penStrokes(compiled)) {
     const ink = el('path', { d: pathData(run, unit, origin), fill: 'none', stroke: color, 'stroke-width': strokeWidth, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', class: 'ink' });
     svg.append(ink);
-    const s = toPx(run.start, unit, origin);
-    const startMark = el('circle', { cx: fmt(s.x), cy: fmt(s.y), r: strokeWidth * 1.8, fill: '#2e9d4f', class: 'start-mark' });
-    svg.prepend(startMark); // under the ink, so small circles stay visible
-    parts.strokes.push({ run, ink, startMark, arrow: null });
+    const pts = samplePoints(run, 48).map((p) => toPx(p, unit, origin));
+    const total = pts.reduce((n, p, i) => (i ? n + Math.hypot(p.x - pts[i - 1].x, p.y - pts[i - 1].y) : 0), 0);
+    // About four pen widths, but never more than a quarter of a short stroke.
+    const span = Math.min(strokeWidth * 4, total * 0.25);
+    const mark = (list, cls, fill) => el('polyline', { points: stretch(list, span).map((p) => `${fmt(p.x)},${fmt(p.y)}`).join(' '), fill: 'none', stroke: fill, 'stroke-width': strokeWidth, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', class: cls });
+    const startMark = mark(pts, 'start-mark', '#2e9d4f');
+    const arrow = mark([...pts].reverse(), 'arrow', '#d0473a');
+    ends.push(startMark, arrow);
+    parts.strokes.push({ run, ink, startMark, arrow });
   }
   for (const seg of compiled.segments.filter((s) => s.type === 'dot')) {
     const p = toPx(seg.p, unit, origin);
@@ -237,23 +244,29 @@ export function renderCompiledSVG(compiled, {
     svg.append(dot);
   }
 
-  // Arrows go on top of all the ink.
-  for (const stroke of parts.strokes) {
-    const e = toPx(stroke.run.end, unit, origin);
-    const t = tangent(stroke.run, 'end');
-    const dir = { x: t.x, y: -t.y }; // y down
-    const nrm = { x: -dir.y, y: dir.x };
-    const L = strokeWidth * 3.2;
-    const W = strokeWidth * 1.8;
-    const tip = add(e, mul(dir, strokeWidth * 0.8));
-    const back = add(tip, mul(dir, -L));
-    const pts = [tip, add(back, mul(nrm, W)), add(back, mul(nrm, -W))].map((p) => `${fmt(p.x)},${fmt(p.y)}`).join(' ');
-    stroke.arrow = el('polygon', { points: pts, fill: '#d0473a', class: 'arrow' });
-    svg.append(stroke.arrow);
-  }
+  // The coloured ends go on top of all the ink.
+  svg.append(...ends);
 
   svg.parts = parts;
   return svg;
+}
+
+// The points of a polyline (px) from its start up to `span` px along it.
+function stretch(pts, span) {
+  const out = [pts[0]];
+  let n = 0;
+  for (let i = 1; i < pts.length; i++) {
+    const a = pts[i - 1], b = pts[i];
+    const d = Math.hypot(b.x - a.x, b.y - a.y);
+    if (n + d >= span) {
+      const f = d ? (span - n) / d : 0;
+      out.push({ x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f });
+      return out;
+    }
+    out.push(b);
+    n += d;
+  }
+  return out;
 }
 
 // Animates the outline being written, one pen stroke after another, each in its writing

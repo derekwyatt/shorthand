@@ -1,5 +1,5 @@
 // Stroke gallery: every family side by side at one scale, each stroke animated in its
-// writing direction (green dot = start, red arrow = end). Tap a card to replay it.
+// writing direction (green = start, red = end). Tap a card to replay it.
 import { FAMILIES, STROKE_BY_ID } from '../data/strokes.js';
 import { renderStrokeSVG, animateStroke } from './render.js';
 
@@ -9,7 +9,7 @@ export function buildGallery(container, { unit = 28 } = {}) {
 
   const intro = document.createElement('p');
   intro.className = 'gallery-intro';
-  intro.textContent = 'Green dot = where the pen starts. Red arrow = where it ends. Tap a stroke to replay it. All strokes are drawn at the same scale.';
+  intro.textContent = 'Green = where the pen starts. Red = where it ends. Tap a stroke to replay it. All strokes are drawn at the same scale.';
   container.append(intro);
 
   for (const family of FAMILIES) {

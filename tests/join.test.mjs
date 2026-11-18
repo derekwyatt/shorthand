@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { EXAMPLES } from '../app/data/examples.js';
 import { STROKE_BY_ID } from '../app/data/strokes.js';
-import { compileOutline, compileExample, JOIN_CIRCLE, circleOf, isMark, isWLoop, W_LOOP, isDisjoin, layoutWords } from '../app/js/join.js';
+import { compileOutline, compileExample, JOIN_OVAL, circleOf, isMark, isWLoop, W_LOOP, isDisjoin, layoutWords } from '../app/js/join.js';
 import { cubicPoint, pathData } from '../app/js/render.js';
 
 const words = EXAMPLES.filter((e) => e.kind === 'word');
@@ -59,8 +59,10 @@ test('circles close on the joint and have the right size', () => {
       const start = segs[0].p0, end = segs[3].p3;
       assert.ok(Math.hypot(start.x - end.x, start.y - end.y) < 1e-9, `${w.title}: circle closes`);
       const pts = polygon(segs);
-      const w2 = Math.max(...pts.map((p) => p.x)) - Math.min(...pts.map((p) => p.x));
-      assert.ok(Math.abs(w2 - JOIN_CIRCLE[tok]) < 0.02, `${w.title}: ${tok} circle diameter ${w2.toFixed(3)}`);
+      // The long axis: the greatest distance across.
+      let across = 0;
+      for (const a of pts) for (const b of pts) across = Math.max(across, Math.hypot(a.x - b.x, a.y - b.y));
+      assert.ok(Math.abs(across - JOIN_OVAL[tok].major) < 0.03, `${w.title}: ${tok} oval length ${across.toFixed(3)}`);
     }
   }
 });
@@ -75,8 +77,11 @@ test('§11: on curves the circle sits inside the curve', () => {
     for (const { segs } of cs) {
       const c = centroid(polygon(segs));
       const joint = segs[0].p0;
-      if (['k', 'g'].includes(curve)) assert.ok(c.y < joint.y, `${w.title}: circle below the ${curve} curve`);
-      else assert.ok(c.y > joint.y, `${w.title}: circle above the ${curve} curve`);
+      // Inside the curve: under the top of k and g, over the bottom of r and l. (The joint
+      // itself can be low on k, whose end turns tightly down.)
+      const ys = polygon([stroke]).map((p) => p.y);
+      if (['k', 'g'].includes(curve)) assert.ok(c.y < Math.max(...ys), `${w.title}: circle below the ${curve} curve`);
+      else assert.ok(c.y > Math.min(...ys), `${w.title}: circle above the ${curve} curve`);
       // And it lies under the arch (between the curve's ends horizontally).
       const xs = [stroke.p0.x, stroke.p3.x];
       assert.ok(c.x > Math.min(...xs) - 0.05 && c.x < Math.max(...xs) + 0.05, `${w.title}: circle is within the curve's span`);

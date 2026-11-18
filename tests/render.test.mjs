@@ -12,12 +12,19 @@ const deg = (v) => (Math.atan2(v.y, v.x) * 180) / Math.PI;
 const angleDiff = (a, b) => Math.abs(((a - b + 540) % 360) - 180);
 
 // Signed perpendicular height of the curve's midpoint above the chord (left of travel = +).
+// The greatest distance of the curve from its chord, signed (+ = left of travel): the depth
+// the recogniser measures (assess.js), which for a lopsided curve is not at its middle.
 function apexHeight(compiled) {
   const seg = compiled.segments[0];
-  const mid = cubicPoint(seg, 0.5);
   const d = chord(compiled);
   const L = Math.hypot(d.x, d.y);
-  return ((mid.x - compiled.start.x) * -d.y + (mid.y - compiled.start.y) * d.x) / L;
+  let best = 0;
+  for (let i = 0; i <= 400; i++) {
+    const q = cubicPoint(seg, i / 400);
+    const h = ((q.x - compiled.start.x) * -d.y + (q.y - compiled.start.y) * d.x) / L;
+    if (Math.abs(h) > Math.abs(best)) best = h;
+  }
+  return best;
 }
 const apex = (id) => cubicPoint(compileStroke(STROKE_BY_ID[id]).segments[0], 0.5);
 const end = (id) => compileStroke(STROKE_BY_ID[id]).end;

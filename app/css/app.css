@@ -467,7 +467,7 @@ body:not(.view-learn) .lesson-panel { display: none; }
 .ref-briefs { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin: 8px 0 16px; }
 .ref-brief { margin: 0; padding: 8px; border-radius: 10px; background: #fff; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 6px; }
 .ref-brief[hidden] { display: none; }
-.ref-brief img { max-width: 100%; height: auto; min-height: 30px; object-fit: contain; }
+.ref-brief img { max-width: 100%; height: auto; min-height: 30px; object-fit: contain; mix-blend-mode: multiply; }
 .ref-brief figcaption { display: flex; flex-direction: column; align-items: center; text-align: center; font-size: 15px; }
 .ref-brief figcaption span { font-size: 13px; color: #777; }
 @media (max-width: 760px), (orientation: portrait) {

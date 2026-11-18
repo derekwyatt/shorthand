@@ -142,6 +142,36 @@ normalised to **t = 1**. Accuracy is about ±10% (raster scans, pixel-level chor
    blend, written as `m 0 0 c …` paths with an end offset. It's a good start for `render.js`
    data. Rescale it to the M proportions, especially n/m, which W draws much longer.
 
+## The shapes of the curves (fitted, November 2026)
+
+The curves are not arcs of a circle. Each was fitted as one cubic Bézier to the alphabet chart
+(M p. 16) rendered at 600 dpi: the largest piece of ink in a crop, a least-squares fit of
+both endpoints and both control points, with the handles kept to at least 0.15 of the chord
+(RMS error 1.6–2.8 px). Taking t as 1 U, the fitted chords agree with the lengths and angles
+above to within about 0.2 U and a few degrees. The shapes are lopsided, a tight turn at one
+end and a nearly straight run at the other:
+
+| Strokes | Tight turn | Depth (sagitta / chord) |
+|---|---|---|
+| k, g | at the end, turning down | 0.17, 0.16 |
+| r, l | at the start | 0.18, 0.15 |
+| p, b | at the end (bottom) | 0.17, 0.16 |
+| f, v | at the start (top) | 0.19, 0.14 |
+| s (both) | (small) | 0.25, 0.24 |
+| th, ten, tem | slight, toward the start | 0.12, 0.15, 0.13 |
+| th, nd, md (under) | slight | 0.14, 0.14, 0.13 |
+
+The th family is flatter than the 0.20–0.25 used before. The fitted control points are in
+`data/strokes.js` (`ctrl`).
+
+In words (`js/join.js`):
+- **Circles are ovals.** Beside a straight stroke the large circle is about twice as long as
+  high (aim, ate, make, calm; pp. 5, 7); between curves it is rounder (air, ail, gay). Its
+  long axis follows the direction of the joint.
+- **A circle takes the place of the tight turn** where it joins that end of a curve: the
+  turn is relaxed along the run of the stroke, keeping most of its depth (air, cake, array,
+  happy).
+
 ## Still open
 
 - **A check against the 1949 Simplified manual.** All the sources say the alphabet is the
