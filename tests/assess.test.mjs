@@ -51,7 +51,9 @@ test('the recorded "hate" attempt reads as "ham"', () => {
   assert.match(t, /reads as m, not t, so the outline says “ham”/);
   assert.match(t, /Too flat/);
   assert.match(t, /Too long/);
-  assert.doesNotMatch(t, /clockwise|wrong side|Missing/, 'circle and dot were right');
+  assert.doesNotMatch(t, /clockwise|wrong side|Missing the h/, 'circle and dot were right');
+  // Recorded before the §8 marks were added: it has no dash under the long a.
+  assert.match(t, /The manual prints a dash under the vowel/);
   assert.equal(r.extras, 0, 'the pen bounce is ignored');
   assert.ok(r.score > 40 && r.score < 75, `score ${r.score}`);
 });
@@ -132,7 +134,7 @@ test('the dot letter (h / brief form "a") is scored on its own', () => {
 });
 
 test('an h word is finished only when both the outline and its dot are written, in either order', () => {
-  const e = ex('word-hate');
+  const e = ex('word-hack');
   const [dot, outline] = perfect(e);
   const outlineOnly = assessAttempt(e, [outline], UNIT);
   assert.equal(outlineOnly.complete, false);
@@ -146,7 +148,7 @@ test('an h word is finished only when both the outline and its dot are written, 
 });
 
 test('the check pattern is green for a correct copy and red where it is wrong', () => {
-  const good = assessAttempt(ex('word-hate'), perfect(ex('word-hate')), UNIT);
+  const good = assessAttempt(ex('word-hack'), perfect(ex('word-hack')), UNIT);
   assert.deepEqual(good.check.map((c) => [c.kind, c.ok]).sort(), [['dot', true], ['outline', true]]);
   const o = good.check.find((c) => c.kind === 'outline');
   const u = good.units.find((x) => x.kind === 'outline').user.pts[0];
@@ -182,7 +184,7 @@ test('the dot letter (h, brief form "a") is scored on its own', () => {
 });
 
 test('an h word is not finished until its dot is written, in either order', () => {
-  const e = ex('word-hate');
+  const e = ex('word-hack');
   const strokes = perfect(e); // dot first, then the outline
   const outlineOnly = assessAttempt(e, [strokes[1]], UNIT);
   assert.equal(outlineOnly.complete, false);
@@ -193,7 +195,7 @@ test('an h word is not finished until its dot is written, in either order', () =
 });
 
 test('the check pattern is green when right and red when wrong, anchored on the learner', () => {
-  const good = assessAttempt(ex('word-hate'), perfect(ex('word-hate')), UNIT);
+  const good = assessAttempt(ex('word-hack'), perfect(ex('word-hack')), UNIT);
   assert.deepEqual(good.check.map((c) => [c.kind, c.ok]).sort(), [['dot', true], ['outline', true]]);
   const fx = JSON.parse(readFileSync(new URL('./fixtures/word-hate-1.json', import.meta.url)));
   const bad = assessAttempt(ex('word-hate'), fx.strokes, fx.strokes[0].lineSpacing / 3);
@@ -301,4 +303,20 @@ test('a small o hook is a stroke, not a dot', () => {
   const flipped = cup.map((p) => ({ ...p, y: 600 - p.y }));
   assert.ok(assessAttempt(e, [{ points: flipped }], UNIT).score < 70);
   assert.ok(assessAttempt(ex('letter-u'), [{ points: flipped }], UNIT).score >= 90);
+});
+
+test('a vowel mark is checked when written, only noted when left out, and the h dot is not taken for it', () => {
+  const e = ex('word-hate');
+  const strokes = perfect(e);
+  assert.equal(strokes.length, 3, 'dash, h dot and outline');
+  const all = assessAttempt(e, strokes, UNIT);
+  assert.ok(all.complete && all.score >= 95, `${all.score}: ${texts(all)}`);
+  const dots = all.units.filter((u) => u.kind === 'dot');
+  assert.deepEqual(dots.map((u) => u.role).sort(), ['h', 'v-dash']);
+  for (const u of dots) assert.ok(u.user, `${u.role} found`);
+  const noDash = assessAttempt(e, strokes.filter((s, i) => modelUnits(e)[i]?.role !== 'v-dash'), UNIT);
+  assert.match(texts(noDash), /The manual prints a dash under the vowel here/);
+  assert.doesNotMatch(texts(noDash), /Missing/);
+  assert.ok(noDash.complete && noDash.score >= 95, `${noDash.score}`);
+  assert.deepEqual([noDash.written, noDash.expected], [2, 2]);
 });

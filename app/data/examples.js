@@ -6,8 +6,8 @@
 //     Gregg Simplified chart. Strokes still marked `verify` there (standalone circles,
 //     o/u hooks, the def/jent blends) are left out until they are checked.
 //   - Words: exactly the words the 1929 manual prints with §11 and §12 (p. 5), built with
-//     those two joining rules (js/join.js). Vowel marks (§8: "seldom used") are omitted,
-//     so words that differ only by marks share one example.
+//     those two joining rules (js/join.js). Vowel marks (§8: "seldom used") are added where
+//     the manual prints them (VOWEL_MARKS: the word lists of Units 1 and 2).
 import { STROKE_BY_ID } from './strokes.js';
 
 const SOUND = {
@@ -262,20 +262,64 @@ function tokenName(t) {
   if (t === '_') return 'pen lifted, the ending written under the end of the word';
   return STROKE_BY_ID[t].label;
 }
-const spell = (outline) => outline.map(tokenName).join(' + ');
+// A vowel mark is named with its circle: "e-circle with a dash under it (long ē)".
+const MARK_NAME = { 'v-dash': 'a dash under it (long sound)', 'v-dot': 'a dot under it (medium sound)' };
+const spell = (outline) => outline.flatMap((t, i) => {
+  if (MARK_NAME[t]) return [];
+  const mark = MARK_NAME[outline[i - 1]];
+  return [mark ? `${tokenName(t)} with ${mark}` : tokenName(t)];
+}).join(' + ');
 
-const wordExample = (level, source) => ([word, outline, rule, note]) => ({
-  id: `word-${word}`, kind: 'word', level, title: word, outline,
-  meaning: [`The word “${word}”: ${spell(outline)}.`, rule, ...(note ? [note] : [])],
-  source,
-});
+// §8 vowel marks, as printed in the word lists of Units 1 and 2 (pp. 3–13; later units print
+// none): one sign per a / e circle of the outline, in order. '-' is the dash of a long
+// sound (ā, ē), '.' the dot of a medium one (ä, ĕ), ' ' no mark.
+export const VOWEL_MARKS = {
+  ache: '-', key: '-', air: '-', ail: '-', ray: '-', array: ' -', airy: '- ', tea: '-', day: '-',
+  eddy: '. ', hate: '-', gate: '-', calm: '.', make: '-', maid: '-', rear: '-', rain: '-', tale: '-',
+  rainy: '- ', rate: '-', raid: '-', ticket: ' .', deck: '.', taken: '-', deed: '-', main: '-',
+  wreck: '.', lake: '-', cream: '-', crane: '-', creed: '-', crate: '-', eagle: '-', glee: '-',
+  glean: '-', gleam: '-', glare: '-', acre: '-', maker: '-', gray: '-', grain: '-', greed: '-',
+  green: '-', greet: '-', clay: '-', ark: '.', dark: '.', mark: '.', net: '.', need: '-',
+  ready: '. ', led: '.', late: '-', laid: '-', tree: '-', train: '-', clean: '-', leg: '.',
+  headache: '.-', eke: '-', egg: '.', gay: '-', ear: '-', aim: '-', ate: '-', eat: '-', may: '-',
+  me: '-', heat: '-', head: '.', get: '.', met: '.', team: '-', dream: '-', mean: '-', eager: '-',
+  today: '-',
+};
+const MARK_TOKEN = { '-': 'v-dash', '.': 'v-dot' };
+
+// The outline with its printed vowel marks, each just before its circle.
+export function withVowelMarks(word, outline) {
+  const signs = Object.hasOwn(VOWEL_MARKS, word) ? VOWEL_MARKS[word] : null;
+  if (!signs) return outline;
+  let k = 0;
+  const out = outline.flatMap((t) => {
+    if (t !== 'a' && t !== 'e') return [t];
+    const sign = signs[k++];
+    return MARK_TOKEN[sign] ? [MARK_TOKEN[sign], t] : [t];
+  });
+  if (k !== signs.length) throw new Error(`vowel marks for “${word}”: ${signs.length} signs for ${k} circles`);
+  return out;
+}
+
+const wordExample = (level, source) => ([word, plain, rule, note]) => {
+  const outline = withVowelMarks(word, plain);
+  return {
+    id: `word-${word}`, kind: 'word', level, title: word, outline,
+    meaning: [`The word “${word}”: ${spell(outline)}.`, rule, ...(note ? [note] : [])],
+    source,
+  };
+};
 
 // Level 7 and 8 titles may name several words that share one outline ("rid / red / read").
-const wordExampleAt = (level) => ([title, outline, rule, page, note]) => {
+const wordExampleAt = (level) => ([title, plain, rule, page, note]) => {
   const names = title.split(' / ');
+  const outline = withVowelMarks(names[0], plain);
+  // The mark is that of the first word; the others share the outline without it.
+  const marked = outline.length > plain.length && names.length > 1;
   return {
     id: `word-${names[0]}`, kind: 'word', level, title, outline,
-    meaning: [`The word${names.length > 1 ? 's' : ''} ${quote(names)}: ${spell(outline)}.`, rule, ...(note ? [note] : [])],
+    meaning: [`The word${names.length > 1 ? 's' : ''} ${quote(names)}: ${spell(outline)}.`, rule, ...(note ? [note] : []),
+      ...(marked ? [`The mark (Manual §8) is that of “${names[0]}”: without it the outline reads ${quote(names.slice(1))} too.`] : [])],
     source: `Gregg Shorthand Manual (1929), p. ${page}`,
   };
 };

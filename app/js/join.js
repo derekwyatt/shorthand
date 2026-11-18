@@ -30,6 +30,9 @@
 //   §99  w within a word: "a short horizontal dash" under the following vowel (w-dash, the
 //        token before that vowel's circle or hook). §100 initial a: a dot on the line before
 //        the outline (a-dot). Both are written apart from the outline, like the h dot.
+//   §8   Marking vowels: "the medium sound is marked with a dot, and the long sound with a
+//        short dash" (ä, ĕ: v-dot; ā, ē: v-dash, the token before the vowel). As printed in
+//        Units 1 and 2 (pp. 3–13), just under the circle, the dash a little left and rising.
 //   §209 "The prefix is placed above the line, very close to the remainder of the word": the
 //        token `^` ends a disjoined prefix (contr = k ^, intr = n ^), drawn as a stroke of its
 //        own just above the start of the rest (p. 121).
@@ -292,10 +295,13 @@ function outlineStrokes(outline) {
   return strokes;
 }
 
-const MARKS = new Set(['w-dash', 'a-dot', 'cap']);
+const MARKS = new Set(['w-dash', 'a-dot', 'cap', 'v-dash', 'v-dot']);
 export const isMark = (tok) => MARKS.has(tok);
 const W_DASH = { length: 0.4, gap: 0.25 }; // below the vowel, in U
 const A_DOT_GAP = 0.45; // before the outline
+// §8 vowel marks under the circle: the dot's gap, and the dash (its middle left of the circle's).
+const V_DOT_GAP = 0.2;
+const V_DASH = { length: 0.32, angle: 62, gap: 0.3, left: 0.08 };
 // §233: the capital mark, two short parallel dashes rising to the right under the outline, right of its middle (p. 141).
 const CAP = { length: 0.4, angle: 30, gap: 0.35, apart: 0.14, along: 0.7 };
 
@@ -380,9 +386,12 @@ export function compileOutline(outline) {
       continue;
     } else {
       const own = c.segments.filter((s, k) => c.tokenOf[k] === m.at && s.type === 'cubic');
-      if (!own.length) throw new Error(`a w dash goes before a vowel (${outline.join(' ')})`);
+      if (!own.length) throw new Error(`${m.tok} goes before a vowel (${outline.join(' ')})`);
       const b = bbox({ segments: own });
-      seg = { type: 'dot', mark: 'w', dash: W_DASH.length, p: { x: (b.minX + b.maxX) / 2, y: b.minY - W_DASH.gap } };
+      const x = (b.minX + b.maxX) / 2;
+      if (m.tok === 'v-dot') seg = { type: 'dot', mark: 'v-dot', p: { x, y: b.minY - V_DOT_GAP } };
+      else if (m.tok === 'v-dash') seg = { type: 'dot', mark: 'v-dash', dash: V_DASH.length, angle: V_DASH.angle, p: { x: x - V_DASH.left, y: b.minY - V_DASH.gap } };
+      else seg = { type: 'dot', mark: 'w', dash: W_DASH.length, p: { x, y: b.minY - W_DASH.gap } };
     }
     segments.unshift(seg);
     tokenOf.unshift(m.i);

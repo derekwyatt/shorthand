@@ -13,8 +13,13 @@ added that the manual does not print.
 - Tokens are the stroke ids of `app/data/strokes.js`, plus `a` (large circle) and `e`
   (small circle). Vowel groups follow §7: the A group (at, calm, came) takes the large
   circle; the E group (kit, get, need) the small circle.
-- Vowel marks (§8, "seldom used") are omitted, as in levels 3–4. Words whose outlines
-  differ only by marks share one example (rid / red / read, tack / take, glean / glen).
+- Vowel marks (§8): the dot of a medium sound (ä, ĕ) and the dash of a long one (ā, ē),
+  just under the circle. Units 1 and 2 print them in their word lists, so the examples
+  carry them as printed (`VOWEL_MARKS` in `app/data/examples.js`; tokens `v-dot`,
+  `v-dash` before the circle). Later units print none. The marks are "seldom used": the
+  pad checks one that is written but only notes one that is left out. Words whose
+  outlines differ only by marks share one example (rid / red / read, tack / take,
+  glean / glen); a shared example carries the mark of its first word.
 - §16: "Some vowels are so obscure or neutral that they are omitted when they do not
   contribute to speed or legibility. For example, the e in the words taken and maker is
   absolutely useless, and is omitted." Hence `taken` = t a k n, `maker` = m a k r.

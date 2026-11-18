@@ -186,10 +186,15 @@ function classify(f, scale, expected = null) {
   return best;
 }
 
+// §8 vowel marks: checked when written, but not needed to finish the outline.
+const isVowelMark = (m) => m.role === 'v-dash' || m.role === 'v-dot';
+
 // What the outline (or brief form) would mean if its consonant were `other`.
 function readsAs(model, other) {
-  const swapped = model.allTokens.map((t) => (t === model.consonant.id ? other.id : t));
-  const word = EXAMPLES.find((e) => e.kind === 'word' && e.outline.join(' ') === swapped.join(' '));
+  // Compared without marks: a vowel mark doesn't make a different outline.
+  const bare = (outline) => outline.filter((t) => !isMark(t)).join(' ');
+  const swapped = bare(model.allTokens.map((t) => (t === model.consonant.id ? other.id : t)));
+  const word = EXAMPLES.find((e) => e.kind === 'word' && bare(e.outline) === swapped);
   if (word) return `“${word.title}”`;
   if (model.allTokens.length === 1 && other.briefForms.length) return other.briefForms.map((b) => `“${b}”`).join(' / ');
   return null;
@@ -649,29 +654,40 @@ export function assessAttempt(example, strokes, unitPx, { scale = 1 } = {}) {
     }
   }
 
-  // Dots: predict where each should be from the matched outlines, take the nearest.
+  // Dots: predict where each should be from the matched outlines; the closest pairs of
+  // predicted and written dots are matched first, so an h dot above a circle is not taken
+  // for the vowel mark under it. (With no outline to place them, dots go in order.)
   const free = new Set(userDots);
+  const picks = new Map();
+  const near = mDots.flatMap((m, i) => {
+    const pred = fit && { x: fit.s * m.pos.x + fit.tx, y: fit.s * m.pos.y + fit.ty };
+    return userDots.map((d) => ({ m, i, d, dd: pred ? dist(centroid(d.pts), pred) : 0 }))
+      .filter((x) => !pred || x.dd <= 1.5 * fit.s);
+  }).sort((a, b) => a.dd - b.dd || a.i - b.i);
+  for (const x of near) {
+    if (picks.has(x.m) || !free.has(x.d)) continue;
+    picks.set(x.m, x);
+    free.delete(x.d);
+  }
   for (const m of mDots) {
-    let pred = null;
-    if (fit) pred = { x: fit.s * m.pos.x + fit.tx, y: fit.s * m.pos.y + fit.ty };
-    let pick = null;
-    for (const d of free) {
-      const c = centroid(d.pts);
-      const dd = pred ? dist(c, pred) : 0;
-      if (pred && dd > 1.5 * (fit?.s ?? 1)) continue;
-      if (!pick || dd < pick.dd) pick = { d, dd };
-    }
+    const pick = picks.get(m);
     let what = 'the dot';
     if (m.role === 'h') what = `the h dot${sentence ? ` in “${m.word}”` : ''}`;
     else if (m.role === 'w') what = 'the w dash under the vowel (Manual §99)';
     else if (m.role === 'a') what = 'the a dot before the outline (Manual §100)';
     else if (m.role === 'cap') what = 'the capital dashes under the outline (Manual §233)';
+    else if (m.role === 'v-dash') what = 'the dash under the vowel: its long sound (Manual §8)';
+    else if (m.role === 'v-dot') what = 'the dot under the vowel: its medium sound (Manual §8)';
     else if (sentence) what = `the dot for “${m.word.toLowerCase()}”`;
+    if (!pick && isVowelMark(m)) {
+      // §8: "otherwise they are seldom used": a note, not a fault.
+      results.push({ unit: m, user: null, weight: 0, score: 0, missing: true, critiques: [{ level: 'info', text: `The manual prints a ${m.role === 'v-dash' ? 'dash under the vowel here: its long sound' : 'dot under the vowel here: its medium sound'} (Manual §8).` }] });
+      continue;
+    }
     if (!pick) {
       results.push({ unit: m, user: null, weight: 0.25, score: 0, missing: true, critiques: [{ level: 'error', text: `Missing ${what}${m.role === 'h' ? ' above the circle' : ''}.` }] });
       continue;
     }
-    free.delete(pick.d);
     const res = { unit: m, user: pick.d, weight: 0.25, score: 100, critiques: [] };
     const ownerRes = m.owner && byModel.get(m.owner);
     const loop = ownerRes?.loops?.start?.loop;
@@ -699,14 +715,15 @@ export function assessAttempt(example, strokes, unitPx, { scale = 1 } = {}) {
   }
 
   // Dots count as parts too: the letter h / "a" is nothing but a dot, and an h word
-  // isn't finished until its dot is written (in either order).
-  const complete = userMain.length >= mMain.length && user.length >= mMain.length + mDots.length;
+  // isn't finished until its dot is written (in either order). A vowel mark is optional.
+  const needDots = mDots.filter((m) => !isVowelMark(m)).length;
+  const complete = userMain.length >= mMain.length && user.length >= mMain.length + needDots;
 
   return {
     score,
     complete,
-    written: Math.min(userMain.length, mMain.length) + Math.min(userDots.length, mDots.length),
-    expected: mMain.length + mDots.length,
+    written: Math.min(userMain.length, mMain.length) + Math.min(userDots.length, needDots),
+    expected: mMain.length + needDots,
     strokes: user.length,
     critiques,
     units: results.map(({ unit, user: u, score: s, critiques: c, readsAs: ra, missing }) => ({
@@ -734,6 +751,7 @@ function checkPattern(results, { complete, lenScale, fit }) {
   }
   const out = [];
   for (const r of results) {
+    if (r.missing && isVowelMark(r.unit)) continue; // optional, so nothing is wrong
     const ok = !r.missing && !r.critiques.some((c) => c.level === 'error');
     if (r.unit.kind === 'outline') {
       if (r.pieces && r.align && r.user) {

@@ -1,9 +1,10 @@
 // Tests for the practice levels and example content. Run: node --test tests/
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { EXAMPLES, LEVELS } from '../app/data/examples.js';
+import { EXAMPLES, LEVELS, VOWEL_MARKS, withVowelMarks } from '../app/data/examples.js';
 import { STROKE_BY_ID } from '../app/data/strokes.js';
 import { compileExample } from '../app/js/join.js';
+import { bbox } from '../app/js/render.js';
 
 const atLevel = (n) => EXAMPLES.filter((e) => e.level === n);
 const key = (e) => e.outline.join(' ');
@@ -68,4 +69,31 @@ test('sentence levels follow the word count', () => {
 
 test('every example compiles (perfect-copy scoring is covered in assess.test.mjs)', () => {
   for (const e of EXAMPLES) assert.ok(compileExample(e), e.id);
+});
+
+test('§8 vowel marks: only on the Unit 1 and 2 words that print them, each just before its circle', () => {
+  for (const [word, signs] of Object.entries(VOWEL_MARKS)) {
+    const e = EXAMPLES.find((x) => x.id === `word-${word}`);
+    assert.ok(e, word);
+    assert.ok(e.level <= 8, `${word} is in Unit 1 or 2 (level ${e.level})`);
+    assert.match(signs, /^[-. ]+$/, word);
+    const marks = e.outline.filter((t) => t === 'v-dash' || t === 'v-dot');
+    assert.equal(marks.length, signs.replace(/ /g, '').length, word);
+    e.outline.forEach((t, i) => { if (t.startsWith('v-')) assert.match(e.outline[i + 1], /^[ae]$/, `${word}: a mark goes before its circle`); });
+  }
+  assert.deepEqual(withVowelMarks('headache', ['h', 'e', 'd', 'a', 'k']), ['h', 'v-dot', 'e', 'd', 'v-dash', 'a', 'k']);
+  assert.deepEqual(withVowelMarks('constructor', ['k']), ['k'], 'words without marks are unchanged');
+  assert.throws(() => withVowelMarks('gate', ['g', 't']), /1 signs for 0 circles/);
+  for (const e of EXAMPLES.filter((x) => x.level > 8)) assert.ok(!e.outline.some((t) => t.startsWith('v-')), e.id);
+});
+
+test('a vowel mark sits just under its circle: the dot under its middle, the dash a little left, rising', () => {
+  for (const [word, mark] of [['calm', 'v-dot'], ['gate', 'v-dash']]) {
+    const c = compileExample(EXAMPLES.find((x) => x.id === `word-${word}`));
+    const m = c.segments.find((s) => s.mark === mark);
+    const circle = bbox({ segments: c.segments.filter((s, k) => s.type === 'cubic' && c.tokens[c.tokenOf[k]] === 'a') });
+    assert.ok(m.p.y < circle.minY && m.p.y > circle.minY - 0.45, `${word}: just under the circle`);
+    assert.ok(m.p.x > circle.minX - 0.1 && m.p.x < circle.maxX, `${word}: under the circle`);
+    if (mark === 'v-dash') assert.ok(m.dash > 0 && m.angle > 45 && m.angle < 80, 'a short rising dash');
+  }
 });
