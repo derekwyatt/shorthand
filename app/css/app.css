@@ -452,3 +452,26 @@ body:not(.view-learn) .lesson-panel { display: none; }
 @media (max-width: 760px), (orientation: portrait) {
   .manual-reader { grid-template-rows: auto minmax(0, 1fr); }
 }
+
+/* Reference view: a menu of sections and the section itself. */
+.reference { flex: 1 1 auto; display: flex; min-height: 0; background: var(--paper); }
+.reference[hidden] { display: none; }
+.ref-menu { flex: 0 0 220px; display: flex; flex-direction: column; gap: 6px; padding: 12px; overflow-y: auto; background: #f3efe2; border-right: 1px solid #d9d2bb; }
+.ref-menu button { min-height: 44px; padding: 6px 12px; border: 0; border-radius: 10px; background: transparent; font: inherit; font-size: 16px; text-align: left; color: #333; touch-action: manipulation; }
+.ref-menu button.active { background: #2b2f36; color: #fff; }
+.ref-body { flex: 1 1 auto; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 12px 24px 48px; }
+.ref-body h2 { font-size: 26px; margin: 8px 0 12px; }
+.ref-body .manual-text { margin: 0; max-width: 760px; }
+.ref-picture { display: block; max-width: 100%; height: auto; margin: 0 0 12px; mix-blend-mode: multiply; }
+.ref-search { width: 100%; max-width: 480px; min-height: 44px; padding: 8px 12px; font: inherit; font-size: 17px; border: 1px solid #d9d2bb; border-radius: 10px; margin-bottom: 6px; box-sizing: border-box; }
+.ref-briefs { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin: 8px 0 16px; }
+.ref-brief { margin: 0; padding: 8px; border-radius: 10px; background: #fff; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 6px; }
+.ref-brief[hidden] { display: none; }
+.ref-brief img { max-width: 100%; height: auto; min-height: 30px; object-fit: contain; }
+.ref-brief figcaption { display: flex; flex-direction: column; align-items: center; text-align: center; font-size: 15px; }
+.ref-brief figcaption span { font-size: 13px; color: #777; }
+@media (max-width: 760px), (orientation: portrait) {
+  .reference { flex-direction: column; }
+  .ref-menu { flex: 0 0 auto; flex-direction: row; overflow-x: auto; border-right: 0; border-bottom: 1px solid #d9d2bb; }
+  .ref-menu button { flex: 0 0 auto; }
+}

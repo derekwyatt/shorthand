@@ -145,3 +145,13 @@ test('reading-question choices are shuffled: the answer is not always first', ()
   const first = choose.filter((s) => shuffled(s.choices, stepKey(s), 12345)[0] === s.example).length;
   assert.ok(first < choose.length * 0.4, `answer first in ${first} of ${choose.length}`);
 });
+
+test('the Reference brief-form chart and pictures point at real images', async () => {
+  const { BRIEF_FORMS } = await import('../app/data/briefs.js');
+  assert.ok(BRIEF_FORMS.length > 300);
+  for (const [words, letters, file, w, h] of BRIEF_FORMS) {
+    assert.ok(words && letters && w > 0 && h > 0, words);
+    assert.ok(fs.existsSync(new URL(`../app/manual/${file}`, import.meta.url)), `${words}: ${file}`);
+  }
+  for (const f of ['alphabet.gif', 'anphras1.gif', 'anphras2.gif']) assert.ok(fs.existsSync(new URL(`../app/manual/${f}`, import.meta.url)), f);
+});

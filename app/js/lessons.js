@@ -8,6 +8,7 @@
 import { LESSONS, PASS_SCORE, stepKey, exampleFor, isTask } from '../data/lessons.js';
 import { plateFor, sectionPlate, readingPlate } from '../data/plates.js';
 import { MANUAL_TEXT } from '../data/manual.js';
+import { renderBlocks } from './manualtext.js';
 import { compileExample } from './join.js';
 import { bbox, renderCompiledSVG, animateStroke } from './render.js';
 import { createExamplePanel, actualSizeStrip } from './practice.js';
@@ -486,16 +487,7 @@ export function createLessons({ panel, pad, assist, unitPx }) {
     const l = LESSONS.find((x) => x.unit === unit);
     const text = el('article', { className: 'manual-text' },
       el('h2', { textContent: `Unit ${unit}${doc.title ? `: ${doc.title}` : ''}` }),
-      ...doc.blocks.map(([align, html]) => {
-        const p = el('p', { className: align === 'center' ? 'center' : '' });
-        p.innerHTML = html;
-        // The site's figures are small: show them 1.4 times as large (still no wider than the text).
-        for (const img of p.querySelectorAll('img[width]')) {
-          img.width = Math.round(img.width * 1.4);
-          img.removeAttribute('height');
-        }
-        return p;
-      }),
+      ...renderBlocks(doc.blocks),
       el('p', { className: 'ex-caption', textContent: 'The Anniversary Manual (1929), as transcribed by J. Andrew Owen at greggshorthand.github.io.' }));
     const close = () => shade.remove();
     const shade = el('div', { className: 'reader manual-reader', role: 'dialog', ariaLabel: `Manual, Unit ${unit}` },

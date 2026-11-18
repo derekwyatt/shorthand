@@ -1,5 +1,6 @@
 import { InkPad, sampleRate } from './ink.js';
 import { buildGallery } from './gallery.js';
+import { buildReference } from './reference.js';
 import { createExamplePanel } from './practice.js';
 import { EXAMPLES, LEVELS } from '../data/examples.js';
 import { U_PER_LINE } from '../data/strokes.js';
@@ -160,10 +161,11 @@ $('reset-all').addEventListener('click', () => {
   location.reload();
 });
 
-// Routing between views: #pad (practice, default), #learn and #quiz (both share the pad)
-// and #strokes.
-const VIEWS = ['pad', 'learn', 'strokes', 'quiz'];
+// Routing between views: #pad (practice, default), #learn and #quiz (both share the pad),
+// #strokes and #ref.
+const VIEWS = ['pad', 'learn', 'strokes', 'quiz', 'ref'];
 let gallery = null;
+let reference = false;
 let lastView = null;
 function route() {
   const view = VIEWS.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'pad';
@@ -176,6 +178,10 @@ function route() {
   else if (wasElsewhere && view === 'pad') goTo(index, { animate: false });
   for (const a of document.querySelectorAll('.modes a')) a.classList.toggle('active', a.dataset.view === view);
   assist.drawModel();
+  if (view === 'ref' && !reference) {
+    buildReference($('reference'));
+    reference = true;
+  }
   if (view === 'strokes') {
     const first = !gallery;
     gallery ??= buildGallery($('gallery'));
