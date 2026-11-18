@@ -4,6 +4,8 @@
 //   read    a rule from the manual, with outlines to watch (`show`, example ids)
 //   write   write an example on the pad; passed when a repeat scores PASS_SCORE or more
 //   choose  read an outline: pick its meaning from `choices` (example ids, answer included)
+//   speed   a section of Gregg Speed Studies (data/speed.js): advice, drills and their keys;
+//           added after the unit's own steps
 //   reading the unit's Reading and Dictation Practice page, with its key (data/reading.js);
 //           added at the end of every unit that has one
 //
@@ -12,6 +14,7 @@
 import { EXAMPLES } from './examples.js';
 import { UNITS } from './units/index.js';
 import { readingFor } from './reading.js';
+import { speedForUnit } from './speed.js';
 
 export { PASS_SCORE } from '../js/assess.js';
 
@@ -186,6 +189,7 @@ const UNIT_3 = [
 export function stepKey(step) {
   if (step.type === 'read') return `read:${step.title}`;
   if (step.type === 'reading') return `reading:${step.reading.unit}`;
+  if (step.type === 'speed') return `speed:${step.speed.study}.${step.speed.section}`;
   return `${step.type}:${step.example}`;
 }
 
@@ -197,7 +201,14 @@ const stepOf = (s) => {
   throw new Error(`unknown lesson step ${JSON.stringify(s)}`);
 };
 
-const withReading = (l) => (readingFor(l.unit) ? { ...l, steps: [...l.steps, { type: 'reading', reading: readingFor(l.unit) }] } : l);
+const withReading = (l) => ({
+  ...l,
+  steps: [
+    ...l.steps,
+    ...speedForUnit(l.unit).map((speed) => ({ type: 'speed', speed })),
+    ...(readingFor(l.unit) ? [{ type: 'reading', reading: readingFor(l.unit) }] : []),
+  ],
+});
 
 export const LESSONS = [
   { id: 'unit-1', unit: 1, title: 'Unit 1', subtitle: 'The first consonants, vowel circles and how circles join', pages: 'pp. 1–6', steps: UNIT_1 },
@@ -206,9 +217,9 @@ export const LESSONS = [
   ...UNITS.map((u) => ({ id: `unit-${u.unit}`, unit: u.unit, title: `Unit ${u.unit}`, subtitle: u.subtitle, pages: u.pages, steps: u.lesson.map(stepOf) })),
 ].map(withReading);
 
-// Steps that must be done (written or answered) to finish a unit; read and reading steps are
-// done on sight.
-export const isTask = (step) => step.type !== 'read' && step.type !== 'reading';
+// Steps that must be done (written or answered) to finish a unit; read, speed and reading
+// steps are done on sight.
+export const isTask = (step) => step.type === 'write' || step.type === 'choose';
 
 const BY_ID = new Map(EXAMPLES.map((e) => [e.id, e]));
 export const exampleFor = (id) => BY_ID.get(id);

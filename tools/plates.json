@@ -1,6 +1,9 @@
 {
   "pdf": "1929 - Anniversary Manual",
   "pageOffset": 16,
+  "sources": {
+    "speed": {"pdf": "1929 - Gregg Speed Studies", "paper": 150, "black": 70, "ink": 200}
+  },
   "crops": [
     {"id": "letter-k", "page": 1, "box": [122, 444, 315, 472]},
     {"id": "letter-g", "page": 1, "box": [122, 484, 318, 518]},

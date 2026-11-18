@@ -1,6 +1,9 @@
 // Extracts small grayscale PNG "plates" of printed shorthand outlines from the scanned 1929 manual
 // into app/plates/, as listed in tools/plates.json (boxes are in pixels of the page at 80 dpi;
 // a crop's optional `dpi` overrides the 300 dpi it is cut at, e.g. for whole reading pages).
+// A crop with `source` is cut from another book in `sources` instead: its `page` is then the
+// page of that PDF, and the book's grey paper is whitened (`paper`: lighter becomes white,
+// `black`: darker becomes black, in between is stretched to full contrast).
 // Usage: node tools/plates.mjs [id ...] [--sheet <file.html>] [--prune]
 // Needs poppler's pdftoppm (PDFTOPPM env var overrides the binary); no npm dependencies.
 import { spawnSync } from 'node:child_process';
@@ -60,27 +63,30 @@ function parsePgm(buf) {
   return { w, h, data: buf.subarray(pos, pos + w * h) };
 }
 
-function render(page, box, tmp, dpi = DPI) {
+function render(page, box, tmp, dpi = DPI, file = pdf) {
   const k = dpi / BASE_DPI;
   const x = Math.round(box[0] * k);
   const y = Math.round(box[1] * k);
   const w = Math.round((box[2] - box[0]) * k);
   const h = Math.round((box[3] - box[1]) * k);
   const prefix = join(tmp, 'p');
-  const r = spawnSync(PDFTOPPM, ['-r', dpi, '-f', page, '-l', page, '-x', x, '-y', y, '-W', w, '-H', h, '-gray', '-singlefile', pdf, prefix].map(String));
+  const r = spawnSync(PDFTOPPM, ['-r', dpi, '-f', page, '-l', page, '-x', x, '-y', y, '-W', w, '-H', h, '-gray', '-singlefile', file, prefix].map(String));
   if (r.status !== 0) throw new Error(`pdftoppm failed: ${r.stderr || r.error}`);
   return parsePgm(readFileSync(`${prefix}.pgm`));
 }
 
 // Whiten paper noise, then crop to the ink plus padding. Returns null if there is no ink.
-function clean(img) {
+function clean(img, { paper = PAPER, black = null, ink = INK } = {}) {
   const { w, h, data } = img;
-  for (let i = 0; i < data.length; i++) if (data[i] >= PAPER) data[i] = 255;
+  for (let i = 0; i < data.length; i++) {
+    if (data[i] >= paper) data[i] = 255;
+    else if (black !== null) data[i] = Math.round((Math.max(0, data[i] - black) * 255) / (paper - black));
+  }
   const rows = new Array(h).fill(0);
   const cols = new Array(w).fill(0);
   for (let y = EDGE; y < h - EDGE; y++) {
     for (let x = EDGE; x < w - EDGE; x++) {
-      if (data[y * w + x] < INK) { rows[y]++; cols[x]++; }
+      if (data[y * w + x] < ink) { rows[y]++; cols[x]++; }
     }
   }
   const first = (a) => a.findIndex((n) => n >= MIN_INK);
@@ -175,7 +181,10 @@ const done = [];
 try {
   for (const c of crops) {
     try {
-      const img = clean(render(c.page + config.pageOffset, c.box, tmp, c.dpi));
+      const src = c.source ? config.sources[c.source] : null;
+      const img = src
+        ? clean(render(c.page, c.box, tmp, c.dpi, join(repo, src.pdf)), { paper: src.paper, black: src.black, ink: src.ink })
+        : clean(render(c.page + config.pageOffset, c.box, tmp, c.dpi));
       if (!img) throw new Error('no ink found');
       const png = encodePng(img);
       writeFileSync(join(outDir, `${c.id}.png`), png);

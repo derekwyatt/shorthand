@@ -7,7 +7,7 @@ import { LESSONS, stepKey, exampleFor, isTask } from '../app/data/lessons.js';
 import { EXAMPLES } from '../app/data/examples.js';
 import { READINGS } from '../app/data/reading.js';
 import { readingPlate } from '../app/data/plates.js';
-import { splitSentences } from '../app/js/lessons.js';
+import { splitSentences, keyItems } from '../app/js/lessons.js';
 import fs from 'node:fs';
 
 test('the units, in order from Unit 1, each with read, write and choose steps', () => {
@@ -84,4 +84,35 @@ test('every unit closes with its Reading and Dictation Practice page and key', (
 test('key paragraphs split into sentences, not at titles or initials', () => {
   assert.deepEqual(splitSentences('Dear Mr. Ames: I am here. Are you? Yes! J. A. Smith came.'), ['Dear Mr. Ames: I am here.', 'Are you?', 'Yes!', 'J. A. Smith came.']);
   assert.deepEqual(splitSentences('One. Two'), ['One.', 'Two']);
+});
+
+test('Speed Studies sections: real units, cut plates, and steps after the unit’s own', async () => {
+  const { SPEED } = await import('../app/data/speed.js');
+  const crops = new Set(JSON.parse(fs.readFileSync(new URL('../tools/plates.json', import.meta.url), 'utf8')).crops.map((c) => c.id));
+  const seen = new Set();
+  for (const s of SPEED) {
+    const id = `${s.study}.${s.section}`;
+    assert.ok(!seen.has(id), `duplicate Speed Study section ${id}`);
+    seen.add(id);
+    assert.ok(s.unit >= 1 && s.unit <= 36, `${id}: unit ${s.unit}`);
+    assert.ok(Math.ceil(s.unit / 3) === s.study || s.study > 12, `${id}: Speed Study ${s.study} goes with Chapter ${s.study}, not Unit ${s.unit}`);
+    assert.ok(s.title && /^pp?\. \d+/.test(s.pages), `${id}: title and pages`);
+    assert.ok(s.text.length || s.figures.length, `${id}: has content`);
+    for (const f of s.figures) {
+      assert.ok(crops.has(f.plate), `${id}: ${f.plate} is cut by tools/plates.json`);
+      assert.ok(fs.existsSync(new URL(`../app/plates/${f.plate}.png`, import.meta.url)), `${id}: ${f.plate}.png`);
+      assert.ok(f.label, `${id}: figure label`);
+      for (const k of f.key ?? []) assert.ok(k.trim(), `${id}: empty key line`);
+    }
+    const steps = LESSONS[s.unit - 1].steps;
+    const at = steps.findIndex((x) => x.type === 'speed' && x.speed === s);
+    assert.ok(at > 0 && steps.slice(at).every((x) => x.type === 'speed' || x.type === 'reading'), `${id}: placed after Unit ${s.unit}'s own steps`);
+  }
+});
+
+test('key lines hide sentence by sentence, or word by word in a word list', () => {
+  assert.deepEqual(keyItems('gale, lag; kale.'), ['gale,', 'lag;', 'kale.']);
+  assert.deepEqual(keyItems('The gale made him giddy. Dick will lead.'), ['The gale made him giddy.', 'Dick will lead.']);
+  assert.deepEqual(keyItems('He can go, but not today.'), ['He can go, but not today.']);
+  assert.deepEqual(keyItems('of: of-the, of-it, of-our.'), ['of: of-the,', 'of-it,', 'of-our.']);
 });

@@ -424,3 +424,10 @@ body:not(.view-learn) .lesson-panel { display: none; }
 @media (max-width: 760px), (orientation: portrait) {
   .reader { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 3fr) minmax(0, 2fr); }
 }
+/* Gregg Speed Studies figures: the drill on white, its label above, its key below. */
+.speed-fig { align-items: stretch; gap: 6px; background: #fff; }
+.speed-fig figcaption { text-align: left; font-weight: 600; color: #444; }
+.speed-plate { width: 100%; cursor: zoom-in; mix-blend-mode: normal; }
+.speed-fig .reading-tools { position: static; background: none; }
+.writing-list { margin: 0; padding-left: 28px; display: flex; flex-direction: column; gap: 6px; }
+.speed-fig .plate { max-height: none; }

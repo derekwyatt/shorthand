@@ -6,6 +6,7 @@ self.PRECACHE = [
   'data/lessons.js',
   'data/plates.js',
   'data/reading.js',
+  'data/speed.js',
   'data/strokes.js',
   'data/units/index.js',
   'data/units/unit04.js',

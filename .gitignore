@@ -4,4 +4,6 @@ coverage/
 
 # Local copy of the 1929 manual scan (from https://greggshorthand.github.io); not committed
 /1929 - Anniversary Manual
+# Gregg Speed Studies, Anniversary Edition, 1929 (https://archive.org/details/greggspeedstudie0000john_a2n5); not committed
+/1929 - Gregg Speed Studies
 *.pdf

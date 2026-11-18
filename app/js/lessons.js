@@ -35,6 +35,16 @@ export function splitSentences(text) {
   return out.filter((x) => x.trim());
 }
 
+// The parts of a key line hidden one by one: its sentences, or the words of a word list.
+export function keyItems(line) {
+  const words = line.split(/(?<=[,;])\s+/);
+  const isList = words.length >= 3 && words.every((w) => w.split(/\s+/).length <= 4);
+  return isList ? words : splitSentences(line);
+}
+
+const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII', 'XIII', 'XIV', 'XV', 'XVI', 'XVII', 'XVIII', 'XIX', 'XX'];
+const roman = (n) => ROMAN[n] ?? String(n);
+
 const button = (text, className, onClick) => el('button', { type: 'button', className, textContent: text, onclick: onClick });
 
 function loadProgress() {
@@ -235,7 +245,7 @@ export function createLessons({ panel, pad, assist, unitPx }) {
     const back = button('◀ Back', '', () => goTo(index - 1));
     back.disabled = index === 0;
     const replay = button('Replay', '', replayAll);
-    replay.disabled = (s.type === 'choose' && !isDone(s)) || s.type === 'reading';
+    replay.disabled = (s.type === 'choose' && !isDone(s)) || s.type === 'reading' || s.type === 'speed';
     nav.replaceChildren(back, replay, button(last ? 'Finish ▶' : forward, 'lesson-next', next));
   }
 
@@ -354,21 +364,22 @@ export function createLessons({ panel, pad, assist, unitPx }) {
     );
   }
 
-  // The key of a reading page, every sentence hidden until tapped.
-  function readingKey(r) {
-    const sentences = [];
-    const passages = r.passages.map((p, i) => el('section', { className: 'reading-passage' },
-      el('div', { className: 'ex-caption', textContent: r.passages.length > 1 ? `Passage ${i + 1} · ${p.words} words` : `${p.words} words` }),
-      ...p.text.map((para) => el('p', { className: 'reading-key' }, ...splitSentences(para).flatMap((text) => {
+  // A key, every sentence (or, in a word list, every word) hidden until tapped.
+  // `groups`: [{ caption, paras }]; `credit`: who transcribed it, or null.
+  function hiddenKey(groups, credit) {
+    const items = [];
+    const sections = groups.map((g) => el('section', { className: 'reading-passage' },
+      ...(g.caption ? [el('div', { className: 'ex-caption', textContent: g.caption })] : []),
+      ...g.paras.map((para) => el('p', { className: 'reading-key' }, ...keyItems(para).flatMap((text) => {
         const span = el('span', { className: 'key-hidden', textContent: text, title: 'Tap to show' });
         span.onclick = () => { span.classList.remove('key-hidden'); sync(); };
-        sentences.push(span);
+        items.push(span);
         return [span, ' '];
       })))));
-    const hidden = () => sentences.filter((x) => x.classList.contains('key-hidden'));
+    const hidden = () => items.filter((x) => x.classList.contains('key-hidden'));
     const all = button('Show all', 'quiz-btn key-btn', () => {
       const hide = !hidden().length;
-      for (const x of sentences) x.classList.toggle('key-hidden', hide);
+      for (const x of items) x.classList.toggle('key-hidden', hide);
       sync();
     });
     const nextBtn = button('Show next', 'quiz-btn key-btn', () => { hidden()[0]?.classList.remove('key-hidden'); sync(); });
@@ -378,8 +389,41 @@ export function createLessons({ panel, pad, assist, unitPx }) {
     }
     return el('div', { className: 'reading-keybox' },
       el('div', { className: 'reading-tools' }, el('strong', { textContent: 'Key' }), nextBtn, all),
-      ...passages,
-      el('p', { className: 'ex-caption', textContent: 'Transcription key: J. Andrew Owen, greggshorthand.github.io.' }));
+      ...sections,
+      ...(credit ? [el('p', { className: 'ex-caption', textContent: credit })] : []));
+  }
+
+  const readingKey = (r) => hiddenKey(
+    r.passages.map((p, i) => ({ caption: r.passages.length > 1 ? `Passage ${i + 1} · ${p.words} words` : `${p.words} words`, paras: p.text })),
+    'Transcription key: J. Andrew Owen, greggshorthand.github.io.');
+
+  // A section of Gregg Speed Studies: its advice, its figures (each with its key, if the book
+  // prints one) and any prose that follows a figure.
+  function renderSpeed(s) {
+    markDone(s);
+    const x = s.speed;
+    pad.load([]);
+    const where = `Gregg Speed Studies, Speed Study ${roman(x.study)}${x.section ? ` §${x.section}` : ''}, ${x.pages}`;
+    const figure = (f) => {
+      const img = el('img', { src: readingPlate(f.plate).src, className: 'plate speed-plate', alt: `${f.label}, from ${where}`, title: 'Tap to enlarge' });
+      img.onclick = () => openReader({ title: `${x.title}: ${f.label}`, plates: [f.plate] }, f.key ? hiddenKey([{ paras: f.key }], null) : el('div'), () => {}, img.alt);
+      return el('figure', { className: 'lesson-plate speed-fig' },
+        el('figcaption', { textContent: f.label }), img,
+        ...(f.key ? [hiddenKey([{ paras: f.key }], null)] : []),
+        ...(f.after ?? []).map((t) => el('p', { className: 'lesson-text', textContent: t })));
+    };
+    body.replaceChildren(
+      el('div', { className: 'ex-caption', textContent: `Speed Study ${roman(x.study)} · for Unit ${x.unit}` }),
+      el('h2', { className: 'lesson-title', textContent: x.title }),
+      el('div', { className: 'ex-source', textContent: where }),
+      ...(x.writing
+        ? [el('p', { className: 'lesson-text', textContent: 'Write these sentences in shorthand on the pad, then read your notes back. The book prints no shorthand for them: write each word as the lessons so far have taught.' }),
+          el('ol', { className: 'lesson-text writing-list' }, ...x.text.map((t) => el('li', { textContent: t })))]
+        : x.text.map((t) => el('p', { className: 'lesson-text', textContent: t }))),
+      ...(x.reading ? [el('p', { className: 'ex-caption', textContent: 'Speed Studies prints no key for this practice: read what you can, and come back to it after the next units.' })] : []),
+      ...x.figures.map(figure),
+      el('p', { className: 'ex-caption', textContent: 'From Gregg Speed Studies, Anniversary Edition (1929), a companion to the Manual: its drills train the movements of the pen.' }),
+    );
   }
 
   // Full screen: the page (tap it to switch between fitting the width and 2×) beside the key.
@@ -389,7 +433,7 @@ export function createLessons({ panel, pad, assist, unitPx }) {
     const close = () => { shade.remove(); restore(); };
     const shade = el('div', { className: 'reader', role: 'dialog', ariaLabel: alt },
       el('div', { className: 'reader-bar' },
-        el('strong', { textContent: `Unit ${r.unit} · Reading and Dictation Practice (§${r.section}, ${r.pages})` }),
+        el('strong', { textContent: r.title ?? `Unit ${r.unit} · Reading and Dictation Practice (§${r.section}, ${r.pages})` }),
         button('Close ✕', 'quiz-btn key-btn', close)),
       page, el('div', { className: 'reader-key' }, keyBox));
     document.body.append(shade);
@@ -411,6 +455,7 @@ export function createLessons({ panel, pad, assist, unitPx }) {
       const s = step();
       if (s.type === 'read') renderRead(s);
       else if (s.type === 'reading') renderReading(s);
+      else if (s.type === 'speed') renderSpeed(s);
       else if (s.type === 'write') renderWrite(s);
       else renderChoose(s);
     }
