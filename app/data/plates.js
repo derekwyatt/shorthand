@@ -1628,6 +1628,9 @@ export function plateFor(exampleId) {
   return PAGES[file] ? { src: src(file), page: PAGES[file] } : null;
 }
 
+// A Reading and Dictation Practice page (data/reading.js), cut whole.
+export const readingPlate = (id) => ({ src: src(id) });
+
 export function sectionPlate(id) {
   const p = SECTION_PLATES[id];
   return p ? { src: src(id), ...p } : null;

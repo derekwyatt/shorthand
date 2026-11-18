@@ -4,11 +4,14 @@
 //   read    a rule from the manual, with outlines to watch (`show`, example ids)
 //   write   write an example on the pad; passed when a repeat scores PASS_SCORE or more
 //   choose  read an outline: pick its meaning from `choices` (example ids, answer included)
+//   reading the unit's Reading and Dictation Practice page, with its key (data/reading.js);
+//           added at the end of every unit that has one
 //
 // Text in quotes is the manual's own wording (1929, US public domain); the rest is a short
 // paraphrase. Every example id must exist in data/examples.js (tests/lessons.test.mjs).
 import { EXAMPLES } from './examples.js';
 import { UNITS } from './units/index.js';
+import { readingFor } from './reading.js';
 
 export { PASS_SCORE } from '../js/assess.js';
 
@@ -181,7 +184,9 @@ const UNIT_3 = [
 
 // A step's key is stable while the lesson text changes, so saved progress survives edits.
 export function stepKey(step) {
-  return step.type === 'read' ? `read:${step.title}` : `${step.type}:${step.example}`;
+  if (step.type === 'read') return `read:${step.title}`;
+  if (step.type === 'reading') return `reading:${step.reading.unit}`;
+  return `${step.type}:${step.example}`;
 }
 
 // A unit module's lesson (data/units/) as steps.
@@ -192,15 +197,18 @@ const stepOf = (s) => {
   throw new Error(`unknown lesson step ${JSON.stringify(s)}`);
 };
 
+const withReading = (l) => (readingFor(l.unit) ? { ...l, steps: [...l.steps, { type: 'reading', reading: readingFor(l.unit) }] } : l);
+
 export const LESSONS = [
   { id: 'unit-1', unit: 1, title: 'Unit 1', subtitle: 'The first consonants, vowel circles and how circles join', pages: 'pp. 1–6', steps: UNIT_1 },
   { id: 'unit-2', unit: 2, title: 'Unit 2', subtitle: 'Circles between strokes and joined curves', pages: 'pp. 7–11', steps: UNIT_2 },
   { id: 'unit-3', unit: 3, title: 'Unit 3', subtitle: 'The ted and men blends, the frequent-word drill and brief forms', pages: 'pp. 12–14', steps: UNIT_3 },
   ...UNITS.map((u) => ({ id: `unit-${u.unit}`, unit: u.unit, title: `Unit ${u.unit}`, subtitle: u.subtitle, pages: u.pages, steps: u.lesson.map(stepOf) })),
-];
+].map(withReading);
 
-// Steps that must be done (written or answered) to finish a unit; read steps are done on sight.
-export const isTask = (step) => step.type !== 'read';
+// Steps that must be done (written or answered) to finish a unit; read and reading steps are
+// done on sight.
+export const isTask = (step) => step.type !== 'read' && step.type !== 'reading';
 
 const BY_ID = new Map(EXAMPLES.map((e) => [e.id, e]));
 export const exampleFor = (id) => BY_ID.get(id);

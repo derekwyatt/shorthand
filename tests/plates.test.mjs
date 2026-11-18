@@ -9,6 +9,7 @@ import fs from 'node:fs';
 import { plateFor, sectionPlate, SECTION_PLATES } from '../app/data/plates.js';
 import { EXAMPLES } from '../app/data/examples.js';
 import { LESSONS } from '../app/data/lessons.js';
+import { READINGS } from '../app/data/reading.js';
 
 const PLATES_DIR = new URL('../app/plates/', import.meta.url);
 const CROPS = JSON.parse(fs.readFileSync(new URL('../tools/plates.json', import.meta.url), 'utf8')).crops;
@@ -59,8 +60,8 @@ test('plates are keyed by real examples, and their pages match plates.json', () 
     assert.equal(crop.page, p.page, `${ex.id}: page in plates.js vs plates.json`);
   }
   // No plate keyed by a typo: every crop that is not a section plate belongs to an example
-  // (directly, or through an alias).
-  const reached = new Set(EXAMPLES.map((e) => plateFor(e.id)).filter(Boolean).map(idOf));
+  // (directly, or through an alias) or to a reading page.
+  const reached = new Set([...EXAMPLES.map((e) => plateFor(e.id)).filter(Boolean).map(idOf), ...READINGS.flatMap((r) => r.plates)]);
   for (const c of CROPS) {
     if (SECTION_PLATES[c.id]) continue;
     assert.ok(reached.has(c.id), `crop ${c.id} is not used by any example (typo in plates.js?)`);

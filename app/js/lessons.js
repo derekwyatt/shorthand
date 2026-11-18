@@ -6,7 +6,7 @@
 // read steps also show their outlines at actual size, on ruled lines like the pad's.
 // Progress (current step and steps done) is kept in localStorage; strokes are not.
 import { LESSONS, PASS_SCORE, stepKey, exampleFor, isTask } from '../data/lessons.js';
-import { plateFor, sectionPlate } from '../data/plates.js';
+import { plateFor, sectionPlate, readingPlate } from '../data/plates.js';
 import { compileExample } from './join.js';
 import { bbox, renderCompiledSVG, animateStroke } from './render.js';
 import { createExamplePanel, actualSizeStrip } from './practice.js';
@@ -20,6 +20,21 @@ function el(tag, props = {}, ...children) {
   node.append(...children);
   return node;
 }
+// Sentences of a key paragraph, splitting after . ? ! (not after Mr., Mrs., Dr., St. or initials).
+export function splitSentences(text) {
+  const out = [];
+  let start = 0;
+  const re = /[.?!]["”’)]?\s+(?=["“(]?[A-Z0-9])/g;
+  for (let m; (m = re.exec(text));) {
+    const before = text.slice(start, m.index + 1);
+    if (/(?:\b(?:Mr|Mrs|Messrs|Dr|St|No|Co|Inc)|\b[A-Z])\.$/.test(before)) continue;
+    out.push(text.slice(start, m.index + m[0].trimEnd().length));
+    start = m.index + m[0].length;
+  }
+  out.push(text.slice(start));
+  return out.filter((x) => x.trim());
+}
+
 const button = (text, className, onClick) => el('button', { type: 'button', className, textContent: text, onclick: onClick });
 
 function loadProgress() {
@@ -220,7 +235,7 @@ export function createLessons({ panel, pad, assist, unitPx }) {
     const back = button('◀ Back', '', () => goTo(index - 1));
     back.disabled = index === 0;
     const replay = button('Replay', '', replayAll);
-    replay.disabled = s.type === 'choose' && !isDone(s);
+    replay.disabled = (s.type === 'choose' && !isDone(s)) || s.type === 'reading';
     nav.replaceChildren(back, replay, button(last ? 'Finish ▶' : forward, 'lesson-next', next));
   }
 
@@ -315,6 +330,71 @@ export function createLessons({ panel, pad, assist, unitPx }) {
     if (answered) reveal();
   }
 
+  // The unit's page of connected shorthand. The key is hidden sentence by sentence: read a
+  // sentence on the page, then tap it (or "Show next") to check.
+  function renderReading(s) {
+    markDone(s);
+    const r = s.reading;
+    pad.load([]);
+    const keyBox = readingKey(r);
+    const alt = `Reading and Dictation Practice, Manual §${r.section}: a page of shorthand`;
+    const open = () => openReader(r, keyBox, () => body.contains(slot) && slot.replaceWith(keyBox), alt);
+    const slot = el('div');
+    body.replaceChildren(
+      el('h2', { className: 'lesson-title', textContent: 'Reading and Dictation Practice' }),
+      el('div', { className: 'ex-source', textContent: `Manual §${r.section}, ${r.pages}` }),
+      el('p', { className: 'lesson-text', textContent: 'The manual closes every unit with a page of connected shorthand to read, and later to take from dictation. Read it a sentence at a time and check each against the key. Full screen puts the page and the key side by side. Copying outlines onto the pad as you read fixes the forms.' }),
+      button('Read full screen', 'quiz-btn', () => { keyBox.replaceWith(slot); open(); }),
+      ...r.plates.map((id) => {
+        const img = el('img', { src: readingPlate(id).src, className: 'plate reading-plate', alt, title: 'Tap to read full screen' });
+        img.onclick = () => { keyBox.replaceWith(slot); open(); };
+        return img;
+      }),
+      keyBox,
+    );
+  }
+
+  // The key of a reading page, every sentence hidden until tapped.
+  function readingKey(r) {
+    const sentences = [];
+    const passages = r.passages.map((p, i) => el('section', { className: 'reading-passage' },
+      el('div', { className: 'ex-caption', textContent: r.passages.length > 1 ? `Passage ${i + 1} · ${p.words} words` : `${p.words} words` }),
+      ...p.text.map((para) => el('p', { className: 'reading-key' }, ...splitSentences(para).flatMap((text) => {
+        const span = el('span', { className: 'key-hidden', textContent: text, title: 'Tap to show' });
+        span.onclick = () => { span.classList.remove('key-hidden'); sync(); };
+        sentences.push(span);
+        return [span, ' '];
+      })))));
+    const hidden = () => sentences.filter((x) => x.classList.contains('key-hidden'));
+    const all = button('Show all', 'quiz-btn key-btn', () => {
+      const hide = !hidden().length;
+      for (const x of sentences) x.classList.toggle('key-hidden', hide);
+      sync();
+    });
+    const nextBtn = button('Show next', 'quiz-btn key-btn', () => { hidden()[0]?.classList.remove('key-hidden'); sync(); });
+    function sync() {
+      all.textContent = hidden().length ? 'Show all' : 'Hide all';
+      nextBtn.disabled = !hidden().length;
+    }
+    return el('div', { className: 'reading-keybox' },
+      el('div', { className: 'reading-tools' }, el('strong', { textContent: 'Key' }), nextBtn, all),
+      ...passages,
+      el('p', { className: 'ex-caption', textContent: 'Transcription key: J. Andrew Owen, greggshorthand.github.io.' }));
+  }
+
+  // Full screen: the page (tap it to switch between fitting the width and 2×) beside the key.
+  function openReader(r, keyBox, restore, alt) {
+    const page = el('div', { className: 'reader-page' }, ...r.plates.map((id) => el('img', { src: readingPlate(id).src, className: 'plate', alt })));
+    page.onclick = () => page.classList.toggle('big');
+    const close = () => { shade.remove(); restore(); };
+    const shade = el('div', { className: 'reader', role: 'dialog', ariaLabel: alt },
+      el('div', { className: 'reader-bar' },
+        el('strong', { textContent: `Unit ${r.unit} · Reading and Dictation Practice (§${r.section}, ${r.pages})` }),
+        button('Close ✕', 'quiz-btn key-btn', close)),
+      page, el('div', { className: 'reader-key' }, keyBox));
+    document.body.append(shade);
+  }
+
   function render() {
     status = null;
     replayers = [];
@@ -330,6 +410,7 @@ export function createLessons({ panel, pad, assist, unitPx }) {
     else {
       const s = step();
       if (s.type === 'read') renderRead(s);
+      else if (s.type === 'reading') renderReading(s);
       else if (s.type === 'write') renderWrite(s);
       else renderChoose(s);
     }

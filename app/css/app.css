@@ -399,3 +399,28 @@ body:not(.view-learn) .lesson-panel { display: none; }
 .lesson-status.bad { color: #c62828; }
 .lesson-left { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
 .lesson-left .choice { width: 100%; }
+
+/* Reading and Dictation Practice: the page of shorthand and its key, hidden by sentence. */
+.reading-plate { width: 100%; background: #fff; border-radius: 8px; padding: 8px; box-sizing: border-box; cursor: zoom-in; mix-blend-mode: normal; }
+.reading-keybox { display: flex; flex-direction: column; gap: 10px; }
+.reading-tools { display: flex; align-items: center; gap: 8px; position: sticky; top: 34px; z-index: 1; padding: 6px 0; background: #f3efe2; }
+.reading-tools strong { flex: 1; font-size: 18px; }
+.key-btn { min-height: 40px; padding: 0 14px; font-size: 15px; }
+.key-btn:disabled { opacity: 0.35; }
+.reading-passage { display: flex; flex-direction: column; gap: 6px; }
+.reading-key { margin: 0; font-size: 17px; line-height: 1.5; }
+.reading-key span { border-radius: 4px; transition: filter 0.2s, background 0.2s; }
+.reading-key .key-hidden { filter: blur(6px); background: #e2dccb; cursor: pointer; user-select: none; -webkit-user-select: none; }
+/* Full-screen reader: the page on the left, the key on the right (stacked when narrow). */
+.reader { position: fixed; inset: 0; z-index: 50; display: grid; grid-template-columns: minmax(0, 62fr) minmax(0, 38fr); grid-template-rows: auto minmax(0, 1fr); background: #f3efe2; }
+.reader-bar { grid-column: 1 / -1; display: flex; align-items: center; gap: 12px; padding: 8px 16px; padding-top: max(8px, env(safe-area-inset-top)); background: #2b2f36; color: #fff; }
+.reader-bar strong { flex: 1; font-size: 16px; }
+.reader-page { overflow: auto; background: #fff; padding: 12px; -webkit-overflow-scrolling: touch; cursor: zoom-in; }
+.reader-page .plate { display: block; width: 100%; max-width: none; height: auto; margin: 0 auto 12px; }
+.reader-page.big { cursor: zoom-out; }
+.reader-page.big .plate { width: 200%; }
+.reader-key { overflow: auto; padding: 0 16px 24px; -webkit-overflow-scrolling: touch; }
+.reader-key .reading-tools { top: 0; }
+@media (max-width: 760px), (orientation: portrait) {
+  .reader { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 3fr) minmax(0, 2fr); }
+}

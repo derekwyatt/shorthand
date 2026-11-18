@@ -1,5 +1,6 @@
 // Extracts small grayscale PNG "plates" of printed shorthand outlines from the scanned 1929 manual
-// into app/plates/, as listed in tools/plates.json (boxes are in pixels of the page at 80 dpi).
+// into app/plates/, as listed in tools/plates.json (boxes are in pixels of the page at 80 dpi;
+// a crop's optional `dpi` overrides the 300 dpi it is cut at, e.g. for whole reading pages).
 // Usage: node tools/plates.mjs [id ...] [--sheet <file.html>] [--prune]
 // Needs poppler's pdftoppm (PDFTOPPM env var overrides the binary); no npm dependencies.
 import { spawnSync } from 'node:child_process';
@@ -59,14 +60,14 @@ function parsePgm(buf) {
   return { w, h, data: buf.subarray(pos, pos + w * h) };
 }
 
-function render(page, box, tmp) {
-  const k = DPI / BASE_DPI;
+function render(page, box, tmp, dpi = DPI) {
+  const k = dpi / BASE_DPI;
   const x = Math.round(box[0] * k);
   const y = Math.round(box[1] * k);
   const w = Math.round((box[2] - box[0]) * k);
   const h = Math.round((box[3] - box[1]) * k);
   const prefix = join(tmp, 'p');
-  const r = spawnSync(PDFTOPPM, ['-r', DPI, '-f', page, '-l', page, '-x', x, '-y', y, '-W', w, '-H', h, '-gray', '-singlefile', pdf, prefix].map(String));
+  const r = spawnSync(PDFTOPPM, ['-r', dpi, '-f', page, '-l', page, '-x', x, '-y', y, '-W', w, '-H', h, '-gray', '-singlefile', pdf, prefix].map(String));
   if (r.status !== 0) throw new Error(`pdftoppm failed: ${r.stderr || r.error}`);
   return parsePgm(readFileSync(`${prefix}.pgm`));
 }
@@ -174,7 +175,7 @@ const done = [];
 try {
   for (const c of crops) {
     try {
-      const img = clean(render(c.page + config.pageOffset, c.box, tmp));
+      const img = clean(render(c.page + config.pageOffset, c.box, tmp, c.dpi));
       if (!img) throw new Error('no ink found');
       const png = encodePng(img);
       writeFileSync(join(outDir, `${c.id}.png`), png);
