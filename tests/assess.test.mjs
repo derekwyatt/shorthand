@@ -248,6 +248,28 @@ test('a phrase (Manual §4) is one joined outline, scored as a whole', () => {
   assert.equal(apart.words[0].text, 'It');
 });
 
+test('the check pattern is fitted to the ink, not sized by its length', () => {
+  const e = ex('sentence-it-will-be-good');
+  const phrase = modelUnits(e).find((u) => u.word === 'It will');
+  const [t, l] = phrase.compiled.segments.map((s) => samplePoints({ ...phrase.compiled, segments: [s] }, 24));
+  // A learner's "it will": a slightly short t, an overshoot up and back at the corner and a
+  // wavy l. The ink is ~1.3x the model's length, but the t is where it should be.
+  const write = (tScale) => {
+    const tt = t.map((p) => ({ x: p.x * tScale, y: p.y * tScale }));
+    const j = tt.at(-1);
+    const spike = [...Array(10)].map((_, i) => ({ x: j.x + 0.005 * i, y: j.y + 0.06 * i }))
+      .concat([...Array(10)].map((_, i) => ({ x: j.x + 0.05 + 0.005 * i, y: j.y + 0.6 - 0.06 * i })));
+    const k = spike.at(-1);
+    return [...tt, ...spike, ...l.map((p, i) => ({ x: k.x + p.x - l[0].x, y: k.y + p.y - l[0].y + 0.1 * Math.sin(i * 0.8) }))];
+  };
+  const strokes = (pts) => [{ points: pts.map((p, i) => ({ x: 100 + p.x * UNIT, y: 300 - p.y * UNIT, t: i * 8 })) }];
+  const good = assessAttempt(e, strokes(write(0.8)), UNIT);
+  assert.ok(good.check.every((c) => c.ok), texts(good));
+  // A t written twice too long still drifts.
+  const long = assessAttempt(e, strokes(write(2.2)), UNIT);
+  assert.equal(long.check.find((c) => c.kind === 'outline').ok, false, texts(long));
+});
+
 test('a long stroke written too short is told how big it is against the ruling', () => {
   const e = ex('letter-b');
   const r = assessAttempt(e, perfect(e, { scale: 0.55 }), UNIT);

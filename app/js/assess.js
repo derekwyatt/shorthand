@@ -465,16 +465,45 @@ function shapeDistance(a, la, b, lb) {
   return sum / a.length;
 }
 
-function distToPath(p, path) {
-  let best = Infinity;
+// The point of `path` nearest to p.
+function nearestOnPath(p, path) {
+  let best = null, bd = Infinity;
   for (let i = 1; i < path.length; i++) {
     const a = path[i - 1], b = path[i];
     const v = sub(b, a);
     const L2 = v.x * v.x + v.y * v.y;
     const f = L2 > 1e-12 ? clamp(((p.x - a.x) * v.x + (p.y - a.y) * v.y) / L2, 0, 1) : 0;
-    best = Math.min(best, Math.hypot(p.x - a.x - f * v.x, p.y - a.y - f * v.y));
+    const q = { x: a.x + f * v.x, y: a.y + f * v.y };
+    const d = dist(p, q);
+    if (d < bd) { bd = d; best = q; }
   }
   return best;
+}
+
+// Scale and offset that lay the model's samples over the learner's ink (q = s·p + t).
+// Starts from the extents and centroids, then refines a few times on nearest points both
+// ways (model to ink and ink to model, so the fit can't shrink onto part of the ink). Not
+// from the path lengths: a wavy hand or an overshoot at a corner lengthens the ink, and a
+// model scaled to that length lands beside a correctly written short stroke.
+function fitModel(M, U) {
+  const cM = centroid(M), cU = centroid(U);
+  let s = extentOf(U) / (extentOf(M) || 1);
+  let t = { x: cU.x - s * cM.x, y: cU.y - s * cM.y };
+  for (let it = 0; it < 8; it++) {
+    const T = (p) => ({ x: s * p.x + t.x, y: s * p.y + t.y });
+    const placed = M.map(T);
+    const pairs = [
+      ...M.map((p, i) => [p, nearestOnPath(placed[i], U)]),
+      ...U.map((q) => { const n = nearestOnPath(q, placed); return [{ x: (n.x - t.x) / s, y: (n.y - t.y) / s }, q]; }),
+    ];
+    const mm = centroid(pairs.map((x) => x[0])), um = centroid(pairs.map((x) => x[1]));
+    let num = 0, den = 0;
+    for (const [p, q] of pairs) { const a = sub(p, mm), b = sub(q, um); num += a.x * b.x + a.y * b.y; den += a.x * a.x + a.y * a.y; }
+    if (den < 1e-9) break;
+    s = num / den;
+    t = { x: um.x - s * mm.x, y: um.y - s * mm.y };
+  }
+  return { s, t };
 }
 
 // "the r", "the a-circle at the beginning", "the e-circle between k and t".
@@ -525,14 +554,20 @@ export function assessShape(unit, user, { scale = 1 } = {}) {
   }
   penalty += d * SHAPE.slope;
 
-  // Localise: lay the model over the learner's shape (same size, same centre) and measure
-  // how far each model sample is from the ink; a token's drift is its mean.
-  const s = userLen / modelLen;
-  const cM = centroid(M.pts), cU = centroid(U.pts);
-  const place = (p) => ({ x: cU.x + s * (p.x - cM.x), y: cU.y + s * (p.y - cM.y) });
-  const devs = M.pts.map((p) => distToPath(place(p), U.pts) / s);
+  // Localise: lay the model over the learner's shape (fitModel) and measure how far each
+  // model sample is from the ink, and each ink sample from the model (counted against the
+  // nearest model sample's token, so a stroke written too long drifts too); a token's
+  // drift is the mean.
+  const { s, t } = fitModel(M.pts, U.pts);
+  const placed = M.pts.map((p) => ({ x: s * p.x + t.x, y: s * p.y + t.y }));
   const sums = new Map();
-  M.owner.forEach((tok, i) => { const e = sums.get(tok) ?? { n: 0, sum: 0 }; e.n++; e.sum += devs[i]; sums.set(tok, e); });
+  const count = (tok, dev) => { const e = sums.get(tok) ?? { n: 0, sum: 0 }; e.n++; e.sum += dev; sums.set(tok, e); };
+  placed.forEach((p, i) => count(M.owner[i], dist(p, nearestOnPath(p, U.pts)) / s));
+  for (const q of U.pts) {
+    let k = 0;
+    placed.forEach((p, i) => { if (dist(p, q) < dist(placed[k], q)) k = i; });
+    count(M.owner[k], dist(q, nearestOnPath(q, placed)) / s);
+  }
   let worst = null;
   for (const [tok, e] of sums) {
     const mean = e.sum / e.n;
@@ -540,7 +575,7 @@ export function assessShape(unit, user, { scale = 1 } = {}) {
     if (!worst || mean > worst.mean) worst = { tok, mean };
   }
   if (worst && worst.mean > SHAPE.drift && !reversed) add('warn', `Drifts from the model at ${tokenPhrase(unit.allTokens, worst.tok)}.`, 0);
-  result.align = { s, cM, cU };
+  result.align = { s, t };
   result.score = Math.round(100 - clamp(penalty, 0, 100));
   return result;
 }
@@ -756,8 +791,8 @@ function checkPattern(results, { complete, lenScale, fit }) {
     if (r.unit.kind === 'outline') {
       if (r.pieces && r.align && r.user) {
         // Joined outline: one piece per token, green where it matches, red where it drifts.
-        const { s, cM, cU } = r.align;
-        const T = (p) => ({ x: cU.x + s * (p.x - cM.x), y: cU.y + s * (p.y - cM.y) });
+        const { s, t } = r.align;
+        const T = (p) => ({ x: s * p.x + t.x, y: s * p.y + t.y });
         const segs = r.unit.compiled.segments;
         const okOf = new Map(r.pieces.map((x) => [x.token, x.ok]));
         let k = 0;
