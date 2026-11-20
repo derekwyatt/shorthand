@@ -932,10 +932,21 @@ try {
   // Offline: once the service worker has saved the app, it loads with no network.
   const cached = await evaluate(`(async () => {
     await navigator.serviceWorker.ready;
-    const cache = await caches.open('gregg-v1');
-    return { page: !!(await cache.match('./')), plate: !!(await cache.match('plates/letter-k.png')), count: (await cache.keys()).length };
+    const list = {};
+    new Function('self', await (await fetch('precache.js')).text())(list);
+    const name = 'gregg-' + list.PRECACHE_VERSION;
+    const cache = await caches.open(name);
+    // The browser's fingerprint of a saved file is the one in the list (what an update compares).
+    const body = await (await cache.match('js/main.js')).arrayBuffer();
+    const hex = [...new Uint8Array(await crypto.subtle.digest('SHA-256', body))].slice(0, 6).map((b) => b.toString(16).padStart(2, '0')).join('');
+    return {
+      caches: (await caches.keys()).filter((k) => k.startsWith('gregg-')).length,
+      page: !!(await cache.match('./')), plate: !!(await cache.match('plates/letter-k.png')), count: (await cache.keys()).length,
+      print: hex === new Map(list.PRECACHE).get('js/main.js'),
+    };
   })()`);
-  check(cached.page && cached.plate && cached.count >= 150, `the service worker saves the whole app (${JSON.stringify(cached)})`);
+  check(cached.caches === 1 && cached.page && cached.plate && cached.count >= 150 && cached.print,
+    `the service worker saves the whole app in one cache for this version, fingerprints matching the list (${JSON.stringify(cached)})`);
   await send('Network.enable');
   await send('Network.emulateNetworkConditions', { offline: true, latency: 0, downloadThroughput: -1, uploadThroughput: -1 });
   await send('Page.reload');
