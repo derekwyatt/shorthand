@@ -232,7 +232,7 @@ Everything stays in your browser's localStorage. Nothing is sent anywhere: the a
 
 ### Thank you, Andrew Owen
 
-This app is built on the work of [J. Andrew Owen](https://www.jandrewowen.com/), whose site [greggshorthand.github.io](https://greggshorthand.github.io) keeps Gregg shorthand alive for anyone who wants to learn it. Every rule the lessons quote, the full text of each unit with its figures, the brief-form chart, the most-used phrases, the keys to the Reading and Dictation Practice, and the [scan of the Manual](https://greggshorthand.github.io/Annivman.pdf) that the printed outlines are cut from: all of it comes from his careful transcription, typed out paragraph by paragraph and linked up so the book can be read on a screen. That is years of patient work, freely given, and it is the foundation this app stands on. Thank you, Andrew.
+This app is built on the work of [J. Andrew Owen](https://www.jandrewowen.com/), whose site [greggshorthand.github.io](https://greggshorthand.github.io) keeps Gregg shorthand alive for anyone who wants to learn it. Every rule the lessons quote, the full text of each unit with its figures, the brief-form chart, the most-used phrases, the keys to the Reading and Dictation Practice, and the [scan of the Manual](https://greggshorthand.github.io/Annivman.pdf) that the printed outlines are cut from: all of it comes from his careful transcription, typed out paragraph by paragraph and linked up so the book can be read on a screen. It is generous work, freely shared, and it is the foundation this app stands on. Thank you, Andrew.
 
 The app links back to his site wherever it shows something from it: each Reference section to its page, the Manual's text to the unit (at the paragraph), each reading key to its transcription, and every "p. N" of the Manual to that page of the scan. Inside the app, "Manual §N" opens the Manual's own text at that paragraph; from there, the link at its foot goes on to the site. The same thanks is in the app, under Reference → Thanks.
 
@@ -242,4 +242,4 @@ The manual is in the US public domain. The scan used to transcribe the units (se
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+The code is MIT-licensed; see [LICENSE](LICENSE). The licence does not cover the content from other sources. The 1929 Manual and Gregg Speed Studies are in the public domain. The Manual's text, figures, brief-form chart, phrases and reading keys come from J. Andrew Owen's transcription at greggshorthand.github.io, which includes his own edits; they are his work, used with credit and links back to his site (see Credits).

@@ -78,7 +78,7 @@ function thanks() {
     p('This app could not teach from the Anniversary Manual without the work of ', outLink(AUTHOR_SITE, AUTHOR), ', whose site ',
       outLink(sourceUrl.home, 'greggshorthand.github.io'), ' keeps Gregg shorthand alive for anyone who wants to learn it.'),
     p('Every rule the lessons quote, the full text of each unit with its figures, the chart of brief forms, the most-used phrases, the keys to the reading practice, and the ',
-      outLink(PDF, 'scan of the Manual'), ' the printed outlines are cut from: all of it comes from his careful transcription, typed out paragraph by paragraph and linked up so the book can be read on a screen. That is years of patient work, freely given, and it is the foundation this app stands on.'),
+      outLink(PDF, 'scan of the Manual'), ' the printed outlines are cut from: all of it comes from his careful transcription, typed out paragraph by paragraph and linked up so the book can be read on a screen. It is generous work, freely shared, and it is the foundation this app stands on.'),
     p('If this app helps you, please visit his site: it has much more than is here, from the earlier and later editions of Gregg to reporting notes and other languages. Each section of this app links back to the page it came from.'),
     p('Thank you, Andrew.')),
     el('p', { className: 'ex-caption', textContent: 'John Robert Gregg’s Anniversary Manual (1929) and Gregg Speed Studies (1929) are in the US public domain; the Speed Studies drills here are cut from a separate scan of that book.' })];

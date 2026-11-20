@@ -1,3 +1,20 @@
+The MIT License below covers the code of this repository: the app's JavaScript,
+HTML and CSS, the tools and the tests, and the example data written for it. It does
+not cover the content taken from other sources, which keeps its own status:
+
+- The text of the Gregg Shorthand Manual, Anniversary Edition (1929), its figures,
+  the brief-form chart, the most-used phrases and the keys to the Reading and
+  Dictation Practice (app/data/manual.js, app/data/briefs.js, app/data/reading.js,
+  app/manual/) are from J. Andrew Owen's transcription at
+  https://greggshorthand.github.io. The 1929 book is in the public domain; his
+  edits and transcription are his work, used with credit and links back to his site.
+- The images in app/plates/ are cut from scans of the Anniversary Manual (from the
+  same site) and of Gregg Speed Studies (1929), both in the public domain.
+
+See "Credits" in README.md.
+
+---
+
 MIT License
 
 Copyright (c) 2026 Derek Wyatt
