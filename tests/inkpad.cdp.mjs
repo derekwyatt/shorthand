@@ -751,6 +751,42 @@ try {
   check(Object.keys(ref).length >= 7 && Object.entries(ref).filter(([k]) => !['found', 'count', 'unit3'].includes(k)).every(([, n]) => n >= 2), `every reference section has content (${JSON.stringify(ref)})`);
   check(ref.found >= 1 && ref.found < 10 && /of 320/.test(ref.count), `the brief-form search filters the chart (${ref.found}, ${ref.count})`);
   check(ref.unit3, 'the Manual can be read unit by unit in Reference');
+  const links = await evaluate(`(() => {
+    const out = {};
+    for (const b of document.querySelectorAll('.ref-menu button')) {
+      b.click();
+      out[b.dataset.id] = [...document.querySelectorAll('.ref-body a.out-link')].map((a) => a.getAttribute('href'));
+    }
+    document.querySelector('.ref-menu button[data-id="units"]').click();
+    const pick = document.querySelector('.ref-body select');
+    pick.value = '7'; pick.dispatchEvent(new Event('change'));
+    out.unit7 = document.querySelector('.ref-body a.out-link').getAttribute('href');
+    out.newTab = [...document.querySelectorAll('a.out-link')].every((a) => a.target === '_blank' && a.rel === 'noopener');
+    return out;
+  })()`);
+  const site = 'https://greggshorthand.github.io/';
+  check(links.beginner[0] === site + 'antwtbgr.html' && links.briefs[0] === site + 'anbfs.html' && links.phrases[0] === site + 'anphrase.html' && links.alphabet[0] === site + 'analphbt.html'
+    && links.unit7 === site + 'anunit07.html' && links.newTab, `each Reference section links to its page at greggshorthand.github.io (${JSON.stringify(links)})`);
+  check(links.thanks.includes(site) && links.thanks.includes(site + 'Annivman.pdf') && links.thanks.some((h) => /jandrewowen/.test(h)), 'Thanks credits Andrew Owen, with links to his sites');
+
+  // In Practice, a source line's § opens the Manual in the app and its page links to the scan.
+  await evaluate(`location.hash = '#pad'`);
+  await sleep(200);
+  const src = await evaluate(`(async () => {
+    const sel = document.getElementById('level-select');
+    sel.value = '5'; sel.dispatchEvent(new Event('change'));
+    await new Promise((r) => setTimeout(r, 200));
+    const line = document.querySelector('.example-panel .ex-source');
+    const page = line.querySelector('a.out-link')?.getAttribute('href');
+    const para = line.querySelector('button.inline-link');
+    para?.click();
+    const reader = document.querySelector('.manual-reader');
+    const back = reader?.querySelector('.credit a')?.getAttribute('href');
+    reader?.querySelector('.reader-bar button:last-child').click();
+    return { text: line.textContent, page, para: para?.textContent, back, closed: !document.querySelector('.manual-reader') };
+  })()`);
+  check(/Annivman\.pdf#page=\d+$/.test(src.page ?? '') && /§/.test(src.para ?? '') && /anunit\d\d\.html#p\d+$/.test(src.back ?? '') && src.closed,
+    `a Practice source line links its page to the scan, and its § to the Manual in the app, which links on to the site (${JSON.stringify(src)})`);
 
   // Settings: the menu opens and closes; a theme recolours the app and the pad's pen.
   await evaluate(`location.hash = '#pad'`);

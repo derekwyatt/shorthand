@@ -3,7 +3,7 @@ import { EXAMPLES, LEVELS } from '../data/examples.js';
 import { animateStroke, cubicPoint, pathData } from './render.js';
 import { assessAttempt, PASS_SCORE } from './assess.js';
 import { generateQuiz } from './quizgen.js';
-import { actualSizeStrip, enlargedSVG, scoreClass, printedOutline } from './practice.js';
+import { actualSizeStrip, enlargedSVG, scoreClass, printedOutline, printedCaption } from './practice.js';
 import { getWriterScale, learnWriterScale } from './writer.js';
 import { el, button, svgEl } from './dom.js';
 
@@ -230,7 +230,7 @@ export function createQuiz({ panel, pad, assist, unitPx }) {
       // The manual's printed outline (it names the word, so only after answering).
       const printed = printedOutline(example);
       reveal.replaceChildren(...meaningLines(example), ...(printed ? [
-        el('div', { className: 'ex-caption', textContent: `In the manual, p. ${printed.page}` }),
+        printedCaption(printed.page),
         el('div', { className: 'ex-plate' }, printed),
       ] : []));
       panel.append(nextButton());

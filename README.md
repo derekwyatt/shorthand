@@ -72,7 +72,7 @@ HOST=127.0.0.1 npm start
 - **Practice** (`#pad`, the default): the left panel shows the example to copy, enlarged and at actual size on ruled lines, with its meaning and source, and below it the manual's printed outline where the manual prints one (with its page). Pick a level from the dropdown (levels tied to a manual unit are grouped under “Manual units”), move with Prev/Next at the top of the panel (or the left and right arrow keys), and use Replay to watch the stroke order. Write on the pad beside it (below it on a portrait screen).
 - **Quiz** (`#quiz`): shares the pad. Choose the length (5, 10 or 20 questions), the levels and the question types, then answer. Read questions ask what an outline says (four choices), showing it enlarged and on ruled lines at actual size; once answered, the manual's printed outline is shown. Write questions ask you to write a word, letter or sentence and score it. Look-alike series ask you to write each member of a family of similar strokes (for example n, m or t, d) and show the results at the end. Passing is a score of 70 or more. The last 20 results are kept.
 - **Strokes** (`#strokes`): every stroke family at one scale. The stroke is green where the pen starts and red where it ends. Tap a stroke to replay it, or use Replay all.
-- **Reference** (`#ref`): the Manual's front matter, the alphabet, every brief form (type a word, or letters such as “a b”, to find one), the most-used phrases and the Manual's text unit by unit.
+- **Reference** (`#ref`): the Manual's front matter, the alphabet, every brief form (type a word, or letters such as “a b”, to find one), the most-used phrases, the Manual's text unit by unit, and a thank-you to Andrew Owen. Each section links to the page of greggshorthand.github.io it comes from.
 
 | Quiz | Strokes |
 | --- | --- |
@@ -184,12 +184,13 @@ app/
     backup.js         progress backup file: export and restore of the gregg.* keys
     gallery.js        the Strokes view
     reference.js      the Reference view
-    manualtext.js     renders the Manual's text blocks
+    manualtext.js     renders the Manual's text; the full-screen Manual reader
   data/
     strokes.js        the stroke table (geometry in U) and look-alike families
     examples.js       the levels of examples
     lessons.js        the lesson steps for Units 1–3 (later units come from units/)
     plates.js         which examples and rules have a printed plate, and its page
+    source.js         links to the pages of greggshorthand.github.io the content comes from
     manual.js         the Manual's text, unit by unit, and its front matter
     briefs.js         the brief-form chart (Reference)
     reading.js        each unit's Reading and Dictation Practice and its key
@@ -228,6 +229,12 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for how the pieces fit together
 Everything stays in your browser's localStorage. Nothing is sent anywhere: the app makes no network requests except to load its own files from wherever it is served (and, with the dev server, `/api/quiz`). The service worker keeps a copy of those files in the browser's cache. Export is user-initiated; the exported file contains your strokes and, among other fields, the browser's user-agent string. Back up writes your progress to a file only when you ask, and Restore reads only a file you choose. Reset removes all stored data.
 
 ## Credits
+
+### Thank you, Andrew Owen
+
+This app is built on the work of [J. Andrew Owen](https://www.jandrewowen.com/), whose site [greggshorthand.github.io](https://greggshorthand.github.io) keeps Gregg shorthand alive for anyone who wants to learn it. Every rule the lessons quote, the full text of each unit with its figures, the brief-form chart, the most-used phrases, the keys to the Reading and Dictation Practice, and the [scan of the Manual](https://greggshorthand.github.io/Annivman.pdf) that the printed outlines are cut from: all of it comes from his careful transcription, typed out paragraph by paragraph and linked up so the book can be read on a screen. That is years of patient work, freely given, and it is the foundation this app stands on. Thank you, Andrew.
+
+The app links back to his site wherever it shows something from it: each Reference section to its page, the Manual's text to the unit (at the paragraph), each reading key to its transcription, and every "p. N" of the Manual to that page of the scan. Inside the app, "Manual §N" opens the Manual's own text at that paragraph; from there, the link at its foot goes on to the site. The same thanks is in the app, under Reference → Thanks.
 
 Outline forms and the rules for joining circles follow the *Gregg Shorthand Manual, Anniversary Edition* (1929). Brief forms come from the Gregg Simplified chart. Each example lists its source in the app.
 

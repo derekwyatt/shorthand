@@ -7,13 +7,13 @@
 // Progress (current step and steps done) is kept in localStorage; strokes are not.
 import { LESSONS, PASS_SCORE, stepKey, exampleFor, isTask } from '../data/lessons.js';
 import { sectionPlate, readingPlate } from '../data/plates.js';
-import { MANUAL_TEXT } from '../data/manual.js';
-import { renderBlocks } from './manualtext.js';
+import { openManual, unitOfParagraph } from './manualtext.js';
 import { animateStroke } from './render.js';
-import { createExamplePanel, actualSizeStrip, enlargedSVG, printedOutline } from './practice.js';
+import { createExamplePanel, actualSizeStrip, enlargedSVG, printedOutline, printedCaption, pageLink } from './practice.js';
+import { AUTHOR, sourceUrl } from '../data/source.js';
 import { assessRepeats } from './repeats.js';
 import { getWriterScale, learnWriterScale } from './writer.js';
-import { el, button } from './dom.js';
+import { el, button, credit } from './dom.js';
 
 const STORE_KEY = 'gregg.lessons.v1';
 
@@ -38,9 +38,6 @@ export function shuffled(list, key, salt = SALT) {
   return out;
 }
 
-// The unit whose text holds the Manual's paragraph n.
-const PARA_UNIT = new Map(Object.entries(MANUAL_TEXT).flatMap(([u, d]) => d.blocks.flatMap(([, html]) => [...html.matchAll(/id="m(\d+)"/g)].map((m) => [Number(m[1]), Number(u)]))));
-const unitOfParagraph = (n) => PARA_UNIT.get(n) ?? null;
 
 // Sentences of a key paragraph, splitting after . ? ! (not after Mr., Mrs., Dr., St. or initials).
 export function splitSentences(text) {
@@ -149,7 +146,7 @@ export function createLessons({ panel, pad, assist, unitPx }) {
         const p = sectionPlate(id);
         return el('figure', { className: 'lesson-plate' },
           el('img', { srcset: p.srcset, className: 'plate', alt: `${p.caption}, as printed in the manual, page ${p.page}` }),
-          el('figcaption', { textContent: `${p.caption} (p. ${p.page})` }));
+          el('figcaption', {}, `${p.caption} (`, pageLink(p.page), ')'));
       }),
     ];
   }
@@ -340,7 +337,7 @@ export function createLessons({ panel, pad, assist, unitPx }) {
       const printed = printedOutline(example);
       ruled.replaceChildren(...stripSection([s.example]));
       after.replaceChildren(
-        ...(printed ? [el('div', { className: 'ex-caption', textContent: `In the manual, p. ${printed.page}` }), el('div', { className: 'ex-plate' }, printed)] : []),
+        ...(printed ? [printedCaption(printed.page), el('div', { className: 'ex-plate' }, printed)] : []),
         ...trySection([s.example]));
       select(s.example);
     };
@@ -377,7 +374,7 @@ export function createLessons({ panel, pad, assist, unitPx }) {
     const slot = el('div');
     body.replaceChildren(
       el('h2', { className: 'lesson-title', textContent: 'Reading and Dictation Practice' }),
-      el('div', { className: 'ex-source', textContent: `Manual §${r.section}, ${r.pages}` }),
+      manualRef(`Manual §${r.section}, ${r.pages}`),
       el('p', { className: 'lesson-text', textContent: 'The manual closes every unit with a page of connected shorthand to read, and later to take from dictation. Read it a sentence at a time and check each against the key. Full screen puts the page and the key side by side. Copying outlines onto the pad as you read fixes the forms.' }),
       button('Read full screen', 'quiz-btn', () => { keyBox.replaceWith(slot); open(); }),
       ...r.plates.map((id) => {
@@ -390,8 +387,8 @@ export function createLessons({ panel, pad, assist, unitPx }) {
   }
 
   // A key, every sentence (or, in a word list, every word) hidden until tapped.
-  // `groups`: [{ caption, paras }]; `credit`: who transcribed it, or null.
-  function hiddenKey(groups, credit) {
+  // `groups`: [{ caption, paras }]; `source`: a line crediting who transcribed it, or null.
+  function hiddenKey(groups, source) {
     const items = [];
     const sections = groups.map((g) => el('section', { className: 'reading-passage' },
       ...(g.caption ? [el('div', { className: 'ex-caption', textContent: g.caption })] : []),
@@ -415,12 +412,12 @@ export function createLessons({ panel, pad, assist, unitPx }) {
     return el('div', { className: 'reading-keybox' },
       el('div', { className: 'reading-tools' }, el('strong', { textContent: 'Key' }), nextBtn, all),
       ...sections,
-      ...(credit ? [el('p', { className: 'ex-caption', textContent: credit })] : []));
+      ...(source ? [source] : []));
   }
 
   const readingKey = (r) => hiddenKey(
     r.passages.map((p, i) => ({ caption: r.passages.length > 1 ? `Passage ${i + 1} · ${p.words} words` : `${p.words} words`, paras: p.text })),
-    'Transcription key: J. Andrew Owen, greggshorthand.github.io.');
+    credit(`Transcription key: ${AUTHOR},`, sourceUrl.readingKey(r.unit), 'the key at greggshorthand.github.io'));
 
   // A section of Gregg Speed Studies: its advice, its figures (each with its key, if the book
   // prints one) and any prose that follows a figure.
@@ -458,31 +455,6 @@ export function createLessons({ panel, pad, assist, unitPx }) {
     const link = el('button', { type: 'button', className: 'ex-source manual-ref', textContent: `${ref} · read it in the Manual ›`, title: 'Show this paragraph in the full text of the unit' });
     link.onclick = () => openManual(unitOfParagraph(Number(m[1])) ?? lesson.unit, Number(m[1]));
     return link;
-  }
-
-  // The Manual's own text of a unit, with its figures, full screen; scrolled to paragraph `para`.
-  function openManual(unit, para = null) {
-    const doc = MANUAL_TEXT[unit];
-    if (!doc) return;
-    const l = LESSONS.find((x) => x.unit === unit);
-    const text = el('article', { className: 'manual-text' },
-      el('h2', { textContent: `Unit ${unit}${doc.title ? `: ${doc.title}` : ''}` }),
-      ...renderBlocks(doc.blocks),
-      el('p', { className: 'ex-caption', textContent: 'The Anniversary Manual (1929), as transcribed by J. Andrew Owen at greggshorthand.github.io.' }));
-    const close = () => shade.remove();
-    const shade = el('div', { className: 'reader manual-reader', role: 'dialog', ariaLabel: `Manual, Unit ${unit}` },
-      el('div', { className: 'reader-bar' },
-        el('strong', { textContent: `Manual · Unit ${unit} · ${l?.pages ?? ''}` }),
-        ...[unit - 1, unit + 1].filter((u) => MANUAL_TEXT[u]).map((u) => button(u < unit ? `◀ Unit ${u}` : `Unit ${u} ▶`, 'quiz-btn key-btn', () => { close(); openManual(u); })),
-        button('Close ✕', 'quiz-btn key-btn', close)),
-      el('div', { className: 'reader-key manual-scroll' }, text));
-    document.body.append(shade);
-    const target = para && text.querySelector(`#m${para}`);
-    if (target) {
-      const block = target.closest('p');
-      block.classList.add('flash');
-      block.scrollIntoView({ block: 'start' });
-    }
   }
 
   // Full screen: the page (tap it to switch between fitting the width and 2×) beside the key.

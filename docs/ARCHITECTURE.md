@@ -8,7 +8,7 @@ The app is plain ES modules loaded by `app/index.html`; there is no bundler. Mod
 | --- | --- |
 | `app/js/main.js` | Entry point. Routing between views, toolbar, persistence, export, per-line pickers. Creates the pad, the example panel, the assist overlay, the quiz, the lessons and the UI chrome. |
 | `app/js/ui.js` | The chrome: themes (`THEMES`, set as `data-theme` on `<html>`; every colour in `app.css` is a token the theme redefines), the Settings menu, and the handle (`#split`) that resizes the panel against the pad (its width in landscape, its height in portrait; the pad keeps at least 40%). Kept in `gregg.ui.v1`. |
-| `app/js/dom.js` | Shared DOM helpers: `el()`, `button()`, `svgEl()` and `saveFile()` (share sheet, else a download). |
+| `app/js/dom.js` | Shared DOM helpers: `el()`, `button()`, `svgEl()`, `saveFile()` (share sheet, else a download), `outLink()` and `credit()` (links out, in a new tab). |
 | `app/js/ink.js` | `InkPad`: pointer capture, canvas drawing, undo/clear, `toJSON()` and `strokesFromJSON()`. |
 | `app/js/assess.js` | `assessAttempt()`: scores one repeat against the model outline and produces critiques. Matches outlines with joined consonants or an s loop as whole shapes (`assessShape()`), smooths the model as well as the learner's ink, and checks the r circle for left motion. Also `guideUnits()` for the guide and shared helpers. |
 | `app/js/repeats.js` | `assessRepeats()`: splits pad strokes into repeats, scores each, aggregates. `practiceLines()` and `repeatIndexFor()`. |
@@ -16,7 +16,8 @@ The app is plain ES modules loaded by `app/index.html`; there is no bundler. Mod
 | `app/js/practice.js` | The example panel: enlarged and actual-size art, meaning, source, score badge, critiques. Also the pieces Lessons and Quiz share: `actualSizeStrip()`, `enlargedSVG()`, `printedOutline()` and `scoreClass()`. |
 | `app/js/lessons.js` | The Lessons view: unit dropdown, read / write / choose / reading / speed steps, the full-screen Manual and reading views, and two progress bars that show where you are (the step in the unit, its place in the course). Shares the pad and reuses the example panel and `assessRepeats()`. |
 | `app/js/reference.js` | The Reference view: the Manual's front matter, alphabet, brief-form chart (searchable), phrases and its text unit by unit. |
-| `app/js/manualtext.js` | Renders blocks of the Manual's text (`data/manual.js`) as paragraphs. |
+| `app/js/manualtext.js` | Renders blocks of the Manual's text (`data/manual.js`) as paragraphs, and opens the full-screen Manual reader at a paragraph (`openManual()`, `unitOfParagraph()`), used by Lessons and by the § links in Practice's source line. |
+| `app/data/source.js` | The pages of greggshorthand.github.io the content comes from (`sourceUrl`): front matter, alphabet, brief forms, phrases, each unit at a paragraph (`#pN`), each reading key, and the scan at a printed page (`Annivman.pdf#page=p+16`, the offset `tools/plates.json` cuts with; a test keeps the two equal). Internal links come first (a § opens the Manual in the app); a caption at the foot of what the site supplied links on to it (`credit()` and `outLink()` in `dom.js`). |
 | `app/js/quiz.js` | Quiz UI (start screen, questions, summary) and result history. Shares the pad. |
 | `app/js/quizgen.js` | Seeded quiz generation, no DOM. Used by the dev server and, as a fallback, by the browser. |
 | `app/js/render.js` | Stroke primitives to cubic Bezier geometry (U, y up); SVG output and animation. An arc may carry `ctrl` (two control points) instead of the bulge/skew/spread form; the o and u hooks use it. |

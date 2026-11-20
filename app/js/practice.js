@@ -5,7 +5,9 @@ import { LEVELS } from '../data/examples.js';
 import { plateFor } from '../data/plates.js';
 import { compileExample, translateCompiled } from './join.js';
 import { bbox, renderCompiledSVG, animateStroke } from './render.js';
-import { el, svgEl } from './dom.js';
+import { el, svgEl, outLink } from './dom.js';
+import { sourceUrl } from '../data/source.js';
+import { openManual, unitOfParagraph } from './manualtext.js';
 
 const STRIP_GAP = 2.5; // U between outlines in an actual-size strip
 
@@ -74,6 +76,30 @@ export function printedOutline(example) {
   return img;
 }
 
+// "p. N" of the manual, linking to that page of the scan at greggshorthand.github.io.
+export function pageLink(page) {
+  const a = outLink(sourceUrl.page(page), `p. ${page}`);
+  a.title = 'This page of the scanned Manual, at greggshorthand.github.io';
+  return a;
+}
+export const printedCaption = (page) => el('div', { className: 'ex-caption' }, 'In the manual, ', pageLink(page));
+
+// A source line such as "Manual §14–18; period from Manual p. 3": each § opens the Manual's
+// text at that paragraph in the app; each page links to the scan.
+export function sourceNodes(text) {
+  return text.split(/(§\s*\d+(?:–\d+)?|\bp\. \d+)/).map((part) => {
+    const para = /^§\s*(\d+)/.exec(part);
+    const unit = para && unitOfParagraph(Number(para[1]));
+    if (unit) {
+      const b = el('button', { type: 'button', className: 'inline-link', textContent: part, title: 'Read this in the Manual' });
+      b.onclick = () => openManual(unit, Number(para[1]));
+      return b;
+    }
+    const page = /^p\. (\d+)$/.exec(part);
+    return page ? pageLink(Number(page[1])) : part;
+  });
+}
+
 export function createExamplePanel({ art, title, meaning, source, counter, score, verdict, hint, critiques }) {
   let current = null; // { example, index, total, lineSpacing }
   let svgs = [];
@@ -88,7 +114,7 @@ export function createExamplePanel({ art, title, meaning, source, counter, score
 
   function showPlate(example) {
     const img = printedOutline(example);
-    plate.replaceChildren(...(img ? [caption(`In the manual, p. ${img.page}`), img] : []));
+    plate.replaceChildren(...(img ? [printedCaption(img.page), img] : []));
   }
 
   function draw({ animate }) {
@@ -130,7 +156,7 @@ export function createExamplePanel({ art, title, meaning, source, counter, score
       counter.textContent = `Level ${example.level} · ${LEVELS[example.level - 1].name} · ${index + 1} of ${total}`;
       title.textContent = example.title;
       meaning.replaceChildren(...example.meaning.map((line) => el('p', { textContent: line })));
-      source.textContent = `Source: ${example.source}`;
+      source.replaceChildren('Source: ', ...sourceNodes(example.source));
       showPlate(example);
       draw({ animate });
     },

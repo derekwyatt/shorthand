@@ -3,27 +3,29 @@
 import { MANUAL_TEXT, FRONT_MATTER } from '../data/manual.js';
 import { BRIEF_FORMS } from '../data/briefs.js';
 import { renderBlocks } from './manualtext.js';
-import { el, button } from './dom.js';
+import { el, button, credit, outLink } from './dom.js';
+import { AUTHOR, AUTHOR_SITE, PDF, sourceUrl } from '../data/source.js';
 
-
-const SOURCE = 'From J. Andrew Owen’s Anniversary Manual site, greggshorthand.github.io.';
+// The line under each section: where it came from, with a link to that page of the site.
+const source = (href) => credit(`From ${AUTHOR}’s Anniversary Manual site:`, href, 'this page at greggshorthand.github.io');
 
 const SECTIONS = [
-  { id: 'beginner', title: 'A Talk with the Beginner', render: () => doc('A Talk with the Beginner', FRONT_MATTER.beginner) },
-  { id: 'about', title: 'About Gregg Shorthand', render: () => doc('About Gregg Shorthand', FRONT_MATTER.about) },
-  { id: 'preface', title: 'Preface', render: () => doc('Preface', FRONT_MATTER.preface) },
-  { id: 'alphabet', title: 'The alphabet', render: () => picture('The Alphabet', ['manual/alphabet.png'], 'The Gregg alphabet: every consonant and vowel sign') },
+  { id: 'beginner', title: 'A Talk with the Beginner', render: () => doc('A Talk with the Beginner', FRONT_MATTER.beginner, sourceUrl.beginner) },
+  { id: 'about', title: 'About Gregg Shorthand', render: () => doc('About Gregg Shorthand', FRONT_MATTER.about, sourceUrl.about) },
+  { id: 'preface', title: 'Preface', render: () => doc('Preface', FRONT_MATTER.preface, sourceUrl.preface) },
+  { id: 'alphabet', title: 'The alphabet', render: () => picture('The Alphabet', ['manual/alphabet.png'], 'The Gregg alphabet: every consonant and vowel sign', sourceUrl.alphabet) },
   { id: 'briefs', title: 'Brief forms', render: briefs },
-  { id: 'phrases', title: 'Most-used phrases', render: () => picture('Most-Used Anniversary Phrases', ['manual/anphras1.png', 'manual/anphras2.png'], 'Most-used phrases in shorthand') },
+  { id: 'phrases', title: 'Most-used phrases', render: () => picture('Most-Used Anniversary Phrases', ['manual/anphras1.png', 'manual/anphras2.png'], 'Most-used phrases in shorthand', sourceUrl.phrases) },
   { id: 'units', title: 'The Manual, unit by unit', render: units },
+  { id: 'thanks', title: 'Thanks', render: thanks },
 ];
 
-function doc(title, blocks) {
-  return [el('h2', { textContent: title }), el('article', { className: 'manual-text' }, ...renderBlocks(blocks)), el('p', { className: 'ex-caption', textContent: SOURCE })];
+function doc(title, blocks, href) {
+  return [el('h2', { textContent: title }), el('article', { className: 'manual-text' }, ...renderBlocks(blocks)), source(href)];
 }
 
-function picture(title, srcs, alt) {
-  return [el('h2', { textContent: title }), ...srcs.map((src) => el('img', { src, alt, className: 'ref-picture' })), el('p', { className: 'ex-caption', textContent: SOURCE })];
+function picture(title, srcs, alt, href) {
+  return [el('h2', { textContent: title }), ...srcs.map((src) => el('img', { src, alt, className: 'ref-picture' })), source(href)];
 }
 
 // Every brief form, with a filter: type a word, or letters as the chart spells them ("a b").
@@ -53,7 +55,7 @@ function briefs() {
   filter();
   return [el('h2', { textContent: 'Brief forms' }),
     el('p', { className: 'lesson-text', textContent: 'Every brief form of the Anniversary Manual. The letters are those the form is written with.' }),
-    search, count, grid, el('p', { className: 'ex-caption', textContent: SOURCE })];
+    search, count, grid, source(sourceUrl.briefs)];
 }
 
 function units() {
@@ -62,19 +64,35 @@ function units() {
   const host = el('div');
   const show = () => {
     const d = MANUAL_TEXT[pick.value];
-    host.replaceChildren(el('article', { className: 'manual-text' }, ...renderBlocks(d.blocks)));
+    host.replaceChildren(el('article', { className: 'manual-text' }, ...renderBlocks(d.blocks)), source(sourceUrl.unit(Number(pick.value))));
   };
   pick.onchange = show;
   show();
-  return [el('h2', { textContent: 'The Manual, unit by unit' }), pick, host,
-    el('p', { className: 'ex-caption', textContent: `The Anniversary Manual (1929). ${SOURCE}` })];
+  return [el('h2', { textContent: 'The Manual, unit by unit' }), pick, host];
+}
+
+// A thank-you to the author of the site the Manual's text comes from.
+function thanks() {
+  const p = (...parts) => el('p', { className: 'lesson-text' }, ...parts);
+  return [el('h2', { textContent: 'Thank you, Andrew Owen' }), el('article', { className: 'thanks' },
+    p('This app could not teach from the Anniversary Manual without the work of ', outLink(AUTHOR_SITE, AUTHOR), ', whose site ',
+      outLink(sourceUrl.home, 'greggshorthand.github.io'), ' keeps Gregg shorthand alive for anyone who wants to learn it.'),
+    p('Every rule the lessons quote, the full text of each unit with its figures, the chart of brief forms, the most-used phrases, the keys to the reading practice, and the ',
+      outLink(PDF, 'scan of the Manual'), ' the printed outlines are cut from: all of it comes from his careful transcription, typed out paragraph by paragraph and linked up so the book can be read on a screen. That is years of patient work, freely given, and it is the foundation this app stands on.'),
+    p('If this app helps you, please visit his site: it has much more than is here, from the earlier and later editions of Gregg to reporting notes and other languages. Each section of this app links back to the page it came from.'),
+    p('Thank you, Andrew.')),
+    el('p', { className: 'ex-caption', textContent: 'John Robert Gregg’s Anniversary Manual (1929) and Gregg Speed Studies (1929) are in the US public domain; the Speed Studies drills here are cut from a separate scan of that book.' })];
 }
 
 export function buildReference(root) {
   const menu = el('nav', { className: 'ref-menu', ariaLabel: 'Reference' });
   const body = el('section', { className: 'ref-body' });
   const open = (s) => {
-    for (const b of menu.children) b.classList.toggle('active', b.dataset.id === s.id);
+    for (const b of menu.children) {
+      b.classList.toggle('active', b.dataset.id === s.id);
+      // On a phone the menu is one scrolling row: keep the open section in view.
+      if (b.dataset.id === s.id) b.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
+    }
     body.replaceChildren(...s.render());
     body.scrollTop = 0;
   };

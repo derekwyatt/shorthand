@@ -610,3 +610,11 @@ body:not(.view-learn) .lesson-panel { display: none; }
   .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
   .card { min-width: 0; }
 }
+
+/* Links back to the source site, and in-line links that open the Manual in the app. */
+.out-link { color: var(--link); text-decoration: underline; text-underline-offset: 2px; }
+.out-link:hover, .inline-link:hover { text-decoration-thickness: 2px; }
+.inline-link { padding: 0; border: 0; background: none; font: inherit; color: var(--link); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+.credit { margin-top: 12px; }
+.thanks { max-width: 68ch; }
+.thanks p { margin: 0 0 14px; }

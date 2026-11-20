@@ -38,3 +38,9 @@ export async function saveFile(file) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
   return true;
 }
+
+// A link out of the app, opened in a new tab.
+export const outLink = (href, text) => el('a', { href, target: '_blank', rel: 'noopener', className: 'out-link', textContent: `${text} ↗` });
+
+// A caption crediting where something came from, with a link to that page.
+export const credit = (text, href, linkText) => el('p', { className: 'ex-caption credit' }, `${text} `, outLink(href, linkText));
