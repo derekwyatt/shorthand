@@ -107,7 +107,7 @@ try {
     await send('Network.setBypassServiceWorker', { bypass: true });
   }
   await startCoverage();
-  await send('Page.navigate', { url: `http://127.0.0.1:${HTTP_PORT}/index.html` });
+  await send('Page.navigate', { url: `http://127.0.0.1:${HTTP_PORT}/index.html#pad` });
   await waitReady();
   await evaluate(`localStorage.clear()`);
   await snap();
@@ -796,6 +796,30 @@ try {
   })()`);
   check(xref.chapter && /Unit 22/.test(xref.unit) && xref.para && xref.opened === 'alphabet',
     `the Manual's cross-references open the unit, the paragraph, and #ref/alphabet the alphabet (${JSON.stringify(xref)})`);
+
+  // Home (the default view): the overview and the story, eight lines of Gregg over English;
+  // tapping a line writes it out.
+  await evaluate(`location.hash = ''`);
+  await sleep(200);
+  const home = await evaluate(`(async () => {
+    const main = document.getElementById('home');
+    const lines = [...main.querySelectorAll('.home-line')];
+    const first = lines[0].querySelector('.home-gregg');
+    first.click();
+    await new Promise((r) => setTimeout(r, 300));
+    const writing = first.querySelector('svg .ink').getAnimations().length > 0;
+    return {
+      shown: !main.hidden && document.body.classList.contains('view-home'),
+      active: document.querySelector('.modes a.active')?.dataset.view,
+      paragraphs: main.querySelectorAll('.home-body > p:not(.ex-caption)').length,
+      lines: lines.length,
+      inked: lines.every((l) => l.querySelectorAll('.home-gregg svg .ink').length > 0 && l.querySelector('.home-english').textContent.endsWith('.')),
+      links: [...main.querySelectorAll('.home-body > p a')].map((a) => a.getAttribute('href')),
+      writing,
+    };
+  })()`);
+  check(home.shown && home.active === 'home' && home.paragraphs === 2 && home.lines === 8 && home.inked && home.writing && home.links.includes('#learn'),
+    `Home is the default view: two paragraphs, eight story lines in Gregg with English, a tap writes a line (${JSON.stringify(home)})`);
 
   // In Practice, a source line's § opens the Manual in the app and its page links to the scan.
   await evaluate(`location.hash = '#pad'`);

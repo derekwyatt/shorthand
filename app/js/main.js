@@ -12,6 +12,7 @@ import { exportProgress, importProgress, backupFileName } from './backup.js';
 import { getWriterScale, learnWriterScale } from './writer.js';
 import { el, saveFile } from './dom.js';
 import { createUi } from './ui.js';
+import { buildHome } from './home.js';
 
 // v2: strokes are kept per example. (v1 kept one global page; it is ignored.)
 const STORE_KEY = 'gregg.practice.v2';
@@ -149,16 +150,17 @@ $('reset-all').addEventListener('click', () => {
   location.reload();
 });
 
-// Routing between views: #pad (practice, default), #learn and #quiz (both share the pad),
-// #strokes and #ref.
-const VIEWS = ['pad', 'learn', 'strokes', 'quiz', 'ref'];
+// Routing between views: #home (default), #pad (practice), #learn and #quiz (both share the
+// pad), #strokes and #ref.
+const VIEWS = ['home', 'pad', 'learn', 'strokes', 'quiz', 'ref'];
+let home = null;
 let gallery = null;
 let reference = null;
 let lastView = null;
 // An address is #view, or #ref/<section> to open a Reference section.
 function route() {
   const [name, section] = location.hash.slice(1).split('/');
-  const view = VIEWS.includes(name) ? name : 'pad';
+  const view = VIEWS.includes(name) ? name : 'home';
   for (const v of VIEWS) document.body.classList.toggle(`view-${v}`, v === view);
   for (const m of document.querySelectorAll('.view')) m.hidden = !m.dataset.view.split(' ').includes(view);
   const wasElsewhere = lastView !== null && lastView !== 'pad';
@@ -168,6 +170,7 @@ function route() {
   else if (wasElsewhere && view === 'pad') goTo(index, { animate: false });
   for (const a of document.querySelectorAll('.modes a')) a.classList.toggle('active', a.dataset.view === view);
   assist.drawModel();
+  if (view === 'home') home ??= buildHome($('home'));
   if (view === 'ref') {
     reference ??= buildReference($('reference'));
     if (section) reference.open(section);

@@ -68,8 +68,9 @@ HOST=127.0.0.1 npm start
 
 ### Views
 
+- **Home** (`#home`, the default): a two-paragraph overview of Gregg shorthand (its purpose, where it came from and how well it worked) and an eight-sentence story written in Gregg with the English under each line. The story uses only outlines the app teaches, with the Manual's phrases joined; tap a line to watch it written. The text and story are in `app/data/home.js`.
 - **Lessons** (`#learn`): shares the pad. A dropdown picks the unit of the manual, each a sequence of steps. A *read* step quotes a rule, shows the manual's printed outlines for it (with the figures or tables the rule refers to), and animates its outlines enlarged (tap a figure to replay it), then shows the same outlines at actual size on rules spaced like the pad's, so you can see how big to write them. Every outline a lesson shows can be tried on the pad: tap it (enlarged or actual size) and what you write is scored and drawn over the model in green and red, as in Practice; each outline keeps its own ink while the step is open. A *write* step shows an example to copy and scores the pad like Practice; a repeat scoring 70 or more passes it. A *choose* step shows an outline, enlarged and unlabelled on ruled lines at actual size (its size against the rules tells look-alikes apart), and asks what it says; a wrong pick can be retried, and once it is answered the outline is shown at actual size to try on the pad. Back, Replay and Next sit at the top of the panel and stay there as a step scrolls. Two bars show where you are: the step within the unit, and that step's place in the whole course. Steps can be skipped; the dropdown shows how many exercises are done in each unit, and the unit summary lists the skipped ones. Progress is kept in localStorage (and can be backed up to a file); the strokes written in a lesson are not.
-- **Practice** (`#pad`, the default): the left panel shows the example to copy, enlarged and at actual size on ruled lines, with its meaning and source, and below it the manual's printed outline where the manual prints one (with its page). Pick a level from the dropdown (levels tied to a manual unit are grouped under “Manual units”), move with Prev/Next at the top of the panel (or the left and right arrow keys), and use Replay to watch the stroke order. Write on the pad beside it (below it on a portrait screen).
+- **Practice** (`#pad`): the left panel shows the example to copy, enlarged and at actual size on ruled lines, with its meaning and source, and below it the manual's printed outline where the manual prints one (with its page). Pick a level from the dropdown (levels tied to a manual unit are grouped under “Manual units”), move with Prev/Next at the top of the panel (or the left and right arrow keys), and use Replay to watch the stroke order. Write on the pad beside it (below it on a portrait screen).
 - **Quiz** (`#quiz`): shares the pad. Choose the length (5, 10 or 20 questions), the levels and the question types, then answer. Read questions ask what an outline says (four choices), showing it enlarged and on ruled lines at actual size; once answered, the manual's printed outline is shown. Write questions ask you to write a word, letter or sentence and score it. Look-alike series ask you to write each member of a family of similar strokes (for example n, m or t, d) and show the results at the end. Passing is a score of 70 or more. The last 20 results are kept.
 - **Strokes** (`#strokes`): every stroke family at one scale. The stroke is green where the pen starts and red where it ends. Tap a stroke to replay it, or use Replay all.
 - **Reference** (`#ref`): the Manual's front matter, the alphabet, every brief form (type a word, or letters such as “a b”, to find one), the most-used phrases, the Manual's text unit by unit, and a thank-you to Andrew Owen. Each section links to the page of greggshorthand.github.io it comes from.
@@ -184,6 +185,7 @@ app/
     writer.js         learned writing-size scale
     backup.js         progress backup file: export and restore of the gregg.* keys
     gallery.js        the Strokes view
+    home.js           the Home view: the overview and the story
     reference.js      the Reference view
     manualtext.js     renders the Manual's text; the full-screen Manual reader
   data/
@@ -191,6 +193,7 @@ app/
     examples.js       the levels of examples
     lessons.js        the lesson steps for Units 1–3 (later units come from units/)
     plates.js         which examples and rules have a printed plate, and its page
+    home.js           the Home overview and story (text)
     source.js         links to the pages of greggshorthand.github.io the content comes from
     manual.js         the Manual's text, unit by unit, and its front matter
     briefs.js         the brief-form chart (Reference)

@@ -574,6 +574,19 @@ body:not(.view-learn) .lesson-panel { display: none; }
 }
 
 /* Reference view: a menu of sections and the section itself. */
+.home { flex: 1 1 auto; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; background: var(--paper); color: var(--text); }
+.home-body { max-width: 760px; margin: 0 auto; padding: 16px 24px 48px; }
+.home-body h1 { font-size: 32px; margin: 8px 0 14px; }
+.home-body h2 { font-size: 24px; margin: 28px 0 4px; }
+.home-body > p { font-size: 17px; line-height: 1.5; margin: 0 0 14px; }
+.home-body a { color: var(--link); }
+.home-story { list-style: none; margin: 14px 0 0; padding: 0; }
+.home-line { margin: 0 0 18px; }
+.home-gregg { display: flex; flex-wrap: wrap; cursor: pointer; touch-action: manipulation; }
+.home-gregg svg { flex: 0 0 auto; }
+.home-gregg .start-mark, .home-gregg .arrow { display: none; }
+.home-rule { stroke: var(--rule); stroke-width: 1; }
+.home-english { margin: 4px 0 0; font-size: 16px; font-style: italic; color: var(--muted); }
 .reference { flex: 1 1 auto; display: flex; min-height: 0; background: var(--paper); }
 .reference[hidden] { display: none; }
 .ref-menu { flex: 0 0 220px; display: flex; flex-direction: column; gap: 6px; padding: 12px; overflow-y: auto; background: var(--panel); border-right: 1px solid var(--panel-border); }
