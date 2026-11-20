@@ -6,13 +6,17 @@ The app is plain ES modules loaded by `app/index.html`; there is no bundler. Mod
 
 | Module | Role |
 | --- | --- |
-| `app/js/main.js` | Entry point. Routing between views, toolbar, persistence, export, per-line pickers. Creates the pad, the example panel, the assist overlay and the quiz. |
+| `app/js/main.js` | Entry point. Routing between views, toolbar, persistence, export, per-line pickers. Creates the pad, the example panel, the assist overlay, the quiz, the lessons and the UI chrome. |
+| `app/js/ui.js` | The chrome: themes (`THEMES`, set as `data-theme` on `<html>`; every colour in `app.css` is a token the theme redefines), the Settings menu, and the handle (`#split`) that resizes the panel against the pad (its width in landscape, its height in portrait; the pad keeps at least 40%). Kept in `gregg.ui.v1`. |
+| `app/js/dom.js` | Shared DOM helpers: `el()`, `button()`, `svgEl()` and `saveFile()` (share sheet, else a download). |
 | `app/js/ink.js` | `InkPad`: pointer capture, canvas drawing, undo/clear, `toJSON()` and `strokesFromJSON()`. |
 | `app/js/assess.js` | `assessAttempt()`: scores one repeat against the model outline and produces critiques. Matches outlines with joined consonants or an s loop as whole shapes (`assessShape()`), smooths the model as well as the learner's ink, and checks the r circle for left motion. Also `guideUnits()` for the guide and shared helpers. |
 | `app/js/repeats.js` | `assessRepeats()`: splits pad strokes into repeats, scores each, aggregates. `practiceLines()` and `repeatIndexFor()`. |
 | `app/js/assist.js` | Real-time guide, live warnings, per-stroke notes, green/red check overlay. |
-| `app/js/practice.js` | The example panel: enlarged and actual-size art, meaning, source, score badge, critiques. |
-| `app/js/lessons.js` | The Lessons view: unit dropdown, read / write / choose steps, progress. Shares the pad and reuses the example panel and `assessRepeats()`. |
+| `app/js/practice.js` | The example panel: enlarged and actual-size art, meaning, source, score badge, critiques. Also the pieces Lessons and Quiz share: `actualSizeStrip()`, `enlargedSVG()`, `printedOutline()` and `scoreClass()`. |
+| `app/js/lessons.js` | The Lessons view: unit dropdown, read / write / choose / reading / speed steps, the full-screen Manual and reading views, and two progress bars that show where you are (the step in the unit, its place in the course). Shares the pad and reuses the example panel and `assessRepeats()`. |
+| `app/js/reference.js` | The Reference view: the Manual's front matter, alphabet, brief-form chart (searchable), phrases and its text unit by unit. |
+| `app/js/manualtext.js` | Renders blocks of the Manual's text (`data/manual.js`) as paragraphs. |
 | `app/js/quiz.js` | Quiz UI (start screen, questions, summary) and result history. Shares the pad. |
 | `app/js/quizgen.js` | Seeded quiz generation, no DOM. Used by the dev server and, as a fallback, by the browser. |
 | `app/js/render.js` | Stroke primitives to cubic Bezier geometry (U, y up); SVG output and animation. An arc may carry `ctrl` (two control points) instead of the bulge/skew/spread form; the o and u hooks use it. |
@@ -25,7 +29,9 @@ The app is plain ES modules loaded by `app/index.html`; there is no bundler. Mod
 | `app/data/lessons.js` | The lesson steps for Manual Units 1–3; they refer to examples by id. Units 4 onward are turned into lessons from `data/units/`. |
 | `app/data/units/` | Manual Units 4 onward as plain data, one module per unit. `index.js` lists them in `UNITS` and gives each unit's Practice level (`levelOfUnit()`, unit + 5). |
 | `app/data/plates.js` | Which examples have a printed plate (`plateFor()`), with its page, and the section plates used by lessons (`sectionPlate()`). |
-| `tools/plates.mjs` | Cuts `app/plates/*.png` from the scan using `tools/plates.json`. |
+| `tools/plates.mjs` | Cuts `app/plates/*.png` from the scan using `tools/plates.json`, smoothing each crop (blur of about a scan pixel, then a tone curve). |
+| `tools/upscale.mjs` | Redraws the website's 1-bit GIFs as smooth grayscale PNGs (`app/manual/`): Catmull-Rom enlargement, a little blur, ink normalised to its local maximum, a steep tone curve. |
+| `tools/png.mjs` | The PNG reader and writer the two image tools share. |
 | `tools/compare.mjs` | Sheet of each outline as the app draws it, beside the manual's plate (`node tools/compare.mjs`). |
 | `tools/dev-server.mjs` | Static server for `app/` with live reload and `/api/quiz`. |
 | `app/sw.js` | Service worker for offline use. Registered by `main.js`. |
@@ -110,6 +116,7 @@ Everything is in localStorage. All keys start with `gregg.`, and Reset removes e
 | `gregg.quiz.v1` | `quiz.js` | The last 20 quiz results (an array). |
 | `gregg.lessons.v1` | `lessons.js` | `{ unit, at, done }`: the open unit, the current step per unit, and per unit the keys of the steps done (`read:<title>`, `write:<example id>`, `choose:<example id>`). |
 | `gregg.writer.v1` | `writer.js` | `{ scale, updated }`. |
+| `gregg.ui.v1` | `ui.js` | `{ theme, pane: { w, h } }`: the theme id and the panel's share of the area beside (w) and above (h) the pad. |
 
 Back up writes every `gregg.` key to a JSON file `{ app: 'gregg-trainer', format: 1, exportedAt, data }`, where `data` maps each key to its raw stored string. Restore validates the file (app and format, only `gregg.` keys, string values that parse as JSON), then removes all existing `gregg.` keys and writes the file's, so a new key needs no backup code. Invalid files are rejected before anything is changed. Back up uses the share sheet when files can be shared (iPad), otherwise a download.
 
@@ -175,7 +182,7 @@ If storage is full or unavailable the app keeps working but nothing survives a r
 
 Examples live in `app/data/examples.js`. Each has `id`, `kind` (`letter`, `brief`, `word`, `phrase` or `sentence`), `level` (1 to 8, then unit + 5 for Units 4 onward), `title`, `outline` (a list of tokens), `meaning` (a list of strings) and `source`. Sentences also have `words`, a list of `{ text, tokens, brief, phrase }`. Phrase examples (Unit 6 onward) are written by the unit modules in `data/units/`, not added here.
 
-An outline token is a stroke id from `app/data/strokes.js` (including the o and oo hooks, `o` and `u`), `a` or `e` (vowel circles), `i` (the §112 broken circle: the large circle, joined like one, ending in a short tick turned in when it ends the outline; outlines with it are scored as whole shapes), `a-rev` or `e-rev` (the §71 r circle: the a or e circle written with left motion, counter-clockwise, on straight strokes only), `a-rev-s` or `e-rev-s` (the §74 s loop: that circle made a narrow loop at the end of an outline), `h` (the dot), or the separate marks `w-dash` (§99, the dash under the following vowel), `a-dot` (§100, the dot before the outline) and `cap` (§233, the capital mark, written last), `^`, which ends a §209 disjoined prefix, or `_`, which starts a §230 disjoined suffix (one of the two, once per word, never first or last). Strokes marked `verify` in the stroke table are deliberately left out of examples until they are checked against the sources (none at present).
+An outline token is a stroke id from `app/data/strokes.js` (including the o and oo hooks, `o` and `u`), `a` or `e` (vowel circles), `i` (the §112 broken circle: the large circle, joined like one, ending in a short tick turned in when it ends the outline; outlines with it are scored as whole shapes), `a-rev` or `e-rev` (the §71 r circle: the a or e circle written with left motion, counter-clockwise, on straight strokes only), `a-rev-s` or `e-rev-s` (the §74 s loop: that circle made a narrow loop at the end of an outline), `h` (the dot), or the separate marks `w-dash` (§99, the dash under the following vowel), `a-dot` (§100, the dot before the outline), `cap` (§233, the capital mark, written last), `v-dot` and `v-dash` (§8, the dot of a medium vowel and the dash of a long one, just under the following circle; added to the Unit 1–2 words that print them from `VOWEL_MARKS` in `examples.js`, so they are not written into the word lists; the scorer checks one that is written and only notes one left out), `^`, which ends a §209 disjoined prefix, or `_`, which starts a §230 disjoined suffix (one of the two, once per word, never first or last). Strokes marked `verify` in the stroke table are deliberately left out of examples until they are checked against the sources (none at present).
 
 To add a word:
 

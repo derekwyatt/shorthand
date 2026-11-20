@@ -244,6 +244,10 @@ body:not(.view-strokes) .for-strokes { display: none; }
   background: var(--panel);
   touch-action: pan-y;
 }
+/* Its parts keep their size; the panel scrolls when they don't fit. */
+.example-panel > * { flex-shrink: 0; }
+/* The panel scrolls; its contents keep their size rather than squeeze to fit. */
+.example-panel > * { flex-shrink: 0; }
 .split {
   flex: 0 0 14px; display: flex; align-items: center; justify-content: center;
   background: var(--panel); border-left: 1px solid var(--panel-border); border-right: 1px solid var(--panel-border);

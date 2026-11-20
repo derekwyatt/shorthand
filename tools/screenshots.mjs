@@ -243,7 +243,7 @@ try {
   };
   await answerCorrect(answers[0]);
   await clickText('Next');
-  await sleep(400);
+  await sleep(3000); // let the outline finish drawing
   await answerCorrect(answers[1]);
   await settle();
   console.log('quiz', JSON.stringify(await evaluate(`document.querySelector('#quiz-panel').innerText.slice(0, 200)`)));

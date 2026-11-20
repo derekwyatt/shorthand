@@ -6,9 +6,11 @@ A browser app for practising Gregg shorthand by hand. You copy an outline onto a
 
 ## Features
 
+- Six themes (Auto, Paper, White, Sepia, Dusk, Night) in the Settings menu (⚙). The panel beside the pad, or above it on a portrait screen, can be resized with the handle between them.
 - Five views: Lessons, Practice, Quiz, Strokes and Reference. Reference holds the Manual's front matter (A Talk with the Beginner, About Gregg Shorthand, the Preface), the alphabet, a searchable chart of all 320 brief forms, the most-used phrases and the Manual's text unit by unit, all from greggshorthand.github.io.
 - Step-by-step lessons for the units of the 1929 manual done so far (Unit 1 onward, in the book's order): read each rule, watch its outlines, write them on the pad until they pass, and name outlines by sight.
 - The manual's own printed outline is shown next to the drawn one, in Practice, in the lessons and, once a question is answered, in reading questions.
+- The vowel marks (§8) are drawn where the manual prints them, in the word lists of Units 1 and 2: a dot under the circle for a medium sound (ä, ĕ), a short dash for a long one (ā, ē). The pad checks a mark you write and only notes one you leave out, since the manual calls them "seldom used".
 - Levels of examples: alphabet strokes (with the o and oo hooks), brief forms, two levels of circle words, short sentences, long sentences (with the manual's §4 phrases, such as *it will*, joined into one outline), then one level per manual unit from Unit 2: joined words (Unit 2), blends with the frequent-word drill (Unit 3), downward characters with blends and brief forms (Unit 4), the s signs (Unit 5), shun, past-tense and brief forms with joined phrases such as *would be* (Unit 6), the o hook (Unit 7), the left-motion r circle and the s loop (Unit 8), th joinings, con/com, ly, to/as/be-able phrases and brief forms (Unit 9), the oo hook (Unit 10), w with the w dash and the a dot (Unit 11), y, ng / nk and the prefixes en, in, em, im, un (Unit 12), the diphthongs (Unit 13), vowel combinations (Unit 14), omitted vowels and joined prefixes and suffixes (Unit 15), the nt/nd and mt/md blends and ld (Unit 16), the jent/pent and def/tive blends (Unit 17), the prefixes be, de, re, dis, mis (Unit 18), the ten/den and tem/dem blends (Unit 19), expressing r (Unit 20), word endings and phrases (Unit 21), t omitted (Unit 22), d omitted and ul, al, sub, less (Unit 23), words omitted in phrases (Unit 24), abbreviated words (Unit 25) and its continuation with the shun words (Unit 26), compound words (Unit 27), disjoined word-beginnings (Units 28–29), phrase forms (Unit 30), joined word-endings (Unit 31), disjoined word-endings (Unit 32), initials (Unit 33), states and cities (Units 34–35) and the closing vocabulary (Unit 36); the level of Unit N is N + 5. Each unit's transcription in `reference/manual-unitNN.md` lists the outlines left out and why.
 - Every unit ends with the manual's Reading and Dictation Practice: the printed page of connected shorthand with its transcription key, hidden a sentence at a time so you can read and check yourself, and a full-screen view with the page and key side by side (`app/data/reading.js`).
 - Each unit also carries the matching sections of *Gregg Speed Studies* (Anniversary Edition, 1929), the Manual's companion: its advice on executing the strokes, its drills with their printed keys (hidden word by word), its own reading practice and writing practice (`app/data/speed.js`). 'Whole unit' shows the Manual's complete text of the unit with its figures, and each rule's 'Manual §N' line opens it at that paragraph (`app/data/manual.js`, from greggshorthand.github.io).
@@ -66,10 +68,11 @@ HOST=127.0.0.1 npm start
 
 ### Views
 
-- **Lessons** (`#learn`): shares the pad. A dropdown picks the unit of the manual, each a sequence of steps. A *read* step quotes a rule, shows the manual's printed outlines for it (with the figures or tables the rule refers to), and animates its outlines enlarged (tap a figure to replay it), then shows the same outlines at actual size on rules spaced like the pad's, so you can see how big to write them. Every outline a lesson shows can be tried on the pad: tap it (enlarged or actual size) and what you write is scored and drawn over the model in green and red, as in Practice; each outline keeps its own ink while the step is open. A *write* step shows an example to copy and scores the pad like Practice; a repeat scoring 70 or more passes it. A *choose* step shows an outline, enlarged and unlabelled on ruled lines at actual size (its size against the rules tells look-alikes apart), and asks what it says; a wrong pick can be retried, and once it is answered the outline is shown at actual size to try on the pad. Back, Replay and Next sit at the top of the panel and stay there as a step scrolls. Steps can be skipped; the dropdown shows how many exercises are done in each unit, and the unit summary lists the skipped ones. Progress is kept in localStorage (and can be backed up to a file); the strokes written in a lesson are not.
-- **Practice** (`#pad`, the default): the left panel shows the example to copy, enlarged and at actual size on ruled lines, with its meaning and source, and below it the manual's printed outline where the manual prints one (with its page). Pick a level from the dropdown (levels tied to a manual unit are grouped under “Manual units”), move with Prev/Next (or the left and right arrow keys), and use Replay to watch the stroke order. Write on the pad on the right.
+- **Lessons** (`#learn`): shares the pad. A dropdown picks the unit of the manual, each a sequence of steps. A *read* step quotes a rule, shows the manual's printed outlines for it (with the figures or tables the rule refers to), and animates its outlines enlarged (tap a figure to replay it), then shows the same outlines at actual size on rules spaced like the pad's, so you can see how big to write them. Every outline a lesson shows can be tried on the pad: tap it (enlarged or actual size) and what you write is scored and drawn over the model in green and red, as in Practice; each outline keeps its own ink while the step is open. A *write* step shows an example to copy and scores the pad like Practice; a repeat scoring 70 or more passes it. A *choose* step shows an outline, enlarged and unlabelled on ruled lines at actual size (its size against the rules tells look-alikes apart), and asks what it says; a wrong pick can be retried, and once it is answered the outline is shown at actual size to try on the pad. Back, Replay and Next sit at the top of the panel and stay there as a step scrolls. Two bars show where you are: the step within the unit, and that step's place in the whole course. Steps can be skipped; the dropdown shows how many exercises are done in each unit, and the unit summary lists the skipped ones. Progress is kept in localStorage (and can be backed up to a file); the strokes written in a lesson are not.
+- **Practice** (`#pad`, the default): the left panel shows the example to copy, enlarged and at actual size on ruled lines, with its meaning and source, and below it the manual's printed outline where the manual prints one (with its page). Pick a level from the dropdown (levels tied to a manual unit are grouped under “Manual units”), move with Prev/Next at the top of the panel (or the left and right arrow keys), and use Replay to watch the stroke order. Write on the pad beside it (below it on a portrait screen).
 - **Quiz** (`#quiz`): shares the pad. Choose the length (5, 10 or 20 questions), the levels and the question types, then answer. Read questions ask what an outline says (four choices), showing it enlarged and on ruled lines at actual size; once answered, the manual's printed outline is shown. Write questions ask you to write a word, letter or sentence and score it. Look-alike series ask you to write each member of a family of similar strokes (for example n, m or t, d) and show the results at the end. Passing is a score of 70 or more. The last 20 results are kept.
-- **Strokes** (`#strokes`): every stroke family at one scale. A green dot is where the pen starts and a red arrow is where it ends. Tap a stroke to replay it, or use Replay all.
+- **Strokes** (`#strokes`): every stroke family at one scale. The stroke is green where the pen starts and red where it ends. Tap a stroke to replay it, or use Replay all.
+- **Reference** (`#ref`): the Manual's front matter, the alphabet, every brief form (type a word, or letters such as “a b”, to find one), the most-used phrases and the Manual's text unit by unit.
 
 | Quiz | Strokes |
 | --- | --- |
@@ -77,16 +80,23 @@ HOST=127.0.0.1 npm start
 
 ![Lessons view: Unit 1, step 1, "aim" and "knee" enlarged and at actual size, with two copies of "aim" on the pad scored 100](docs/screenshots/lessons.png)
 
-### Toolbar (Practice)
+### Toolbar and Settings
 
+The toolbar holds the views, Undo and Clear (Replay all in Strokes) and the Settings button (⚙), which opens a menu with the rest.
+
+- **Theme** (Settings): Auto follows the device (Paper by day, Dusk when it is dark); Paper, White, Sepia, Dusk and Night are fixed. In the dark themes the manual's scans are shown light on dark.
 - **Undo**: removes the last stroke (or restores a cleared pad). Cmd/Ctrl+Z does the same.
 - **Clear**: clears the pad for the current example. It can be undone.
-- **Export JSON**: saves the current attempt (see below). On an iPad the share sheet is used when available; otherwise the browser downloads a file named `gregg-<example id>-<timestamp>.json`.
-- **Line spacing**: 32 to 96 px, default 48. The example is redrawn at the same scale.
-- **Finger ink**: by default only the pen and the mouse draw. Turn this on to draw with a finger.
-- **Guide**: turns the real-time guide (preview and live warnings) on or off (on by default).
-- **Back up** and **Restore** (all views): Back up saves all progress (lessons, practice, quiz history, settings and the learned writing size) to a `gregg-progress-YYYY-MM-DD.json` file. On an iPad it opens the share sheet, so you can save it straight to Google Drive or Files; elsewhere it downloads the file. Restore loads such a file on another device or browser and, after a confirmation, replaces everything stored there.
-- **Reset** (all views): after a confirmation, deletes everything the app has stored: practice strokes and scores, quiz history, export marks, settings and the learned writing size.
+- **Export JSON** (Settings): saves the current attempt (see below). On an iPad the share sheet is used when available; otherwise the browser downloads a file named `gregg-<example id>-<timestamp>.json`.
+- **Line spacing** (Settings): 32 to 96 px, default 48. The example is redrawn at the same scale.
+- **Finger ink** (Settings): by default only the pen and the mouse draw. Turn this on to draw with a finger.
+- **Guide** (Settings): turns the real-time guide (preview and live warnings) on or off (on by default).
+- **Back up** and **Restore** (Settings): Back up saves all progress (lessons, practice, quiz history, settings and the learned writing size) to a `gregg-progress-YYYY-MM-DD.json` file. On an iPad it opens the share sheet, so you can save it straight to Google Drive or Files; elsewhere it downloads the file. Restore loads such a file on another device or browser and, after a confirmation, replaces everything stored there.
+- **Reset** (Settings): after a confirmation, deletes everything the app has stored: practice strokes and scores, quiz history, export marks, settings and the learned writing size.
+
+### Resizing the panel
+
+In Practice, Quiz and Lessons the panel sits beside the pad on a landscape screen and above it on a portrait one (an iPad held upright, a phone). Drag the handle between them to make the panel narrower or shorter (or wider or taller); the pad always keeps at least 40% of the space. With the handle focused, the arrow keys move it, and a double-tap puts it back. The size is remembered.
 
 ### Repeats
 
@@ -128,7 +138,7 @@ An end-to-end run in headless Chrome that drives the real page with synthetic pe
 npm run coverage
 ```
 
-Runs the unit tests and the Chrome test together and writes a merged coverage report with c8 into `coverage/`. It fails if line coverage across `app/js/` and `app/data/` drops below 80%.
+Runs the unit tests and the Chrome test together and writes a merged coverage report with c8 into `coverage/`. It fails if line coverage across `app/js/` and `app/data/` drops below 95%, or function coverage below 90%.
 
 ```text
 npm run screenshots
@@ -144,14 +154,22 @@ npm run plates [ids…] [--sheet file.html] [--prune]
 
 Cuts the manual's printed outlines from the scan into `app/plates/<id>.png`, using the crop boxes in `tools/plates.json`. With ids, only those crops are made. `--sheet file.html` also writes a contact sheet of the crops to check by eye, and `--prune` deletes images in `app/plates/` that have no crop. It needs the PDF locally and poppler's `pdftoppm`. The images are committed, so the app and the tests do not need either.
 
+```text
+node tools/upscale.mjs <dir of .gif> <out dir>
+```
+
+Redraws the line-art GIFs from greggshorthand.github.io (the figures of `app/manual/`) as smooth grayscale PNGs at two or three times their size. macOS only (it converts with `sips`).
+
 ## Project layout
 
 ```text
 app/
-  index.html          single page: three views and the toolbar
-  css/app.css         styles
+  index.html          single page: the views, the toolbar and the Settings menu
+  css/app.css         styles; the themes are sets of colour tokens
   js/
     main.js           wiring: routing, toolbar, persistence, export, per-line pickers
+    ui.js             themes, the Settings menu, the panel/pad resize handle
+    dom.js            small DOM helpers (el, button, svgEl, saveFile)
     ink.js            InkPad: pointer capture, ink drawing, undo, JSON (de)serialisation
     assess.js         scores an attempt against the model outline; writes critiques
     repeats.js        groups pad strokes into repeats and lines; aggregates scores
@@ -165,13 +183,20 @@ app/
     writer.js         learned writing-size scale
     backup.js         progress backup file: export and restore of the gregg.* keys
     gallery.js        the Strokes view
+    reference.js      the Reference view
+    manualtext.js     renders the Manual's text blocks
   data/
     strokes.js        the stroke table (geometry in U) and look-alike families
     examples.js       the levels of examples
     lessons.js        the lesson steps for Units 1–3 (later units come from units/)
     plates.js         which examples and rules have a printed plate, and its page
+    manual.js         the Manual's text, unit by unit, and its front matter
+    briefs.js         the brief-form chart (Reference)
+    reading.js        each unit's Reading and Dictation Practice and its key
+    speed.js          the Gregg Speed Studies sections for each unit
     units/            manual Units 4 onward as data, one module per unit (index.js lists them)
   plates/             images of the manual's printed outlines (npm run plates)
+  manual/             the website's figures, redrawn smooth (tools/upscale.mjs)
   icons/              app icons for the Home Screen
   manifest.webmanifest  name, icons and display mode for Add to Home Screen
   sw.js               service worker: saves the app on the device for offline use
@@ -183,6 +208,8 @@ tools/
   screenshots.mjs     regenerates docs/screenshots/ (npm run screenshots)
   plates.mjs          cuts app/plates/ from the scan (npm run plates)
   plates.json         crop boxes for plates.mjs
+  upscale.mjs         redraws the website's GIF figures as smooth PNGs
+  png.mjs             PNG reading and writing for the image tools
   precache.mjs        writes app/precache.js (npm run precache; --check in CI)
 .github/workflows/
   pages.yml           tests, then publishes app/ to GitHub Pages on push to main

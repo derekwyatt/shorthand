@@ -129,3 +129,11 @@ test('repeatIndexFor: a tall outline that starts high still continues its line',
   // A stroke starting a line lower is a new repeat.
   assert.equal(repeatIndexFor(e, strokes.slice(0, 1), { x: 100, y: 300 + LS }, O), 0);
 });
+
+test('a note left in every repeat (an unwritten vowel mark) is not summarised as a problem', () => {
+  const aim = ex('word-aim');
+  const plain = [0, 1].flatMap((i) => shift(perfect(aim, { skipDots: true }), 0, i * 2 * LS, i * 5000));
+  const r = assessRepeats(aim, plain, O);
+  assert.equal(r.critiques.filter((c) => /dash under the vowel/.test(c.text)).length, 1, texts(r));
+  assert.ok(!r.critiques.some((c) => c.text.startsWith('In 2 of 2')), texts(r));
+});

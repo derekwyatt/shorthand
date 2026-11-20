@@ -99,7 +99,8 @@ export function assessRepeats(example, strokes, { unitPx, lineSpacing, scale = 1
   }
   const counts = new Map();
   for (const r of done) {
-    for (const key of new Set(r.result.critiques.map((c) => issueKey(c.text)).filter(Boolean))) counts.set(key, (counts.get(key) ?? 0) + 1);
+    // Faults only: a note (such as an unwritten vowel mark) is not a recurring problem.
+    for (const key of new Set(r.result.critiques.filter((c) => c.level !== 'info').map((c) => issueKey(c.text)).filter(Boolean))) counts.set(key, (counts.get(key) ?? 0) + 1);
   }
   [...counts].filter(([, n]) => n >= 2).sort((a, b) => b[1] - a[1]).slice(0, MAX_RECURRING).forEach(([key, n]) => {
     critiques.push({ level: 'info', text: `In ${n} of ${done.length} repeats: ${key}.` });
