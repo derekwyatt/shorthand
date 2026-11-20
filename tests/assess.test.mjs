@@ -342,3 +342,21 @@ test('a vowel mark is checked when written, only noted when left out, and the h 
   assert.ok(noDash.complete && noDash.score >= 95, `${noDash.score}`);
   assert.deepEqual([noDash.written, noDash.expected], [2, 2]);
 });
+
+test('a vowel dash written larger than a dot is still the dash, not an extra stroke', () => {
+  for (const id of ['word-day', 'word-initial-o']) {
+    const e = ex(id);
+    const strokes = perfect(e, { scale: 1.4 });
+    const marks = modelUnits(e).flatMap((u, i) => (['v-dash', 'cap'].includes(u.role) ? [i] : []));
+    assert.ok(marks.length, `${id} has a dash`);
+    // Each dash ~0.55 U long at the writer's size, with a slight hook, as a hand writes it.
+    for (const i of marks) {
+      const c = strokes[i].points[0];
+      strokes[i] = { points: [0, 1, 2, 3, 4, 5, 6].map((k) => ({ x: c.x + k * 1.0 - (k > 5 ? 1.5 : 0), y: c.y + k * 1.0, t: c.t + k * 8 })) };
+    }
+    const r = assessAttempt(e, strokes, UNIT, { scale: 1.4 });
+    assert.equal(r.extras, 0, `${id}: ${texts(r)}`);
+    assert.ok(r.complete && r.score >= 90, `${id} ${r.score}: ${texts(r)}`);
+    for (const i of marks) assert.ok(r.units.some((u) => u.user && u.user.pts[0].t === strokes[i].points[0].t && u.kind === 'dot'), `${id}: the dash is matched as a mark`);
+  }
+});

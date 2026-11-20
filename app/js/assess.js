@@ -227,6 +227,9 @@ export function cleanStrokes(us) {
 const DOT_TRAVEL_MAX = 0.45;
 const travelOf = (pts) => pts.reduce((sum, p, i) => (i ? sum + Math.hypot(p.x - pts[i - 1].x, p.y - pts[i - 1].y) : 0), 0);
 export const isDot = (s) => extentOf(s.pts) < DOT_MAX && travelOf(s.pts) < DOT_TRAVEL_MAX;
+// The largest stroke (bbox diagonal, U at the example's size) still taken for a mark when it
+// is left over by the outlines: the dashes are 0.3–0.4 U.
+const MARK_MAX = 0.8;
 
 // Hand jitter, smoothed away before measuring: the path is resampled every SMOOTH_STEP U
 // and averaged over ±SMOOTH_RADIUS samples. Without this a short line (n, t) wobbles enough
@@ -654,14 +657,25 @@ function longStrokeSize(cons, name) {
 export function assessAttempt(example, strokes, unitPx, { scale = 1 } = {}) {
   const units = modelUnits(example);
   const user = cleanStrokes(toUserStrokes(strokes, unitPx)).map((s) => (isDot(s) ? s : { ...s, pts: smoothPath(s.pts) }));
-  const userDots = user.filter(isDot);
-  const userMain = user.filter((s) => !isDot(s));
+  let userDots = user.filter(isDot);
+  let userMain = user.filter((s) => !isDot(s));
   const mMain = units.filter((u) => u.kind === 'outline');
   const mDots = units.filter((u) => u.kind === 'dot');
   const sentence = !!example.words;
   const label = (u) => (sentence ? `“${u.word}”` : null);
 
-  const pairs = align(mMain, userMain, scale);
+  let pairs = align(mMain, userMain, scale);
+  // A mark written larger than a dot (a vowel dash at a large hand): a small stroke left
+  // over by the outlines is tried as a mark, placed like the dots below. No size alone
+  // tells them apart: the outline of "O" is hardly bigger than its capital dashes.
+  if (mDots.length) {
+    const small = new Set(pairs.filter((p) => !p.m && extentOf(p.u.pts) < MARK_MAX * Math.max(1, scale)).map((p) => p.u));
+    if (small.size) {
+      userDots = user.filter((s) => isDot(s) || small.has(s));
+      userMain = userMain.filter((s) => !small.has(s));
+      pairs = pairs.filter((p) => !small.has(p.u));
+    }
+  }
   const matched = pairs.filter((p) => p.m && p.u);
   // `fit` only places dots. Sizes are judged against the writer's own size (`scale`,
   // learned across attempts), never re-estimated mid-attempt, so an outline's verdict
