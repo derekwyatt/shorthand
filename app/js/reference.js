@@ -103,4 +103,6 @@ export function buildReference(root) {
   }));
   root.replaceChildren(menu, body);
   open(SECTIONS[0]);
+  // Opens a section by id (from a #ref/<id> address).
+  return { open: (id) => open(SECTIONS.find((s) => s.id === id) ?? SECTIONS[0]) };
 }

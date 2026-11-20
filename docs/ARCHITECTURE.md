@@ -31,7 +31,7 @@ The app is plain ES modules loaded by `app/index.html`; there is no bundler. Mod
 | `app/data/units/` | Manual Units 4 onward as plain data, one module per unit. `index.js` lists them in `UNITS` and gives each unit's Practice level (`levelOfUnit()`, unit + 5). |
 | `app/data/plates.js` | Which examples have a printed plate (`plateFor()`), with its page, and the section plates used by lessons (`sectionPlate()`). |
 | `tools/plates.mjs` | Cuts `app/plates/*.png` from the scan using `tools/plates.json`, smoothing each crop (blur of about a scan pixel, then a tone curve). |
-| `tools/upscale.mjs` | Redraws the website's 1-bit GIFs as smooth grayscale PNGs (`app/manual/`): Catmull-Rom enlargement, a little blur, ink normalised to its local maximum, a steep tone curve. |
+| `tools/upscale.mjs` | Enlarges the website's GIFs (`app/manual/`) as grayscale PNGs: Catmull-Rom resampling of the GIFs' own anti-aliased grays, a slight gamma for the hairlines, 32 levels. No threshold or local contrast, which broke faint lines into dashes and blotted soft edges. |
 | `tools/png.mjs` | The PNG reader and writer the two image tools share. |
 | `tools/compare.mjs` | Sheet of each outline as the app draws it, beside the manual's plate (`node tools/compare.mjs`). |
 | `tools/dev-server.mjs` | Static server for `app/` with live reload and `/api/quiz`. |

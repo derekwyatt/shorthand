@@ -143,10 +143,12 @@ $('reset-all').addEventListener('click', () => {
 // #strokes and #ref.
 const VIEWS = ['pad', 'learn', 'strokes', 'quiz', 'ref'];
 let gallery = null;
-let reference = false;
+let reference = null;
 let lastView = null;
+// An address is #view, or #ref/<section> to open a Reference section.
 function route() {
-  const view = VIEWS.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'pad';
+  const [name, section] = location.hash.slice(1).split('/');
+  const view = VIEWS.includes(name) ? name : 'pad';
   for (const v of VIEWS) document.body.classList.toggle(`view-${v}`, v === view);
   for (const m of document.querySelectorAll('.view')) m.hidden = !m.dataset.view.split(' ').includes(view);
   const wasElsewhere = lastView !== null && lastView !== 'pad';
@@ -156,9 +158,9 @@ function route() {
   else if (wasElsewhere && view === 'pad') goTo(index, { animate: false });
   for (const a of document.querySelectorAll('.modes a')) a.classList.toggle('active', a.dataset.view === view);
   assist.drawModel();
-  if (view === 'ref' && !reference) {
-    buildReference($('reference'));
-    reference = true;
+  if (view === 'ref') {
+    reference ??= buildReference($('reference'));
+    if (section) reference.open(section);
   }
   if (view === 'strokes') {
     const first = !gallery;

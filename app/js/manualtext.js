@@ -1,6 +1,8 @@
 // Renders blocks of the Manual's text (data/manual.js) as paragraphs.
-// Blocks are [align, html] with only em, strong, br, img and anchor spans: static content
-// from this repository, so it is set as HTML.
+// Blocks are [align, html] with only em, strong, br, img, anchor spans and cross-references:
+// static content from this repository, so it is set as HTML. A cross-reference opens what it
+// names in the app: another unit (data-unit), a paragraph (data-para) or a Reference section
+// (data-ref).
 import { el, button, credit } from './dom.js';
 import { MANUAL_TEXT } from '../data/manual.js';
 import { LESSONS } from '../data/lessons.js';
@@ -17,6 +19,18 @@ export function renderBlocks(blocks) {
     for (const img of p.querySelectorAll('img[width]')) {
       img.width = Math.round(img.width * 1.4);
       img.removeAttribute('height');
+    }
+    for (const a of p.querySelectorAll('a[data-unit], a[data-para], a[data-ref]')) {
+      a.href = a.dataset.ref ? `#ref/${a.dataset.ref}` : '#';
+      a.className = 'inline-link';
+      a.onclick = (e) => {
+        // Whatever Manual reader is open gives way to what the link opens.
+        document.querySelector('.manual-reader')?.remove();
+        if (a.dataset.ref) return; // the hash opens the Reference section
+        e.preventDefault();
+        const para = a.dataset.para ? Number(a.dataset.para) : null;
+        openManual(para ? unitOfParagraph(para) : Number(a.dataset.unit), para);
+      };
     }
     return p;
   });

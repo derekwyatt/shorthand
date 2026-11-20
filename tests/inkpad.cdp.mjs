@@ -769,6 +769,27 @@ try {
     && links.unit7 === site + 'anunit07.html' && links.newTab, `each Reference section links to its page at greggshorthand.github.io (${JSON.stringify(links)})`);
   check(links.thanks.includes(site) && links.thanks.includes(site + 'Annivman.pdf') && links.thanks.some((h) => /jandrewowen/.test(h)), 'Thanks credits Andrew Owen, with links to his sites');
 
+  // The Manual's own cross-references open what they name inside the app.
+  const xref = await evaluate(`(async () => {
+    const pick = document.querySelector('.ref-body select') ?? (document.querySelector('.ref-menu button[data-id="units"]').click(), document.querySelector('.ref-body select'));
+    pick.value = '28'; pick.dispatchEvent(new Event('change'));
+    const chapter = [...document.querySelectorAll('.ref-body a.inline-link')].find((a) => a.textContent === 'Chapter VIII');
+    chapter?.click();
+    const unit = document.querySelector('.manual-reader .reader-bar strong')?.textContent;
+    pick.value = '25'; pick.dispatchEvent(new Event('change'));
+    document.querySelector('.manual-reader')?.remove();
+    [...document.querySelectorAll('.ref-body a.inline-link')].find((a) => /paragraph 23/.test(a.textContent))?.click();
+    const para = !!document.querySelector('.manual-reader #m23')?.closest('p.flash');
+    const alpha = [...document.querySelectorAll('.manual-reader a.inline-link')].length;
+    document.querySelector('.manual-reader')?.remove();
+    location.hash = '#ref/alphabet';
+    await new Promise((r) => setTimeout(r, 200));
+    const opened = document.querySelector('.ref-menu button.active')?.dataset.id;
+    return { chapter: !!chapter, unit, para, alpha, opened };
+  })()`);
+  check(xref.chapter && /Unit 22/.test(xref.unit) && xref.para && xref.opened === 'alphabet',
+    `the Manual's cross-references open the unit, the paragraph, and #ref/alphabet the alphabet (${JSON.stringify(xref)})`);
+
   // In Practice, a source line's § opens the Manual in the app and its page links to the scan.
   await evaluate(`location.hash = '#pad'`);
   await sleep(200);

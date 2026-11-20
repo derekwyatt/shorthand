@@ -127,7 +127,8 @@ test('the Manual text: every unit, figures that exist, paragraph anchors in orde
     assert.ok(doc && doc.blocks.length > 3, `Unit ${u} text`);
     for (const [align, html] of doc.blocks) {
       assert.ok(align === null || align === 'center', `Unit ${u}: align ${align}`);
-      assert.ok(!/<(?!\/?(?:em|strong|br|img|span)\b)/.test(html), `Unit ${u}: unexpected tag in ${html.slice(0, 60)}`);
+      assert.ok(!/<(?!\/?(?:em|strong|br|img|span|a)\b)/.test(html), `Unit ${u}: unexpected tag in ${html.slice(0, 60)}`);
+      for (const [a] of html.matchAll(/<a\b[^>]*>/g)) assert.match(a, /^<a data-(unit|para|ref)="[\w-]+">$/, `Unit ${u}: cross-reference ${a}`);
       for (const [, src] of html.matchAll(/src="([^"]+)"/g)) assert.ok(fs.existsSync(new URL(`../app/${src}`, import.meta.url)), `Unit ${u}: ${src}`);
       for (const [, n] of html.matchAll(/id="m(\d+)"/g)) {
         assert.ok(Number(n) > last, `Unit ${u}: paragraph ${n} after ${last}`);

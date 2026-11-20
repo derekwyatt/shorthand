@@ -158,7 +158,7 @@ Cuts the manual's printed outlines from the scan into `app/plates/<id>.png`, usi
 node tools/upscale.mjs <dir of .gif> <out dir>
 ```
 
-Redraws the line-art GIFs from greggshorthand.github.io (the figures of `app/manual/`) as smooth grayscale PNGs at two or three times their size. macOS only (it converts with `sips`).
+Enlarges the figures from greggshorthand.github.io (`app/manual/`) to two or three times their size as grayscale PNGs, keeping the originals' own anti-aliasing. macOS only (it converts with `sips`).
 
 ## Project layout
 

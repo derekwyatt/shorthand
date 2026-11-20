@@ -1,7 +1,9 @@
 // The text of the Anniversary Manual (1929; US public domain), unit by unit, with its figures,
 // from J. Andrew Owen's transcription at greggshorthand.github.io (images in app/manual/).
-// Blocks are [align, html]: align is "center" or null; html uses only em, strong, br, img
-// and <span id="mN"> anchors for the Manual's paragraph N. Imported by a one-off script.
+// Blocks are [align, html]: align is "center" or null; html uses only em, strong, br, img,
+// <span id="mN"> anchors for the Manual's paragraph N, and the site's in-text cross-references as
+// <a data-unit="N">, <a data-para="N"> or <a data-ref="section"> (manualtext.js makes them open the
+// Manual or Reference in the app). Imported by a one-off script.
 export const MANUAL_TEXT = {
   1: { title: "", blocks: [
     [null, "<span id=\"m1\"></span><strong>1.</strong> Shorthand is written by <em>sound</em>; thus <em>aim</em> is written <em>am</em> (long sound of <em>a</em>), <em>cat</em> is written <em>kat</em>, <em>knee</em> is written <em>ne</em>. Since we are learning shorthand to save time in writing, it is necessary to ignore those letters that aren't pronounced."],
@@ -90,7 +92,7 @@ export const MANUAL_TEXT = {
     ["center", "<strong>Brief Forms for Common Words</strong>"],
     [null, "<span id=\"m23\"></span><strong>23.</strong> A comparatively small number of frequently recurring words make up a large part of the English language. As an illustration, ten words—<em>the, of and, to, a, in, that, it, is, I</em>—form one-fourth of the entire written and spoken language.<br>The forms for these frequent words are based on a very common method of abbreviation in longhand writing. For example, <em>amt</em>. is written for <em>amount</em>; <em>Rev.</em> for <em>Reverend</em>; <em>gym</em> for <em>gymnasium</em>; <em>ans</em>. for <em>answer</em>; <em>math</em>. for <em>mathematics</em>, and so on. By taking advantage of this method of abbreviation, brief and easily remembered shorthand forms are obtained for the most common words in the language. Some of these brief forms consists of letters you have not yet learned, so do not attempt to learn the new letters until the chapters in which they occur."],
     ["center", "<img src=\"manual/gregg024.png\" alt=\"brief forms\" width=\"381\" height=\"187\">"],
-    [null, "*In some phrases <em>they</em> is written the same as <em>the</em>, as in <em>they will</em>.<br>Note: Refer to the alphabet page for explanation of characters."],
+    [null, "*In some phrases <em>they</em> is written the same as <em>the</em>, as in <em>they will</em>.<br>Note: Refer to <a data-ref=\"alphabet\">the alphabet page</a> for explanation of characters."],
     ["center", "<span id=\"m24\"></span><strong>24. Business Abbreviations</strong>"],
     ["center", "<img src=\"manual/gregg025.png\" alt=\"Business abbreviations\" width=\"383\" height=\"59\">"],
     ["center", "<span id=\"m25\"></span><strong>25. Reading and Dictation Practice</strong>"],
@@ -560,7 +562,7 @@ export const MANUAL_TEXT = {
   ] },
   25: { title: "", blocks: [
     [null, "<strong>The Abbreviating Principle</strong>"],
-    [null, "<span id=\"m192\"></span><strong>192. </strong> The application of the abbreviating principle discussed in Chapter I, paragraph 23, many illustrations of which previously have been given, is more or less flexible and depends to a large extent upon the familiarity of the writer with the words and subject matter in the dictation. Note how the principle is applied in the following illustration:"],
+    [null, "<span id=\"m192\"></span><strong>192. </strong> The application of the abbreviating principle discussed in <a data-para=\"23\">Chapter I, paragraph 23</a>, many illustrations of which previously have been given, is more or less flexible and depends to a large extent upon the familiarity of the writer with the words and subject matter in the dictation. Note how the principle is applied in the following illustration:"],
     ["center", "<img src=\"manual/gregg199.png\" alt=\"Example of the use of the abbreviating principle\" width=\"389\" height=\"265\">"],
     [null, "The abbreviating principle is not employed when advantage may be taken of analogical or definite word-building rules, and it should not be employed when easily written word forms are possible without it: <em>When in doubt write it out</em>."],
     [null, "<span id=\"m193\"></span><strong>193. Short Words.</strong> In a small but useful group of common words—many illustrations of which have been given throughout this manual in \"Brief Forms for Common Words\"—the form stops with a diphthong or a strongly accented vowel:"],
@@ -613,7 +615,7 @@ export const MANUAL_TEXT = {
     ["center", "<img src=\"manual/gregg214.png\" alt=\"Word-beginnings\" width=\"392\" height=\"383\">"],
     ["center", "<span id=\"m210\"></span><strong>210. Key to Analogical Word-Beginnings</strong>"],
     ["center", "1. central, center, centralize, centralization, centrifugal.<br>2. contract, contrary, control, contribute, contrast, counterpart, countersign.<br>3. construct, construction, constrain, constraint, construe, construed.<br>4. detriment, detrimental, deteriorate, detract, detraction.<br>5. destroy, distribute, distribution, distract, distraction.<br>6. electric, electrical, electrolysis, electric light.<br>7. extra, extreme, extraordinary, exterior, extricate, exclusive, exclamation.<br>8. interest, interesting, enter, entered, entertain, interfere, introduce, intelligence.<br>9. instruct, instruction, instrument, instruments, instrumental.<br>10. retreat, retract, retraction, retribution, retrieve, retrogression.<br>11. restrain, restraint, restrict, restriction."],
-    [null, "<span id=\"m211\"></span><strong>211.</strong> In forming the derivatives of words ending in <em>ct</em>, as in <em>contract</em>, it is not necessary to disjoin to express <em>ed</em>, <em>or</em>, <em>er</em>, or <em>ive</em>. The <em>t</em> is omitted in the primitive form (under the rules given in ), and also in its derivatives:"],
+    [null, "<span id=\"m211\"></span><strong>211.</strong> In forming the derivatives of words ending in <em>ct</em>, as in <em>contract</em>, it is not necessary to disjoin to express <em>ed</em>, <em>or</em>, <em>er</em>, or <em>ive</em>. The <em>t</em> is omitted in the primitive form (under the rules given in <a data-unit=\"22\">Chapter VIII</a>), and also in its derivatives:"],
     ["center", "<img src=\"manual/gregg215.png\" alt=\"derivatives of the above words\" width=\"392\" height=\"309\">"],
     [null, "<strong><span id=\"m212\"></span>Analogical Word-Beginnings—Compounds</strong>"],
     [null, "<strong>212.</strong> Some very useful forms are obtained by joining simple syllable characters, such as <em>in</em>, <em>un</em>, <em>dis</em>, <em>re</em>, and <em>non</em>, to the signs for disjoined word-beginnings:"],
