@@ -6,7 +6,7 @@
 // finger touches are ignored unless acceptTouch is set, which gives palm rejection.
 
 export class InkPad {
-  constructor(canvas, { onChange = () => {}, onStrokeStart = () => {}, onStrokeMove = () => {}, acceptTouch = false, lineSpacing = 48 } = {}) {
+  constructor(canvas, { onChange = () => {}, onStrokeStart = () => {}, onStrokeMove = () => {}, acceptTouch = false, lineSpacing = 48, lineWidth = 2.2 } = {}) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
     this.onChange = onChange;
@@ -15,7 +15,7 @@ export class InkPad {
     this.acceptTouch = acceptTouch;
     this.lineSpacing = lineSpacing;
     this.inkColor = '#1d3c8f';
-    this.lineWidth = 2.2;
+    this.lineWidth = lineWidth; // CSS px (Settings → Pen thickness)
 
     this.strokes = [];
     this.history = [];      // undo stack: { type: 'add' } | { type: 'clear', strokes }

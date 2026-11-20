@@ -19,6 +19,7 @@ const $ = (id) => document.getElementById(id);
 
 const saved = loadSaved();
 const spacingInput = $('spacing');
+const penInput = $('pen-width');
 const fingerInput = $('finger');
 let index = Math.min(Math.max(0, EXAMPLES.findIndex((e) => e.id === saved.exampleId)), EXAMPLES.length - 1);
 const currentExample = () => EXAMPLES[index];
@@ -34,6 +35,7 @@ let pickedY = null;
 
 const pad = new InkPad($('ink'), {
   lineSpacing: saved.lineSpacing,
+  lineWidth: saved.penWidth,
   acceptTouch: saved.acceptTouch,
   onStrokeStart: (stroke) => { if (!inQuiz()) assist.strokeStart(stroke, pad.strokes); },
   onStrokeMove: (stroke) => { if (!inQuiz()) assist.strokeMove(stroke); },
@@ -75,6 +77,8 @@ const lessons = createLessons({ panel: $('lesson-panel'), pad, assist, unitPx })
 
 spacingInput.value = saved.lineSpacing;
 fingerInput.checked = saved.acceptTouch;
+penInput.value = saved.penWidth;
+$('pen-width-out').value = `${saved.penWidth}px`;
 guideInput.checked = saved.guide;
 guideInput.addEventListener('change', () => {
   saved.guide = guideInput.checked;
@@ -100,6 +104,12 @@ spacingInput.addEventListener('input', () => {
     refreshAssessment();
   }
   assist.drawModel();
+  persist();
+});
+penInput.addEventListener('input', () => {
+  pad.lineWidth = Number(penInput.value);
+  $('pen-width-out').value = `${pad.lineWidth}px`;
+  pad.redraw();
   persist();
 });
 fingerInput.addEventListener('change', () => {
@@ -307,7 +317,7 @@ function showStatus() {
 }
 
 function loadSaved() {
-  const defaults = { lineSpacing: 48, acceptTouch: false, guide: true, exampleId: null, attempts: {} };
+  const defaults = { lineSpacing: 48, penWidth: 2.2, acceptTouch: false, guide: true, exampleId: null, attempts: {} };
   try {
     const s = { ...defaults, ...JSON.parse(localStorage.getItem(STORE_KEY)) };
     s.attempts ??= {};
@@ -320,6 +330,7 @@ function loadSaved() {
 function persist() {
   saved.lineSpacing = pad.lineSpacing;
   saved.acceptTouch = pad.acceptTouch;
+  saved.penWidth = pad.lineWidth;
   try {
     localStorage.setItem(STORE_KEY, JSON.stringify(saved));
   } catch {

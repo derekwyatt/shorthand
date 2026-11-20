@@ -190,6 +190,13 @@ try {
   const inked = await evaluate(`(() => { const c = document.getElementById('ink'); const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i]) n++; return n; })()`);
   check(inked > 50, `ink pixels drawn (${inked})`);
 
+  // Pen thickness redraws the ink thicker and is kept.
+  await evaluate(`(() => { const r = document.getElementById('pen-width'); r.value = 5; r.dispatchEvent(new Event('input')); })()`);
+  const thick = await evaluate(`(() => { const c = document.getElementById('ink'); const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i]) n++; return n; })()`);
+  check(thick > inked * 1.5, `pen thickness redraws thicker ink (${inked} → ${thick} pixels)`);
+  check(JSON.parse(await evaluate(`localStorage.getItem('gregg.practice.v2')`)).penWidth === 5, 'pen thickness is saved');
+  check(await evaluate(`document.getElementById('pen-width-out').value`) === '5px', 'pen thickness shows its value');
+
   // Line spacing control updates the rules and later strokes.
   await evaluate(`(() => { const r = document.getElementById('spacing'); r.value = 64; r.dispatchEvent(new Event('input')); })()`);
   check(await evaluate(`getComputedStyle(document.documentElement).getPropertyValue('--line-spacing').trim()`) === '64px', 'line spacing control sets the CSS rule spacing');

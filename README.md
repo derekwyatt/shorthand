@@ -89,6 +89,7 @@ The toolbar holds the views, Undo and Clear (Replay all in Strokes) and the Sett
 - **Clear**: clears the pad for the current example. It can be undone.
 - **Export JSON** (Settings): saves the current attempt (see below). On an iPad the share sheet is used when available; otherwise the browser downloads a file named `gregg-<example id>-<timestamp>.json`.
 - **Line spacing** (Settings): 32 to 96 px, default 48. The example is redrawn at the same scale.
+- **Pen thickness** (Settings): 1 to 6 px, default 2.2. Only the look of the ink: assessment uses the pen's path.
 - **Finger ink** (Settings): by default only the pen and the mouse draw. Turn this on to draw with a finger.
 - **Guide** (Settings): turns the real-time guide (preview and live warnings) on or off (on by default).
 - **Back up** and **Restore** (Settings): Back up saves all progress (lessons, practice, quiz history, settings and the learned writing size) to a `gregg-progress-YYYY-MM-DD.json` file. On an iPad it opens the share sheet, so you can save it straight to Google Drive or Files; elsewhere it downloads the file. Restore loads such a file on another device or browser and, after a confirmation, replaces everything stored there.
