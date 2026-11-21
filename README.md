@@ -50,7 +50,7 @@ Every push to `main` publishes `app/` to GitHub Pages (`.github/workflows/pages.
 
 Progress is kept per browser and per address, so the Pages copy starts empty. Use **Back up** on one device and **Restore** on the other to move it (the backup file can go through Google Drive, Files, AirDrop and so on). Safari may clear stored data for websites you haven't visited for a while; apps added to the Home Screen are exempt.
 
-When you add, rename or remove a file under `app/`, run `npm run precache` to update the list of files the service worker saves (`app/precache.js`). A unit test fails until you do.
+After any change under `app/`, run `npm run precache`. It updates the list of files the service worker saves (`app/precache.js`, with a fingerprint of each file) and the versioned URLs in `app/index.html`: the page asks for its stylesheet and every module as `file?v=<fingerprint>` (the modules through an import map), so a browser never pairs a new page with an old script from its own cache. A unit test fails until you do.
 
 ### Using it on an iPad over the LAN
 
@@ -215,7 +215,7 @@ tools/
   plates.json         crop boxes for plates.mjs
   upscale.mjs         redraws the website's GIF figures as smooth PNGs
   png.mjs             PNG reading and writing for the image tools
-  precache.mjs        writes app/precache.js (npm run precache; --check in CI)
+  precache.mjs        writes app/precache.js and index.html's versioned URLs (npm run precache; --check in CI)
 .github/workflows/
   pages.yml           tests, then publishes app/ to GitHub Pages on push to main
 tests/                unit tests (*.test.mjs), the Chrome end-to-end script

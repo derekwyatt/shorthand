@@ -68,8 +68,10 @@ function fromNetwork(request, wait) {
     fetch(request, { cache: 'no-cache' }).then((res) => {
       clearTimeout(timer);
       if (res.ok) {
+        // Saved under the plain URL: the page asks for its scripts as file?v=<fingerprint>.
         const copy = res.clone();
-        caches.open(CACHE).then((cache) => cache.put(request, copy));
+        const url = new URL(request.url);
+        caches.open(CACHE).then((cache) => cache.put(url.origin + url.pathname, copy));
       }
       resolve(res);
     }, (err) => { clearTimeout(timer); reject(err); });

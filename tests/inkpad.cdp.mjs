@@ -797,6 +797,12 @@ try {
   check(xref.chapter && /Unit 22/.test(xref.unit) && xref.para && xref.opened === 'alphabet',
     `the Manual's cross-references open the unit, the paragraph, and #ref/alphabet the alphabet (${JSON.stringify(xref)})`);
 
+  // Every module is loaded at its versioned URL (index.html's import map), so a browser
+  // can't pair the page with an old copy of a script.
+  const loaded = await evaluate(`performance.getEntriesByType('resource').map((e) => e.name).filter((n) => /\\/(js|data)\\/[^?]+\\.js/.test(n))`);
+  check(loaded.length > 10 && loaded.every((n) => /\\?v=[0-9a-f]{12}$/.test(n)) && loaded.some((n) => n.includes('/js/ink.js?v=')),
+    `modules load at versioned URLs (${loaded.length}, e.g. ${loaded.find((n) => n.includes('/js/ink.js')) ?? 'none'})`);
+
   // Home (the default view): the overview and the story, eight lines of Gregg over English;
   // tapping a line writes it out.
   await evaluate(`location.hash = ''`);

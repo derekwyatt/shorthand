@@ -365,4 +365,4 @@ async function exportJSON() {
 }
 
 // Offline: the service worker keeps every file of the app on the device (see sw.js).
-if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch((err) => console.warn('offline support unavailable', err));
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).catch((err) => console.warn('offline support unavailable', err));

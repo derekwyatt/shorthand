@@ -3,12 +3,21 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
-import { precacheList, precacheSource } from '../tools/precache.mjs';
+import { precacheList, precacheSource, versionedPage } from '../tools/precache.mjs';
 
 const APP = new URL('../app/', import.meta.url);
 
 test('app/precache.js lists every file of the app (run npm run precache)', () => {
   assert.equal(readFileSync(new URL('precache.js', APP), 'utf8'), precacheSource());
+});
+
+test('index.html asks for its stylesheet and every module at a versioned URL (run npm run precache)', () => {
+  const html = readFileSync(new URL('index.html', APP), 'utf8');
+  assert.equal(html, versionedPage());
+  const map = JSON.parse(html.match(/<script type="importmap">(.*?)<\/script>/s)[1]).imports;
+  for (const f of ['./js/main.js', './js/home.js', './data/examples.js', './data/units/unit04.js']) assert.match(map[f], /\?v=[0-9a-f]{12}$/, f);
+  // The import map comes before the first module script, as browsers require.
+  assert.ok(html.indexOf('type="importmap"') < html.indexOf('type="module"'));
 });
 
 test('the precache list has the page, its code, data and plates, and every entry exists', () => {

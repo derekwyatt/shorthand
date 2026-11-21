@@ -3,8 +3,13 @@
 // a fingerprint of its contents, so an update downloads only the files that changed, and the
 // list as a whole a version (the cache's name).
 //
-//   node tools/precache.mjs           write the list
-//   node tools/precache.mjs --check   exit 1 if the list is out of date (CI)
+// It also versions index.html: the stylesheet, the main script and (through an import map)
+// every module it imports are requested as file?v=<fingerprint>, so a browser can't pair a
+// new page with an old script it kept in its own cache (GitHub Pages lets it keep files for
+// 10 minutes).
+//
+//   node tools/precache.mjs           write index.html's versions and the list
+//   node tools/precache.mjs --check   exit 1 if either is out of date (CI)
 import { createHash } from 'node:crypto';
 import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
@@ -12,6 +17,7 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = fileURLToPath(new URL('../app/', import.meta.url));
 const OUT = join(ROOT, 'precache.js');
+const PAGE = join(ROOT, 'index.html');
 const SKIP = new Set(['sw.js', 'precache.js']); // the worker and its list are not cached by it
 
 function walk(dir) {
@@ -27,6 +33,19 @@ export function precacheList() {
 }
 
 const fingerprint = (data) => createHash('sha256').update(data).digest('hex').slice(0, 12);
+const versioned = (f) => `${f}?v=${fingerprint(readFileSync(join(ROOT, f)))}`;
+
+// index.html with every script and the stylesheet at its versioned URL.
+export function versionedPage(html = readFileSync(PAGE, 'utf8')) {
+  const modules = walk(ROOT).filter((f) => f.endsWith('.js') && /^(js|data)\//.test(f)).sort();
+  const map = JSON.stringify({ imports: Object.fromEntries(modules.map((f) => [`./${f}`, `./${versioned(f)}`])) }, null, 1).replace(/\n\s*/g, ' ');
+  const out = html
+    .replace(/<script type="importmap">.*?<\/script>\n\s*/s, '')
+    .replace(/href="css\/app\.css[^"]*"/, `href="${versioned('css/app.css')}"`)
+    .replace(/(\s*)<script type="module" src="js\/main\.js[^"]*"><\/script>/, (_, ws) => `${ws}<script type="importmap">${map}</script>${ws}<script type="module" src="${versioned('js/main.js')}"></script>`);
+  if (!out.includes('type="importmap"') || !out.includes('css/app.css?v=')) throw new Error('index.html: no stylesheet or main script to version');
+  return out;
+}
 
 // [file, fingerprint] for every file ('./' is the page, index.html).
 export function precacheEntries(list = precacheList()) {
@@ -39,17 +58,18 @@ export function precacheSource(entries = precacheEntries()) {
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
-  const src = precacheSource();
   if (process.argv.includes('--check')) {
     let cur = '';
     try { cur = readFileSync(OUT, 'utf8'); } catch { /* missing */ }
-    if (cur !== src) {
-      console.error('app/precache.js is out of date: run npm run precache');
+    if (readFileSync(PAGE, 'utf8') !== versionedPage() || cur !== precacheSource()) {
+      console.error('app/index.html or app/precache.js is out of date: run npm run precache');
       process.exit(1);
     }
-    console.log('app/precache.js is up to date');
+    console.log('app/index.html and app/precache.js are up to date');
   } else {
-    writeFileSync(OUT, src);
+    // The page first: its own fingerprint is part of the list.
+    writeFileSync(PAGE, versionedPage());
+    writeFileSync(OUT, precacheSource());
     console.log(`wrote ${relative(process.cwd(), OUT)} (${precacheList().length} files)`);
   }
 }
