@@ -695,6 +695,7 @@ export const SOUNDS = {
   careful: 'K EH1 R F AH0 L',
   carefully: 'K EH1 R F AH0 L IY0',
   cares: 'K EH1 R Z',
+  caret: 'K AE1 R AH0 T',
   carew: 'K AE1 R UW0',
   cargo: 'K AA1 R G OW2',
   carload: 'K AA1 R L OW2 D',

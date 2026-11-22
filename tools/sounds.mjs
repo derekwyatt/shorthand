@@ -17,6 +17,8 @@ const WRITING_PRACTICE = [33, 64, 90, 111, 132, 152, 173, 191, 208, 226, 237, 24
 const dictPath = process.argv[2];
 if (!dictPath) throw new Error('usage: node tools/sounds.mjs path/to/cmudict.dict');
 const dict = new Map();
+// Words the app's texts use that the dictionary lacks (caret: the Unit 2 Speed Studies drill).
+const SUPPLEMENT = { caret: 'K AE1 R AH0 T' };
 for (const line of fs.readFileSync(dictPath, 'utf8').split('\n')) {
   const m = /^([a-z']+) ([A-Z0-9 ]+?)(?: #.*)?$/.exec(line.trim());
   if (m && !dict.has(m[1])) dict.set(m[1], m[2]);
@@ -38,6 +40,7 @@ for (const w of [...words]) {
     if (b.length > 2 && b.at(-1) === b.at(-2)) words.add(b.slice(0, -1));
   }
 }
+for (const [w, p] of Object.entries(SUPPLEMENT)) if (!dict.has(w)) dict.set(w, p);
 const kept = [...words].filter((w) => dict.has(w)).sort();
 const body = kept.map((w) => `  ${/^[a-z]+$/.test(w) ? w : JSON.stringify(w)}: '${dict.get(w)}',`).join('\n');
 fs.writeFileSync(new URL('../app/data/sounds.js', import.meta.url), `// Pronunciations, from the CMU Pronouncing Dictionary (BSD 2-clause licence, Carnegie Mellon

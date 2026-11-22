@@ -35,6 +35,8 @@ test('the rules of the drill words (Speed Studies, Review Drill on Circle Joinin
   assert.equal(out('enemy', 2), 'e n e m e');
   assert.equal(out('leaky', 2), 'l e k e');
   assert.equal(out('gaining', 2), 'g a n ing');
+  assert.equal(out('caret', 2), 'k a r e t', 'not in the dictionary: tools/sounds.mjs supplies it');
+  assert.equal(out('hay', 2), 'h a', 'a circle alone, with the h dot');
 });
 
 test('each rule waits for the unit that teaches it', () => {

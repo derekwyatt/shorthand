@@ -446,7 +446,22 @@ function compileCore(outline) {
       const prev = strokes[i - 1] ?? null;
       const next = strokes[i + 1] ?? null;
       const adj = prev || next;
-      if (!adj) throw new Error(`a circle needs a stroke to join (${outline.join(' ')})`);
+      if (!adj) {
+        // A circle standing alone (hay: the h dot and ā), as the stroke table draws it: left
+        // motion (Speed Studies I §2, p. 18). Only a single plain circle, after h or not.
+        if (outline.filter((x) => x !== 'h').length !== 1 || !['a', 'e'].includes(tok)) throw new Error(`a circle needs a stroke to join (${outline.join(' ')})`);
+        const c = compileStroke(STROKE_BY_ID[tok], pen);
+        segments.push(...c.segments);
+        owners.push(...c.segments.map(() => i));
+        if (pendingDot) {
+          const b = bbox(c);
+          dots.push({ type: 'dot', p: { x: (b.minX + b.maxX) / 2, y: b.maxY + H_GAP } });
+          dotOwners.push(dotToken);
+          pendingDot = false;
+        }
+        pen = c.end;
+        return;
+      }
       let rotation;
       let t;
       if (prev && next) {
