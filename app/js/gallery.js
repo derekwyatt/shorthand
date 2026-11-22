@@ -15,6 +15,7 @@ export function buildGallery(container, { unit = 28 } = {}) {
       el('div', { className: 'label', textContent: stroke.label }),
       el('div', { className: 'sounds', textContent: stroke.sounds.join(', ') }),
       ...(stroke.briefForms.length ? [el('div', { className: 'brief', textContent: stroke.briefForms.join(', ') })] : []),
+      ...(stroke.note ? [el('div', { className: 'stroke-note', textContent: stroke.note })] : []),
       ...(stroke.verify ? [el('div', { className: 'verify', textContent: `⚠ verify: ${stroke.verify}` })] : []));
     node.dataset.stroke = id;
     return node;

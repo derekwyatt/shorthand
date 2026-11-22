@@ -12,7 +12,8 @@
 //     `skew` > 0 moves the apex toward the end of the stroke, < 0 toward the start.
 //     `spread` > 0 lets the curve overhang its chord (for hooks and loops).
 //
-// `verify` marks shapes I have only checked by eye, not measured.
+// `verify` marks shapes I have only checked by eye, not measured. `note` is shown with the
+// stroke in the Strokes view.
 
 // About how many U fit in one steno line. The long strokes (g, l, b, v, j ≈ 3.1–3.5 U)
 // are drawn about one line-space tall/long in the manual's plates. Inference, tunable.
@@ -46,16 +47,21 @@ export const FAMILIES = [
 
 export const STROKES = [
   // Vowel circles. Ovals tilted with the writing slope; standing alone (the chart, p. 16) they
-  // are rounder than when joined in words (JOIN_OVAL in join.js). Isolated direction: verify.
+  // are rounder than when joined in words (JOIN_OVAL in join.js). The 1929 Manual gives no
+  // direction for a circle written alone; Owen's transcription of §3 adds "(written
+  // counterclockwise)" for I, and the app draws every lone circle that way.
   { id: 'a', label: 'a', sounds: ['a (as in at, arm, ate)'], size: 'large',
     primitives: [{ type: 'circle', width: 1.05, height: 0.8, tilt: 25, dir: 'ccw' }],
-    briefForms: [], verify: 'direction of an isolated circle' },
+    briefForms: [], note: 'Written alone, counter-clockwise: Owen’s transcription of §3 says so for I; the 1929 printing gives no direction.' },
   { id: 'e', label: 'e', sounds: ['e (as in pet, peat), short i'], size: 'small',
     primitives: [{ type: 'circle', width: 0.4, height: 0.34, tilt: 25, dir: 'ccw' }],
-    briefForms: [], verify: 'direction of an isolated circle' },
+    briefForms: [], note: 'Written alone, counter-clockwise: Owen’s transcription of §3 says so for I; the 1929 printing gives no direction.' },
   { id: 'i', label: 'ī', sounds: ['long i (as in ice)'], size: 'large',
-    primitives: [{ type: 'circle', width: 1.05, height: 0.8, tilt: 25, dir: 'ccw', indent: true }],
-    briefForms: ['I'], verify: 'shape and depth of the indent' },
+    // §112 (p. 61): the broken circle, a large oval about 0.47 as wide as long, tilted about
+    // 36°, whose end runs on over its start and turns in to a tick at the top, measured on the
+    // 1200-dpi scan of the sign and of die (render.js brokenTick).
+    primitives: [{ type: 'circle', width: 1.15, height: 0.55, tilt: 36, dir: 'ccw', indent: true }],
+    briefForms: ['I'], note: 'The broken circle (§112): the oval runs on past its start and turns in, a short tick toward the centre.' },
 
   // Forward lines.
   { id: 'n', label: 'n', sounds: ['n'], size: 'short', primitives: [line(0, 0.9)], briefForms: ['in', 'not'] },

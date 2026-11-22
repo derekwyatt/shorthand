@@ -54,7 +54,7 @@
 // An outline is a list of tokens: a stroke id from data/strokes.js, 'a' or 'e' (circle),
 // 'a-rev' or 'e-rev' (the §71 r circle) or 'h' (dot). Geometry is in U with y up, like render.js.
 import { STROKE_BY_ID } from '../data/strokes.js';
-import { compileStroke, cubicPoint, tangent, bbox } from './render.js';
+import { compileStroke, cubicPoint, tangent, bbox, brokenTick } from './render.js';
 
 // Joined circles are ovals, not round. On the 600-dpi plates the large circle beside a straight
 // stroke is about twice as long as it is high, its long axis along that stroke (aim, ate, make,
@@ -104,16 +104,6 @@ export function circleOf(tok) {
   return m ? { size: m[1], reversed: !!m[2], loop: !!m[3], broken: false } : null;
 }
 
-// §112 the broken circle: on the plates (night, tie, kind; p. 63) the circle closes and the
-// pen runs on a little along the top and turns in, a short tick into the circle.
-function brokenTick(p, t, center) {
-  const toC = { x: center.x - p.x, y: center.y - p.y };
-  const L = Math.hypot(toC.x, toC.y) || 1;
-  const n = { x: toC.x / L, y: toC.y / L };
-  const r = L, along = 0.35 * r, depth = 0.3 * r;
-  const a = { x: p.x + t.x * along, y: p.y + t.y * along };
-  return { type: 'cubic', p0: p, c1: { x: p.x + t.x * along * 0.8, y: p.y + t.y * along * 0.8 }, c2: a, p3: { x: a.x + n.x * depth, y: a.y + n.y * depth } };
-}
 export const S_LOOP = { a: { length: 2.0, width: 0.6 }, e: { length: 1.5, width: 0.4 } };
 // w before a vowel (we, way, wait; Unit 11 plates, p. 52): the oo hook drawn about twice its
 // size runs on into the circle, which the plates draw as a narrow loop carrying on along the
@@ -489,8 +479,9 @@ function compileCore(outline) {
       owners.push(...circle.segments.map(() => i));
       if (circleOf(tok).broken && !next) {
         // The indent ends the outline; within one the next stroke leaves from the joint.
-        segments.push(brokenTick(pen, t, circle.center));
-        owners.push(i);
+        const tick = brokenTick(circle.segments[0], circle.center);
+        segments.push(...tick);
+        owners.push(...tick.map(() => i));
       }
       if (pendingDot) {
         dots.push({ type: 'dot', p: { x: circle.center.x, y: circle.center.y + circle.r + H_GAP } });

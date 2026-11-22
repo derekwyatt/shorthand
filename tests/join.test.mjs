@@ -292,11 +292,14 @@ test('w before a vowel: the hook doubled, running on into a narrow loop that tur
 test('§112: the broken circle joins like the large circle and ends turned in; hooks beside a circle are doubled', () => {
   const tie = compileOutline(['t', 'i']), tea = compileOutline(['t', 'a']);
   const circ = (c) => c.segments.filter((s, k) => c.tokenOf[k] === 1);
-  assert.equal(circ(tie).length, circ(tea).length + 1, 'tie: the a circle plus the indent');
+  assert.equal(circ(tie).length, circ(tea).length + 2, 'tie: the a circle, the run over its start and the tick');
   assert.deepEqual(circ(tie)[0].p0, circ(tea)[0].p0);
   const tick = circ(tie).at(-1), centre = centroid(polygon(circ(tea)));
   const d = (p) => Math.hypot(p.x - centre.x, p.y - centre.y);
-  assert.ok(d(tick.p3) < d(tick.p0), 'the indent turns into the circle');
+  assert.ok(d(tick.p3) < 0.25 * d(tick.p0), 'the tick turns in nearly to the centre (p. 61)');
+  const run = circ(tie).at(-2), first = circ(tie)[0];
+  assert.deepEqual(run.p0, first.p0, 'the run starts where the circle closes');
+  assert.ok(d(run.p3) > 0.8 * d(first.p0), 'and runs on along the circle before the tick');
   const fight = compileOutline(['f', 'i', 't']);
   assert.equal(fight.segments.filter((s, k) => fight.tokenOf[k] === 1).length, 4, 'within an outline the next stroke leaves from the joint');
   const span = (c, i) => { const p = polygon(c.segments.filter((s, k) => c.tokenOf[k] === i)); return Math.max(...p.map((q) => q.x)) - Math.min(...p.map((q) => q.x)); };

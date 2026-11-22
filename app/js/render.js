@@ -69,8 +69,28 @@ function arcCubic(p0, { angle, length, bulge, skew = 0, spread = 0, ctrl = null 
   };
 }
 
+// §112 the broken circle: on the plates (the sign and die, p. 61; night, tie, kind, p. 63)
+// the circle closes and the pen runs on over its own start, about half of the first quarter
+// of the oval, then drops a short straight tick toward the centre, ending close to it.
+// Measured on the 1200-dpi scan: the run is about 0.55 of the first quarter, the tick about
+// 0.85 of the way from the oval to its centre.
+export const BROKEN = { run: 0.55, depth: 0.85 };
+const lerp = (a, b, u) => ({ x: a.x + (b.x - a.x) * u, y: a.y + (b.y - a.y) * u });
+// The part of cubic `seg` from its start to parameter u (de Casteljau).
+function cubicHead(seg, u) {
+  const a = lerp(seg.p0, seg.c1, u), b = lerp(seg.c1, seg.c2, u), c = lerp(seg.c2, seg.p3, u);
+  const d = lerp(a, b, u), e = lerp(b, c, u);
+  return { type: 'cubic', p0: seg.p0, c1: a, c2: d, p3: lerp(d, e, u) };
+}
+export function brokenTick(first, center) {
+  const run = cubicHead(first, BROKEN.run);
+  const a = run.p3;
+  const tip = lerp(a, center, BROKEN.depth);
+  return [run, { type: 'cubic', p0: a, c1: lerp(a, tip, 1 / 3), c2: lerp(a, tip, 2 / 3), p3: tip }];
+}
+
 // A full ellipse that starts and ends at its top point (in the unrotated frame).
-// `indent` (ī) adds a small inner loop at the start.
+// `indent` (ī) runs on past the start and ends in the §112 tick (brokenTick).
 function circleCubics(p0, { width, height, tilt = 0, dir = 'ccw', indent = false }) {
   const rx = width / 2;
   const ry = height / 2;
@@ -82,17 +102,12 @@ function circleCubics(p0, { width, height, tilt = 0, dir = 'ccw', indent = false
   const deriv = (th) => rot({ x: -rx * Math.sin(th), y: ry * Math.cos(th) });
 
   const out = [];
-  let start = p0;
-  if (indent) {
-    // Small loop hanging inside the top of the large circle, written the opposite way.
-    const r = Math.min(rx, ry) * 0.3;
-    const loop = circleCubics(p0, { width: 2 * r, height: 2 * r, tilt, dir: dir === 'ccw' ? 'cw' : 'ccw' });
-    // Shift the loop so that its top coincides with p0 and it sits inside the big circle.
-    out.push(...loop);
-    start = p0;
-  }
-
-  const th0 = Math.PI / 2;
+  const start = p0;
+  // A plain circle starts at th = π/2. The ī starts back along its turn from the point of the
+  // oval straight above its centre (th = top), so the run past its start ends there and the
+  // tick drops straight down toward the centre, as on the plate.
+  const top = Math.atan2(rx * c, ry * s);
+  const th0 = indent ? top - sign * BROKEN.run * (Math.PI / 2) : Math.PI / 2;
   const center = add(start, mul(pointAt({ x: 0, y: 0 }, th0), -1));
   const step = (sign * Math.PI) / 2;
   const k = (4 / 3) * Math.tan(step / 4);
@@ -109,6 +124,7 @@ function circleCubics(p0, { width, height, tilt = 0, dir = 'ccw', indent = false
   }
   // Snap the closing point to the exact start so the ellipse is closed.
   out[out.length - 1].p3 = start;
+  if (indent) out.push(...brokenTick(out[0], center));
   return out;
 }
 

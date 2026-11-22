@@ -98,14 +98,19 @@ test('circles are closed, the right size and written in their direction', () => 
   for (const id of ['a', 'e', 'i']) {
     const s = STROKE_BY_ID[id];
     const c = compileStroke(s);
-    near(c.end.x, 0, 1e-9, `${id} closes (x)`);
-    near(c.end.y, 0, 1e-9, `${id} closes (y)`);
+    // ī runs on past the close and ends in its tick (§112); the oval itself closes.
+    const oval = id === 'i' ? c.segments.slice(0, 4) : c.segments;
+    near(oval.at(-1).p3.x, 0, 1e-9, `${id} closes (x)`);
+    near(oval.at(-1).p3.y, 0, 1e-9, `${id} closes (y)`);
     const pts = samplePoints(c);
     const w = Math.max(...pts.map((p) => p.x)) - Math.min(...pts.map((p) => p.x));
     const prim = s.primitives[0];
-    assert.ok(w > prim.width * 0.9 && w < prim.width * 1.15, `${id} width ≈ ${prim.width} (got ${w.toFixed(3)})`);
-    // Shoelace over the main ellipse only (skip ī's inner loop): positive = counter-clockwise.
-    const main = { ...c, segments: c.segments.slice(-4) };
+    // The horizontal extent of the tilted oval.
+    const t = (prim.tilt ?? 0) * Math.PI / 180;
+    const wide = 2 * Math.hypot((prim.width / 2) * Math.cos(t), (prim.height / 2) * Math.sin(t));
+    assert.ok(w > wide * 0.9 && w < wide * 1.15, `${id} width ≈ ${wide.toFixed(3)} (got ${w.toFixed(3)})`);
+    // Shoelace over the oval only (skip ī's run and tick): positive = counter-clockwise.
+    const main = { ...c, segments: oval };
     const mp = samplePoints(main);
     let area = 0;
     for (let i = 0; i < mp.length - 1; i++) area += mp[i].x * mp[i + 1].y - mp[i + 1].x * mp[i].y;
