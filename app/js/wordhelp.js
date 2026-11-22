@@ -6,15 +6,18 @@
 //   abbr     a business abbreviation (§24, §44), shown in the Manual
 //   built    one of those with an ending the Manual teaches: ing (§3), s (§46–55), the past
 //            tense (§59), ly (§80–82)
+//   sound    not printed in the Manual's lists: the outline the rules taught so far give it
+//            (js/bysound.js), marked as derived
 //   name     a capitalised word not at the start of a sentence: written by sound, capital mark
-//   unknown  not in the app yet: written by sound with the rules taught so far
+//   unknown  none of these: written by sound with the rules taught so far
 import { el, outLink } from './dom.js';
-import { EXAMPLES } from '../data/examples.js';
+import { EXAMPLES, spell as spellOutline } from '../data/examples.js';
 import { BRIEF_FORMS } from '../data/briefs.js';
 import { MANUAL_TEXT } from '../data/manual.js';
 import { sourceUrl } from '../data/source.js';
 import { openPopup, linkSections, unitOfParagraph } from './manualtext.js';
-import { taughtIn } from './explain.js';
+import { taughtIn, joiningNotes } from './explain.js';
+import { soundOutline, withEnding, decompose } from './bysound.js';
 import { enlargedSVG } from './practice.js';
 
 const sec = ([a, b]) => `§${a}${b > a ? `–${b}` : ''}`;
@@ -88,43 +91,98 @@ function direct(w, unit) {
   return null;
 }
 
-// Endings the Manual teaches, tried in turn: [suffix, bases, what is added, §].
+// Endings the Manual teaches, tried in turn: [suffix, bases, what is added, §, the ending for
+// withEnding()].
 const ENDINGS = [
-  ['ings', (b) => [b], 'ings', [106, 106]],
-  ['ing', (b) => [b, `${b}e`, b.length > 2 && b.at(-1) === b.at(-2) ? b.slice(0, -1) : null], 'the ing dot', [3, 3]],
-  ['ies', (b) => [`${b}y`], 's', [46, 55]],
-  ['es', (b) => [b, `${b}e`], 's', [46, 55]],
-  ['s', (b) => [b], 's', [46, 55]],
-  ['ied', (b) => [`${b}y`], 'the past tense', [59, 59]],
-  ['ed', (b) => [b, `${b}e`, b.length > 2 && b.at(-1) === b.at(-2) ? b.slice(0, -1) : null], 'the past tense (t or d)', [59, 59]],
-  ['d', (b) => [b], 'the past tense (t or d)', [59, 59]],
-  ['ly', (b) => [b, `${b}le`], 'ly, a small circle', [80, 82]],
+  ['ings', (b) => [b, `${b}e`], 'ings, a left s', [106, 106], 'ings'],
+  ['ing', (b) => [b, `${b}e`, b.length > 2 && b.at(-1) === b.at(-2) ? b.slice(0, -1) : null], 'the ing dot', [3, 3], 'ing'],
+  ['ies', (b) => [`${b}y`], 's', [46, 55], 's'],
+  ['es', (b) => [b, `${b}e`], 's', [46, 55], 's'],
+  ['s', (b) => [b], 's', [46, 55], 's'],
+  ['ied', (b) => [`${b}y`], 'the past tense', [59, 59], 'ed'],
+  ['ed', (b) => [b, `${b}e`, b.length > 2 && b.at(-1) === b.at(-2) ? b.slice(0, -1) : null], 'the past tense (t or d)', [59, 59], 'ed'],
+  ['d', (b) => [b], 'the past tense (t or d)', [59, 59], 'ed'],
+  ['ly', (b) => [b, `${b}le`], 'ly, a small circle', [80, 82], 'ly'],
 ];
 
-function resolve(w, unit, depth = 0) {
+// §61: a brief form used as part of another word (inform, become): [prefix, its strokes, unit].
+const BRIEF_PREFIXES = [['in', ['n'], 6], ['con', ['k'], 9], ['com', ['k'], 9], ['un', ['n'], 12], ['be', ['b'], 18], ['re', ['r'], 18]];
+
+const outlineOf = (row) => row?.example?.outline ?? row?.outline ?? null;
+const SOUND_NOTE = 'Not in the Manual’s word lists: the outline the rules so far give it; the printed page may write it otherwise.';
+
+// A word written by sound (js/bysound.js): its outline, the rules used, and the joinings.
+function soundRow(w, unit) {
+  const s = soundOutline(w, unit ?? 36);
+  if (!s) return null;
+  const rules = s.rules.filter(([, [a]]) => a > 1);
+  const joins = joiningNotes(s.outline).filter(([, [a]]) => !rules.some(([, [b]]) => b === a));
+  const all = [...rules, ...joins];
+  return {
+    kind: 'sound', outline: s.outline, example: { id: `sound-${w}`, kind: 'word', title: w, outline: s.outline },
+    how: `By sound: ${spellOutline(s.outline)}.${all.length ? ` ${all.map(([t, r]) => `${t[0].toUpperCase()}${t.slice(1)} (${sec(r)})`).join('. ')}.` : ''} ${SOUND_NOTE}`,
+    refs: [[1, 1], ...all.map(([, r]) => r)],
+  };
+}
+
+function resolve(w, unit, depth = 0, bySound = true) {
   const hit = direct(w, unit);
   if (hit || depth > 1) return hit;
-  for (const [suffix, bases, added, refs] of ENDINGS) {
+  // A base the Manual prints comes first; a base by sound only when the pronunciations agree
+  // that the word is it plus the ending (taking is take + ing, not "tak").
+  const split = decompose(w);
+  for (const pass of bySound ? [false, true] : [false])
+  for (const [suffix, bases, added, refs, ending] of ENDINGS) {
     if (!w.endsWith(suffix) || w.length - suffix.length < 2) continue;
     for (const b of bases(w.slice(0, -suffix.length)).filter(Boolean)) {
-      const base = resolve(b, unit, depth + 1);
-      if (base) {
-        return { kind: 'built', base: { ...base, text: b }, how: `“${b}” (${base.example?.outline.join(' + ') ?? base.spell ?? 'its outline'}) + ${added} (${sec(refs)}).`, refs: [refs, ...base.refs] };
-      }
+      if (pass && split?.base !== b) continue;
+      const base = resolve(b, unit, depth + 1, pass);
+      if (!base) continue;
+      // The whole outline, when the base has one: the ending joined to it.
+      const parts = decompose(w);
+      const baseOutline = outlineOf(base);
+      const outline = baseOutline && (ending === 'ings'
+        ? (unit ?? 36) >= 12 ? [...baseOutline.filter((t) => !t.startsWith('v-')), 's-left'] : null
+        : withEnding(baseOutline, ending, unit ?? 36, parts?.base === b ? parts.added : ending === 'ed' ? (/[td]$/.test(b) ? 'IH0 D' : 'D') : ''));
+      return {
+        kind: 'built', base: { ...base, text: b }, outline: outline ?? null,
+        example: outline ? { id: `built-${w}`, kind: 'word', title: w, outline } : null,
+        how: `“${b}” (${baseOutline ? spellOutline(baseOutline) : base.spell ?? 'its outline'}) + ${added} (${sec(refs)}).${base.kind === 'sound' ? ` ${SOUND_NOTE}` : ''}`,
+        refs: [refs, ...base.refs],
+      };
     }
   }
-  return null;
+  for (const [prefix, strokes, u] of BRIEF_PREFIXES) {
+    const rest = EXAMPLE.get(w.slice(prefix.length));
+    if (!w.startsWith(prefix) || !rest || rest.kind !== 'brief' || w.length - prefix.length < 3 || (unit ?? 36) < u) continue;
+    const outline = [...strokes, ...rest.outline];
+    return {
+      kind: 'built', outline, example: { id: `built-${w}`, kind: 'word', title: w, outline },
+      how: `“${prefix}” (${spellOutline(strokes)}) + the brief form for “${rest.title.split(' / ')[0]}” (${spellOutline(rest.outline)}): a brief form used as part of another word (§61).`,
+      refs: [[61, 61]],
+    };
+  }
+  return bySound ? soundRow(w, unit) : null;
 }
 
 function rowFor(key, word, initial, unit) {
-  const hit = resolve(key, unit);
+  const name = /^[A-Z]/.test(word) && !initial;
+  const hit = resolve(key, unit, 0, !name);
   if (hit) return hit;
   const parts = key.split('-');
   if (parts.length > 1 && parts.every((p) => resolve(p, unit))) {
     return { kind: 'built', parts: parts.map((p) => ({ ...resolve(p, unit), text: p })), how: `${parts.map((p) => `“${p}”`).join(' + ')}, joined.`, refs: parts.flatMap((p) => resolve(p, unit).refs) };
   }
-  if (/^[A-Z]/.test(word) && !initial) return { kind: 'name', how: 'A name: written by sound (§1), with the capital mark, two short dashes, under it (§5).', refs: [[1, 1], [5, 5]] };
-  return { kind: 'unknown', how: `Written by sound (§1)${unit ? ` with the rules of Units 1–${unit}` : ''}. The app has no outline for it yet.`, refs: [[1, 1]] };
+  if (name) {
+    const s = soundOutline(key, unit ?? 36);
+    const outline = s && [...s.outline, 'cap'];
+    return {
+      kind: 'name', outline, example: outline ? { id: `name-${key}`, kind: 'word', title: word, outline } : null,
+      how: `A name: written by sound (§1)${s ? `, ${spellOutline(s.outline)},` : ''} with the capital mark, two short dashes, under it (§5).`,
+      refs: [[1, 1], [5, 5]],
+    };
+  }
+  return { kind: 'unknown', how: `Written by sound (§1)${unit ? ` with the rules of Units 1–${unit}` : ''}. A sound or joining in it is beyond what the app can derive, so it has no outline here.`, refs: [[1, 1]] };
 }
 
 // Rows for `text` (a string or paragraphs): each word or phrase once, in order of first use.
@@ -170,6 +228,13 @@ export function wordRows(text, { unit = null } = {}) {
 // ---------------------------------------------------------------- the window
 
 function drawing(row) {
+  if (row.example && (row.kind === 'sound' || (row.kind === 'built' || row.kind === 'name') && row.outline)) {
+    try {
+      const svg = enlargedSVG(row.example, { maxUnit: 16, width: 120, height: 44, pad: 4, strokeWidth: 2, label: `Gregg shorthand for ${row.example.title}` });
+      svg.classList.add('word-help-svg');
+      return el('span', { className: 'word-help-derived' }, svg, ...(row.kind === 'sound' || row.kind === 'name' || row.base?.kind === 'sound' ? [el('span', { className: 'word-help-tag', textContent: 'by sound' })] : []));
+    } catch { /* fall through */ }
+  }
   if (row.example) {
     const svg = enlargedSVG(row.example, { maxUnit: 16, width: 120, height: 44, pad: 4, strokeWidth: 2, label: `Gregg shorthand for ${row.example.title}` });
     svg.classList.add('word-help-svg');
@@ -179,12 +244,12 @@ function drawing(row) {
     const [words, , file, w, h] = row.chart;
     return el('img', { src: `manual/${file}`, alt: `Brief form for ${words}`, width: Math.round(w * 0.9), height: Math.round(h * 0.9), className: 'word-help-img' });
   }
-  if (row.base) return el('span', { className: 'word-help-built' }, drawing(row.base), el('span', { textContent: ' +' }));
-  if (row.parts) return el('span', { className: 'word-help-built' }, ...row.parts.flatMap((p, i) => [...(i ? [' + '] : []), drawing(p)]));
+  if (row.base) return el('span', { className: 'word-help-sum' }, drawing(row.base), el('span', { textContent: ' +' }));
+  if (row.parts) return el('span', { className: 'word-help-sum' }, ...row.parts.flatMap((p, i) => [...(i ? [' + '] : []), drawing(p)]));
   return el('span', { className: 'ex-caption', textContent: '—' });
 }
 
-const LEGEND = 'Outlines drawn in blue are the app’s own, which you can practise in Practice; black ones are printed on the brief-form chart. “—” marks a word the app has no outline for yet: work it out by sound from the rules so far.';
+const LEGEND = 'Outlines drawn in colour are the app’s; black ones are printed on the brief-form chart. Those marked “by sound” are not in the Manual’s word lists: the app derives them from the rules taught so far, so check them against the page. “—” marks a word the app cannot derive: work it out by sound.';
 
 export function wordTable(rows) {
   return el('table', { className: 'word-help' },

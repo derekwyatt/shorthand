@@ -267,13 +267,14 @@ function tokenName(t) {
   if (t === 'w-dash') return 'w-dash (below the vowel)';
   if (t === 'a-dot') return 'a-dot (before the outline)';
   if (t === 'cap') return 'the capital mark (two dashes under the outline)';
+  if (t === 'ing') return 'the ing dot';
   if (t === '^') return 'pen lifted, the rest written just below';
   if (t === '_') return 'pen lifted, the ending written under the end of the word';
   return STROKE_BY_ID[t].label;
 }
 // A vowel mark is named with its circle: "e-circle with a dash under it (long ē)".
 const MARK_NAME = { 'v-dash': 'a dash under it (long sound)', 'v-dot': 'a dot under it (medium sound)' };
-const spell = (outline) => outline.flatMap((t, i) => {
+export const spell = (outline) => outline.flatMap((t, i) => {
   if (MARK_NAME[t]) return [];
   const mark = MARK_NAME[outline[i - 1]];
   return [mark ? `${tokenName(t)} with ${mark}` : tokenName(t)];

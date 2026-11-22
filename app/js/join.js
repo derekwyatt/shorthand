@@ -285,13 +285,16 @@ function outlineStrokes(outline) {
   return strokes;
 }
 
-const MARKS = new Set(['w-dash', 'a-dot', 'cap', 'v-dash', 'v-dot']);
+const MARKS = new Set(['w-dash', 'a-dot', 'cap', 'v-dash', 'v-dot', 'ing']);
 export const isMark = (tok) => MARKS.has(tok);
 const W_DASH = { length: 0.4, gap: 0.25 }; // below the vowel, in U
 const A_DOT_GAP = 0.45; // before the outline
 // §8 vowel marks under the circle: the dot's gap, and the dash (its middle left of the circle's).
 const V_DOT_GAP = 0.2;
 const V_DASH = { length: 0.32, angle: 62, gap: 0.3, left: 0.08 };
+// §3: "A dot at the end of a word expresses ing": just past the outline's last point, a little
+// below it.
+const ING_DOT = { along: 0.3, below: 0.15 };
 // §233: the capital mark, two short parallel dashes rising to the right under the outline, right of its middle (p. 141).
 const CAP = { length: 0.4, angle: 30, gap: 0.35, apart: 0.14, along: 0.7 };
 
@@ -388,6 +391,9 @@ function compileParts(outline) {
     let seg;
     if (m.tok === 'a-dot') {
       seg = { type: 'dot', mark: 'a', p: { x: box.minX - A_DOT_GAP, y: c.start.y } };
+    } else if (m.tok === 'ing') {
+      if (m.i !== outline.length - 1) throw new Error(`the ing dot ends the word (${outline.join(' ')})`);
+      seg = { type: 'dot', mark: 'ing', p: { x: c.end.x + ING_DOT.along, y: c.end.y - ING_DOT.below } };
     } else if (m.tok === 'cap') {
       // Under the outline, CAP.along of the way across its width (p. 141: right of the middle
       // of m and k, near the right end of g and n), the upper dash CAP.gap below its lowest point.

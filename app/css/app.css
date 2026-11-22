@@ -663,8 +663,10 @@ body:not(.view-learn) .lesson-panel { display: none; }
 .word-help td { padding: 6px; vertical-align: middle; border-bottom: 1px solid var(--gutter-border); }
 .word-help-word { font-weight: 600; }
 .word-help-outline img, .word-help-svg { display: block; max-width: 120px; height: auto; }
-.word-help-built { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 2px; max-width: 100%; }
-.word-help-built .word-help-built img, .word-help-built .word-help-svg, .word-help-built img { max-width: 60px; }
+.word-help-sum { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 2px; max-width: 100%; }
+.word-help-sum .word-help-svg, .word-help-sum img { max-width: 60px; }
+.word-help-derived { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 2px; }
+.word-help-tag { font-size: 11px; color: var(--muted); border: 1px solid var(--gutter-border); border-radius: 4px; padding: 0 4px; }
 .word-help-word { overflow-wrap: anywhere; }
 .word-help-unknown td { color: var(--muted); }
 .word-help-pop { width: min(760px, 100%); }

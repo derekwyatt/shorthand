@@ -11,6 +11,7 @@ export const TOKEN_NOTES = {
   'e-rev': ['The reversed small circle', 'A circle written with left motion, against the usual way, adds r after the vowel: on and between straight strokes.', [71, 72]],
   'a-rev-s': ['The loop (large)', 'A final left-motion circle on a straight stroke becomes a loop to add s.', [74, 74]],
   'e-rev-s': ['The loop (small)', 'A final left-motion circle on a straight stroke becomes a loop to add s.', [74, 74]],
+  ing: ['The ing dot', '“A dot at the end of a word expresses ing.”', [3, 3]],
   'a-dot': ['The a dot', 'In words beginning with a-h or a-w, the a is a dot on the line close to the next character.', [100, 100]],
   'v-dot': ['The vowel dot', 'A dot under a circle marks the medium sound of the vowel (a as in calm). Marks are seldom used: only to make an unfamiliar or isolated word certain.', [8, 8]],
   'v-dash': ['The vowel dash', 'A short dash under a circle marks the long sound of the vowel (a as in came). Marks are seldom used: only to make an unfamiliar or isolated word certain.', [8, 8]],
