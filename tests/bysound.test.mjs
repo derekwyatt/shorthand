@@ -1,7 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { soundOutline, withEnding, decompose } from '../app/js/bysound.js';
-import { EXAMPLES } from '../app/data/examples.js';
+import { soundOutline, withEnding, decompose, markVowels } from '../app/js/bysound.js';
+import { EXAMPLES, VOWEL_MARKS } from '../app/data/examples.js';
+import { wordRows } from '../app/js/wordhelp.js';
 import { taughtIn } from '../app/js/explain.js';
 import { unitOfParagraph } from '../app/js/manualtext.js';
 
@@ -21,7 +22,7 @@ test('the rules give the Manual’s own outlines for the words of Units 1–19',
     const g = soundOutline(w, u);
     if (!g) continue;
     n++;
-    if (g.outline.join(' ') === plain(e.outline)) ok++;
+    if (plain(g.outline) === plain(e.outline)) ok++;
     else wrong.push(w);
   }
   assert.ok(n > 500, `${n} words derived`);
@@ -29,11 +30,11 @@ test('the rules give the Manual’s own outlines for the words of Units 1–19',
 });
 
 test('the rules of the drill words (Speed Studies, Review Drill on Circle Joinings, checked on the plate)', () => {
-  assert.equal(out('deem', 2), 'd e m');
-  assert.equal(out('realm', 2), 'r e l m');
-  assert.equal(out('enemy', 2), 'e n e m e');
-  assert.equal(out('leaky', 2), 'l e k e');
-  assert.equal(out('gaining', 2), 'g a n ing');
+  assert.equal(out('deem', 2), 'd v-dash e m');
+  assert.equal(out('realm', 2), 'r v-dot e l m');
+  assert.equal(out('enemy', 2), 'v-dot e n e m e');
+  assert.equal(out('leaky', 2), 'l v-dash e k e');
+  assert.equal(out('gaining', 2), 'g v-dash a n ing');
 });
 
 test('each rule waits for the unit that teaches it', () => {
@@ -63,4 +64,21 @@ test('every rule cites paragraphs of the Manual', () => {
   for (const w of ['nation', 'tenant', 'faces', 'those', 'taking', 'prevent', 'happened', 'confer']) {
     for (const [, [a, b]] of soundOutline(w)?.rules ?? []) assert.ok(unitOfParagraph(a) && unitOfParagraph(b), `${w}: §${a}–${b}`);
   }
+});
+
+test('§8 marks: long vowels a dash, medium a dot, as the Manual marks its Unit 1–3 words', () => {
+  let n = 0, ok = 0;
+  for (const e of EXAMPLES.filter((x) => x.kind === 'word')) {
+    const w = e.title.split(' / ')[0];
+    if (!Object.hasOwn(VOWEL_MARKS, w)) continue;
+    n++;
+    if (markVowels(w, e.outline).join(' ') === e.outline.join(' ')) ok++;
+  }
+  assert.ok(ok / n >= 0.95, `${ok} of ${n}`);
+  assert.equal(out('deem', 2), 'd v-dash e m');
+  assert.equal(out('realm', 2), 'r v-dot e l m');
+  assert.equal(out('deem', 9), 'd e m', 'after Unit 3 the Manual prints no marks');
+  const row = (t) => wordRows('taking Harry', { unit: 2 }).find((r) => r.text === t);
+  assert.deepEqual(row('taking').outline, ['t', 'v-dash', 'a', 'k', 'ing']);
+  assert.equal(markVowels('harry', ['h', 'a', 'r', 'e']).join(' '), 'h a r e', 'ă before rr is short');
 });

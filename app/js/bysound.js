@@ -517,7 +517,7 @@ export function soundOutline(word, unit = 36) {
       const base = parts && soundOutline(parts.base, unit);
       if (base) {
         const out = withEnding(base.outline, parts.ending, unit, parts.added);
-        if (out) result = { outline: out, rules: base.rules, base: parts.base, ending: parts.ending };
+        if (out) result = { outline: unit <= MARKED_UNTIL ? markVowels(w, out) : out, rules: base.rules, base: parts.base, ending: parts.ending };
       }
       if (!result) {
         const rules = [];
@@ -528,7 +528,7 @@ export function soundOutline(word, unit = 36) {
         need(out.some((t) => !['h', 'ing', 'w-dash', 'a-dot'].includes(t)));
         compileOutline(out);
         const seen = new Set();
-        result = { outline: out, rules: rules.filter(([t]) => !seen.has(t) && seen.add(t)) };
+        result = { outline: unit <= MARKED_UNTIL ? markVowels(w, out) : out, rules: rules.filter(([t]) => !seen.has(t) && seen.add(t)) };
       }
     } catch (e) {
       if (!(e instanceof Skip) && !/circle|hook|loop|join|disjoin|goes before|ends the word|stroke/i.test(e.message)) throw e;
@@ -537,4 +537,39 @@ export function soundOutline(word, unit = 36) {
   }
   DONE.set(key, result);
   return result;
+}
+
+// §8: "the medium sound is marked with a dot, and the long sound with a short dash"; the short
+// sound is not marked. The Manual marks them in the word lists of Units 1–3 (VOWEL_MARKS in
+// data/examples.js) and in the drills that go with them, so outlines for those units carry them.
+export const MARKED_UNTIL = 3;
+const markOf = (v) => {
+  if (v.stress === 0) return null;
+  if (v.p === 'EY' || v.p === 'IY' || (v.p === 'EH' && v.v === 'a')) return 'v-dash';
+  if (v.p === 'AA' || v.p === 'EH') return 'v-dot';
+  return null;
+};
+// The outline with a mark before each a or e circle whose vowel is long or medium, read from the
+// word's pronunciation; the outline unchanged when its circles and the word's vowels don't line up.
+export function markVowels(word, outline) {
+  const w = word.toLowerCase();
+  const phones = SOUNDS[w];
+  const plain = outline.filter((t) => t !== 'v-dash' && t !== 'v-dot');
+  if (!phones) return plain;
+  const all = sounds(w, parse(phones));
+  // ĭ before r is heard as ē (ear, rear, hear: marked long, p. 13)
+  all.forEach((s, i) => { if (s.p === 'IH' && s.stress && all[i + 1]?.c === 'r') s.p = 'IY'; });
+  let vowels = all.filter((s) => isV(s) && (s.v === 'a' || s.v === 'e'));
+  const circles = plain.filter((t) => t === 'a' || t === 'e');
+  // unaccented vowels the outline leaves out (taken, rattle) go first
+  while (vowels.length > circles.length && vowels.some((v) => v.stress === 0)) vowels.splice(vowels.findLastIndex((v) => v.stress === 0), 1);
+  if (vowels.length !== circles.length || vowels.some((v, i) => v.v !== circles[i])) return plain;
+  let k = 0;
+  return plain.flatMap((t) => {
+    if (t !== 'a' && t !== 'e') return [t];
+    const v = vowels[k++];
+    // a before rr is short (Harry, carry), though the dictionary hears it as in air
+    const m = v.p === 'EH' && /arr/.test(w) ? null : markOf(v);
+    return m ? [m, t] : [t];
+  });
 }

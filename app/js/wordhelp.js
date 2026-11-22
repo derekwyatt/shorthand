@@ -17,7 +17,7 @@ import { MANUAL_TEXT } from '../data/manual.js';
 import { sourceUrl } from '../data/source.js';
 import { openPopup, linkSections, unitOfParagraph } from './manualtext.js';
 import { taughtIn, joiningNotes } from './explain.js';
-import { soundOutline, withEnding, decompose } from './bysound.js';
+import { soundOutline, withEnding, decompose, markVowels, MARKED_UNTIL } from './bysound.js';
 import { enlargedSVG } from './practice.js';
 
 const sec = ([a, b]) => `§${a}${b > a ? `–${b}` : ''}`;
@@ -141,13 +141,15 @@ function resolve(w, unit, depth = 0, bySound = true) {
       // The whole outline, when the base has one: the ending joined to it.
       const parts = decompose(w);
       const baseOutline = outlineOf(base);
-      const outline = baseOutline && (ending === 'ings'
+      const joined = baseOutline && (ending === 'ings'
         ? (unit ?? 36) >= 12 ? [...baseOutline.filter((t) => !t.startsWith('v-')), 's-left'] : null
         : withEnding(baseOutline, ending, unit ?? 36, parts?.base === b ? parts.added : ending === 'ed' ? (/[td]$/.test(b) ? 'IH0 D' : 'D') : ''));
+      // §8 marks, as the Manual prints them in Units 1–3
+      const outline = joined && (unit ?? 36) <= MARKED_UNTIL ? markVowels(w, joined) : joined;
       return {
         kind: 'built', base: { ...base, text: b }, outline: outline ?? null,
         example: outline ? { id: `built-${w}`, kind: 'word', title: w, outline } : null,
-        how: `“${b}” (${baseOutline ? spellOutline(baseOutline) : base.spell ?? 'its outline'}) + ${added} (${sec(refs)}).${base.kind === 'sound' ? ` ${SOUND_NOTE}` : ''}`,
+        how: `${outline ? `Written ${spellOutline(outline)}: ` : ''}“${b}” (${baseOutline ? spellOutline(baseOutline) : base.spell ?? 'its outline'}) + ${added} (${sec(refs)}).${base.kind === 'sound' ? ` ${SOUND_NOTE}` : ''}`,
         refs: [refs, ...base.refs],
       };
     }
