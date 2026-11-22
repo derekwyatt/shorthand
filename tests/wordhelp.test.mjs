@@ -55,3 +55,11 @@ test('in a list of separate words, an outline that reads as another word says so
   assert.doesNotMatch(row(wordRows('I had to add it up.', { unit: 2 }), 'had').how, /same outline as/, 'a sentence tells them apart');
   assert.doesNotMatch(row(wordRows('take, rate, rule, raid', { unit: 2 }), 'raid').how, /same outline as/, 'a word written by sound is not compared');
 });
+
+test('brief forms from the chart are drawn as outlines where the drawing was checked against it', () => {
+  const rows = wordRows('He was great with them.', { unit: 2 });
+  assert.deepEqual(row(rows, 'great').example.outline, ['g', 'r']);
+  assert.match(row(rows, 'great').how, /^Written g \+ r\. A brief form/);
+  assert.equal(row(rows, 'was').example, undefined, 'was keeps the chart’s image');
+  assert.ok(row(rows, 'was').chart);
+});

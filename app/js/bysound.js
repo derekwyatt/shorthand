@@ -449,6 +449,9 @@ function signs(out, rules) {
   return res;
 }
 
+// The left or right s and the th of an outline spelled with plain s and th (the brief-form chart).
+export const settleSigns = (tokens) => signs(tokens, []);
+
 // The endings a word may be split into: its base and what is added, when the pronunciations
 // agree (taking = take + ing, dared = dare + d, faces = face + s).
 const ENDINGS = [

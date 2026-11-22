@@ -12,7 +12,7 @@
 //   unknown  none of these: written by sound with the rules taught so far
 import { el, outLink } from './dom.js';
 import { EXAMPLES, spell as spellOutline } from '../data/examples.js';
-import { BRIEF_FORMS } from '../data/briefs.js';
+import { BRIEF_FORMS, CHART_OUTLINES } from '../data/briefs.js';
 import { MANUAL_TEXT } from '../data/manual.js';
 import { sourceUrl } from '../data/source.js';
 import { openPopup, linkSections, unitOfParagraph } from './manualtext.js';
@@ -44,6 +44,8 @@ for (const s of EXAMPLES.filter((x) => x.kind === 'sentence')) {
     if (!EXAMPLE.has(key)) EXAMPLE.set(key, { id: `${s.id}:${key}`, kind: 'phrase', title: w.text, outline: w.tokens, meaning: [`The phrase “${w.text}”, written as one outline (Manual §4).`] });
   }
 }
+// A chart form the app draws (CHART_OUTLINES), as an example to draw; else null, and its image is shown.
+const chartExample = (f) => f && Object.hasOwn(CHART_OUTLINES, f[0]) ? { id: `chart-${f[2]}`, kind: 'brief', title: f[0].replace(/[,;] /g, ' / '), outline: CHART_OUTLINES[f[0]] } : null;
 const CHART = new Map(BRIEF_FORMS.flatMap((f) => f[0].split(/[,;]\s*/).map((w) => [w.trim().toLowerCase().replace(/\.$/, ''), f])));
 const ABBR = new Map([['dear sir', 24], ['yours truly', 24], ['mr', 24], ['dear madam', 44], ['very truly yours', 44], ['yours very truly', 44]]);
 const LONGEST = Math.max(...[...EXAMPLE.keys(), ...ABBR.keys()].map((k) => k.split(' ').length));
@@ -85,9 +87,13 @@ function direct(w, unit, marks = false) {
   if (EXAMPLE.has(w)) return exampleRow(marks ? EXAMPLE.get(w) : unmarked(EXAMPLE.get(w)), unit);
   if (ABBR.has(w)) {
     const p = ABBR.get(w);
-    return { kind: 'abbr', chart: CHART.get(w) ?? null, how: `A business abbreviation (§${p}).`, refs: [[p, p]] };
+    const example = chartExample(CHART.get(w));
+    return { kind: 'abbr', chart: CHART.get(w) ?? null, ...(example ? { example } : {}), how: `A business abbreviation (§${p}).`, refs: [[p, p]] };
   }
-  if (CHART.has(w)) return { kind: 'chart', chart: CHART.get(w), spell: CHART.get(w)[1], how: 'A brief form (what a brief form is: §23); its outline is the one on the brief-form chart.', refs: [[23, 23]] };
+  if (CHART.has(w)) {
+    const example = chartExample(CHART.get(w));
+    return { kind: 'chart', chart: CHART.get(w), ...(example ? { example } : {}), spell: CHART.get(w)[1], how: `${example ? `Written ${spellOutline(example.outline)}. ` : ''}A brief form (what a brief form is: §23); its outline is the one on the brief-form chart.`, refs: [[23, 23]] };
+  }
   return null;
 }
 
@@ -303,7 +309,7 @@ function drawing(row) {
   return el('span', { className: 'ex-caption', textContent: '—' });
 }
 
-const LEGEND = 'Outlines drawn in colour are the app’s; black ones are printed on the brief-form chart. Those marked “by sound” are not in the Manual’s word lists: the app derives them from the rules taught so far, so check them against the page. “—” marks a word the app cannot derive: work it out by sound.';
+const LEGEND = 'Outlines drawn in colour are the app’s (brief forms as the brief-form chart writes them); the few in black are the chart’s own image, where the app has no drawing that matches it. Those marked “by sound” are not in the Manual’s word lists: the app derives them from the rules taught so far, so check them against the page. “—” marks a word the app cannot derive: work it out by sound.';
 
 export function wordTable(rows) {
   return el('table', { className: 'word-help' },
