@@ -698,6 +698,24 @@ try {
   })()`);
   check(sections.n > 0 && sections.hrefs.every((h) => /^https:\/\/greggshorthand\.github\.io\/anunit\d\d\.html#p\d+$/.test(h)) && !sections.plain && !sections.option,
     `every § in the lesson links to its paragraph on the source site (${JSON.stringify(sections).slice(0, 300)})`);
+  const pop = await evaluate(`(async () => {
+    const tick = () => new Promise((r) => setTimeout(r, 50));
+    const state = () => { const p = document.querySelector('.section-pop'); return p && { title: p.querySelector('strong').textContent, first: p.querySelector('.section-pop-body p')?.textContent.slice(0, 20), out: p.querySelector('a.out-link')?.getAttribute('href'), target: p.querySelector('a.out-link')?.target }; };
+    const link = document.querySelector('#lesson-panel a.section-link');
+    link.click(); await tick();
+    const shown = { ...state(), titleLinks: document.querySelectorAll('.section-pop-bar a').length };
+    document.querySelector('.section-pop-close').click(); await tick();
+    const afterX = !!state();
+    link.click(); await tick();
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })); await tick();
+    const afterEsc = !!state();
+    link.click(); await tick();
+    document.querySelector('.section-pop-shade').dispatchEvent(new MouseEvent('click', { bubbles: true })); await tick();
+    return { shown, afterX, afterEsc, afterShade: !!state(), shades: document.querySelectorAll('.section-pop-shade').length };
+  })()`);
+  check(pop.shown?.title.startsWith('Manual §14') && /^14\./.test(pop.shown.first ?? '') && pop.shown.out === 'https://greggshorthand.github.io/anunit02.html#p14' && pop.shown.target === '_blank' && pop.shown.titleLinks === 0,
+    `tapping a § shows its paragraph in a small window, with a link to the site in a new tab (${JSON.stringify(pop.shown)})`);
+  check(!pop.afterX && !pop.afterEsc && !pop.afterShade && pop.shades === 0, `the § window closes with ✕, Escape or a tap outside it (${JSON.stringify(pop)})`);
   await click('#lesson-panel .manual-ref');
   await sleep(200);
   const manual = await evaluate(`(() => { const r = document.querySelector('.manual-reader'); return { open: !!r, flash: !!r?.querySelector('.flash'), next: [...(r?.querySelectorAll('button') ?? [])].map((b) => b.textContent) }; })()`);

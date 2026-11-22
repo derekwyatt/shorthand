@@ -3,7 +3,7 @@
 // static content from this repository, so it is set as HTML. A cross-reference opens what it
 // names in the app: another unit (data-unit), a paragraph (data-para) or a Reference section
 // (data-ref).
-import { el, button, credit } from './dom.js';
+import { el, button, credit, outLink } from './dom.js';
 import { MANUAL_TEXT } from '../data/manual.js';
 import { LESSONS } from '../data/lessons.js';
 import { AUTHOR, sourceUrl } from '../data/source.js';
@@ -13,11 +13,59 @@ import { AUTHOR, sourceUrl } from '../data/source.js';
 const PARA_UNIT = new Map(Object.entries(MANUAL_TEXT).flatMap(([u, d]) => d.blocks.flatMap(([, html]) => [...html.matchAll(/id="m(\d+)"|^<strong>(\d+)\./g)].map((m) => [Number(m[1] ?? m[2]), Number(u)]))));
 export const unitOfParagraph = (n) => PARA_UNIT.get(n) ?? null;
 
+// The blocks of the Manual's paragraphs `from` to `to`: each paragraph runs from the block
+// with its anchor (or, first in a unit, its bold number) to the next paragraph's.
+const startsPara = (html) => /^(?:<span id="m\d+"><\/span>)?<strong>(?:<span id="m\d+"><\/span>)?\d+\./.test(html) || /id="m\d+"/.test(html);
+const paraOf = (html) => Number((/id="m(\d+)"/.exec(html) ?? /^<strong>(\d+)\./.exec(html) ?? [])[1]);
+export function paragraphBlocks(from, to = from) {
+  const doc = MANUAL_TEXT[unitOfParagraph(from)];
+  if (!doc) return [];
+  const out = [];
+  let inside = false;
+  for (const b of doc.blocks) {
+    if (startsPara(b[1])) {
+      const n = paraOf(b[1]);
+      if (n > to) break;
+      inside = n >= from;
+    }
+    if (inside) out.push(b);
+  }
+  return out;
+}
+
+// A small window over the page with the paragraph(s) `from`–`to` of the Manual, a link to the
+// same paragraph on the site (in a new tab), and a button for the whole unit in the app.
+// Closes with ✕, Escape or a tap outside it.
+export function showSection(from, to = from) {
+  document.querySelector('.section-pop-shade')?.remove();
+  const unit = unitOfParagraph(from);
+  const label = `Manual §${from}${to > from ? `–${to}` : ''}`;
+  const close = () => { shade.remove(); document.removeEventListener('keydown', onKey); };
+  const onKey = (e) => { if (e.key === 'Escape') close(); };
+  const closeBtn = el('button', { type: 'button', className: 'section-pop-close', textContent: '✕', ariaLabel: 'Close', title: 'Close' });
+  closeBtn.onclick = close;
+  const body = el('div', { className: 'section-pop-body manual-text' }, ...renderBlocks(paragraphBlocks(from, to)));
+  // A cross-reference or link inside replaces the popup with what it opens.
+  body.addEventListener('click', (e) => { if (e.target.closest('a')) close(); });
+  const pop = el('div', { className: 'section-pop', role: 'dialog', ariaLabel: label },
+    el('div', { className: 'section-pop-bar' }, el('strong', { textContent: `${label} · Unit ${unit}` }), closeBtn),
+    body,
+    el('div', { className: 'section-pop-foot' },
+      outLink(sourceUrl.unit(unit, from), 'Open on greggshorthand.github.io'),
+      button('Whole unit ›', 'inline-link', () => { close(); openManual(unit, from); })));
+  const shade = el('div', { className: 'section-pop-shade' }, pop);
+  shade.addEventListener('click', (e) => { if (e.target === shade) close(); });
+  document.addEventListener('keydown', onKey);
+  document.body.append(shade);
+  closeBtn.focus();
+}
+
 // "§14" (or "§14–22") anywhere in the app's text links to that paragraph of the Manual on
-// greggshorthand.github.io. Text already in a link or a control is left alone, and so is a
-// Speed Studies section ("Speed Study IV §3").
-const SECTION = /§\s*(\d+)(?:\s*[–-]\s*\d+)?/g;
-const LEAVE = 'a, button, select, textarea, svg, script, style';
+// greggshorthand.github.io; a plain tap shows it in a small window (showSection) instead.
+// Text already in a link or a control is left alone, and so is a Speed Studies section
+// ("Speed Study IV §3").
+const SECTION = /§\s*(\d+)(?:\s*[–-]\s*(\d+))?/g;
+const LEAVE = 'a, button, select, textarea, svg, script, style, .section-pop-bar';
 export function linkSections(root) {
   const walk = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
     acceptNode: (t) => (t.data.includes('§') && !t.parentElement?.closest(LEAVE) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT),
@@ -30,7 +78,14 @@ export function linkSections(root) {
     for (const m of t.data.matchAll(SECTION)) {
       const n = Number(m[1]), unit = unitOfParagraph(n);
       if (!unit || /Speed Study [IVXLC]+\s*$/.test(t.data.slice(0, m.index))) continue;
-      parts.push(t.data.slice(last, m.index), el('a', { href: sourceUrl.unit(unit, n), target: '_blank', rel: 'noopener', className: 'section-link', textContent: m[0], title: `Manual §${n} on ${AUTHOR}'s site` }));
+      const a = el('a', { href: sourceUrl.unit(unit, n), target: '_blank', rel: 'noopener', className: 'section-link', textContent: m[0], title: `Show Manual §${n}` });
+      a.onclick = (e) => {
+        if (e.metaKey || e.ctrlKey || e.shiftKey || e.button) return; // a new tab, as asked
+        e.preventDefault();
+        e.stopPropagation();
+        showSection(n, Math.max(n, Number(m[2] ?? n)));
+      };
+      parts.push(t.data.slice(last, m.index), a);
       last = m.index + m[0].length;
     }
     if (!parts.length) continue;

@@ -561,6 +561,15 @@ body:not(.view-learn) .lesson-panel { display: none; }
 .manual-ref { display: inline; padding: 0; border: 0; background: none; text-align: left; font: inherit; font-size: 12px; color: var(--link); cursor: pointer; }
 .manual-reader { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); }
 .manual-scroll { background: var(--paper); }
+/* A § tapped in the text: its paragraph in a small window. */
+.section-pop-shade { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 16px; background: rgba(0, 0, 0, 0.35); }
+.section-pop { display: flex; flex-direction: column; width: min(560px, 100%); max-height: min(70vh, 640px); border-radius: 12px; background: var(--panel); color: var(--text); box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35); overflow: hidden; }
+.section-pop-bar { display: flex; align-items: center; gap: 12px; padding: 8px 8px 8px 16px; background: var(--accent); color: var(--on-accent); }
+.section-pop-bar strong { flex: 1; font-size: 15px; }
+.section-pop-close { min-width: 44px; min-height: 44px; padding: 0; border: 0; border-radius: 8px; background: transparent; color: inherit; font-size: 20px; cursor: pointer; }
+.section-pop-close:hover { background: rgba(255, 255, 255, 0.15); }
+.section-pop .section-pop-body { overflow: auto; padding: 12px 16px 4px; margin: 0; font-size: 16px; -webkit-overflow-scrolling: touch; }
+.section-pop-foot { display: flex; flex-wrap: wrap; gap: 8px 20px; justify-content: space-between; padding: 10px 16px; border-top: 1px solid var(--gutter-border); font-size: 14px; }
 .manual-text { max-width: 760px; margin: 0 auto; padding: 8px 4px 48px; font-size: 18px; line-height: 1.5; color: var(--text); }
 .manual-text h2 { font-size: 26px; margin: 12px 0; }
 .manual-text p { margin: 0 0 12px; }

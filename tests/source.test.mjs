@@ -32,3 +32,21 @@ test('every § the app cites is a paragraph of a unit, so it can link to the sit
   const missing = [...cited].filter((n) => !unitOfParagraph(n));
   assert.deepEqual(missing, [], `no unit for §${missing.join(', §')}`);
 });
+
+test('a § popup shows just that paragraph (or range) of the Manual', async () => {
+  const { paragraphBlocks } = await import('../app/js/manualtext.js');
+  const text = (blocks) => blocks.map((b) => b[1]).join('\n');
+  const p14 = text(paragraphBlocks(14));
+  assert.match(p14, /^<span id="m14"><\/span><strong>14\./);
+  assert.match(p14, /<img/);
+  assert.doesNotMatch(p14, /id="m15"/);
+  const range = text(paragraphBlocks(14, 16));
+  assert.match(range, /id="m15"/);
+  assert.match(range, /id="m16"/);
+  assert.doesNotMatch(range, /id="m17"/);
+  // A unit's first paragraph has only its bold number.
+  assert.match(text(paragraphBlocks(161)), /^<strong>161\./);
+  assert.doesNotMatch(text(paragraphBlocks(161)), /id="m162"/);
+  // Headings that carry an anchor start their paragraph too.
+  assert.match(text(paragraphBlocks(61)), /Brief Forms as Prefixes/);
+});
