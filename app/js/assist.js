@@ -7,7 +7,7 @@
 //   - the correct pattern drawn thinly under each written part: green if right, red if not;
 //   - the whole example on the top rule, at the size it is judged at.
 import { guideUnits, cleanStrokes, toUserStrokes, isDot, angleText, strokeName, DOT_MAX } from './assess.js';
-import { pathData, pathLength, bbox } from './render.js';
+import { pathData, pathLength, bbox, markSVG } from './render.js';
 import { compileExample } from './join.js';
 import { svgEl } from './dom.js';
 
@@ -54,12 +54,7 @@ export function createAssist({ overlay, check, hint, model, modelOf, unitPx, ena
     const baseline = Math.max(1, Math.ceil(((box.maxY - box.minY) * u + 4) / lineSpacing)) * lineSpacing;
     const origin = { x: MODEL_LEFT - box.minX * u, y: baseline + box.minY * u };
     const path = svgEl('path', { d: pathData(compiled, u, origin), class: 'model-path' });
-    const dots = compiled.segments.filter((s) => s.type === 'dot').map((s) => {
-      const x = origin.x + s.p.x * u, y = origin.y - s.p.y * u;
-      if (!s.dash) return svgEl('circle', { cx: x, cy: y, r: 2.8, class: 'model-dot' });
-      const half = (s.dash * u) / 2, a = ((s.angle ?? 0) * Math.PI) / 180, hx = half * Math.cos(a), hy = half * Math.sin(a);
-      return svgEl('line', { x1: x - hx, x2: x + hx, y1: y + hy, y2: y - hy, class: 'model-path' });
-    });
+    const dots = compiled.segments.filter((s) => s.type === 'dot').map((s) => markSVG(s, u, origin, 2.8, s.dash ? 'model-path' : 'model-dot'));
     model.replaceChildren(path, ...dots);
   }
 
@@ -74,9 +69,10 @@ export function createAssist({ overlay, check, hint, model, modelOf, unitPx, ena
     return cleanStrokes(toUserStrokes(padStrokes, unitPx())).filter((s) => !isDot(s)).length;
   }
 
+  const MARK_LABEL = { h: 'h dot', 'v-dash': 'vowel dash', 'v-dot': 'vowel dot', w: 'w dash', a: 'a dot', cap: 'capital dashes' };
   function partLabel(r) {
     if (r.kind === 'dot') {
-      if (r.role === 'h') return 'h dot';
+      if (MARK_LABEL[r.role]) return MARK_LABEL[r.role];
       return multiOutline || r.word === '.' ? `“${r.word.toLowerCase()}” (dot)` : 'dot';
     }
     return multiOutline ? `“${r.word}”` : '';
@@ -182,7 +178,7 @@ export function createAssist({ overlay, check, hint, model, modelOf, unitPx, ena
           const d = pathData({ segments: c.segments }, u, { x: 0, y: 0 });
           if (d) nodes.push(svgEl('path', { d, class: `check-path ${cls}` }));
         } else {
-          nodes.push(svgEl('circle', { cx: c.p.x * u, cy: -c.p.y * u, r: 2.6, class: `check-dot ${cls}` }));
+          nodes.push(markSVG(c, u, { x: 0, y: 0 }, 2.6, `check-${c.dash ? 'path' : 'dot'} ${cls}`));
         }
       }
       check.replaceChildren(...nodes);

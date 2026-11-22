@@ -104,7 +104,7 @@ export function modelUnits(example) {
     const toks = w.tokens;
     const dots = w.compiled.segments.filter((s) => s.type === 'dot');
     // §99 / §100 / §233 marks are written apart, like the h dot: each is a unit of its own.
-    for (const s of dots.filter((d) => d.mark)) units.push({ kind: 'dot', role: s.mark, word: w.text, pos: s.p });
+    for (const s of dots.filter((d) => d.mark)) units.push({ kind: 'dot', role: s.mark, word: w.text, pos: s.p, dash: s.dash, angle: s.angle });
     if (toks.filter((t) => !isMark(t)).join() === 'h') {
       units.push({ kind: 'dot', role: 'brief', word: w.text, pos: dots.find((d) => !d.mark).p });
       continue;
@@ -829,7 +829,9 @@ function checkPattern(results, { complete, lenScale, fit }) {
     if (T) p = T(r.unit.pos);
     else if (r.user) p = centroid(r.user.pts);
     else if (fit) p = { x: fit.s * r.unit.pos.x + fit.tx, y: fit.s * r.unit.pos.y + fit.ty };
-    if (p) out.push({ kind: 'dot', word: r.unit.word, ok, p });
+    // A dash (vowel, w, capital) is drawn as a dash, at the writer's size.
+    const dash = r.unit.dash && { dash: r.unit.dash * lenScale, angle: r.unit.angle ?? 0 };
+    if (p) out.push({ kind: 'dot', word: r.unit.word, ok, p, ...dash });
   }
   return out;
 }

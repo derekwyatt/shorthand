@@ -360,3 +360,17 @@ test('a vowel dash written larger than a dot is still the dash, not an extra str
     for (const i of marks) assert.ok(r.units.some((u) => u.user && u.user.pts[0].t === strokes[i].points[0].t && u.kind === 'dot'), `${id}: the dash is matched as a mark`);
   }
 });
+
+test('the check pattern draws a vowel dash as a dash and a vowel dot as a dot', () => {
+  for (const [id, role, dash] of [['word-rain', 'v-dash', true], ['word-day', 'v-dash', true], ['word-initial-o', 'cap', true]]) {
+    const e = ex(id);
+    const r = assessAttempt(e, perfect(e), UNIT);
+    const marks = r.check.filter((c) => c.kind === 'dot');
+    const units = modelUnits(e).filter((u) => u.role === role);
+    assert.ok(units.length && marks.length >= units.length, `${id} has its ${role} in the check`);
+    assert.equal(marks.filter((c) => c.dash > 0).length >= units.length, dash, `${id}: ${JSON.stringify(marks)}`);
+  }
+  const dot = EXAMPLES.find((e) => e.outline?.includes('v-dot'));
+  const marks = assessAttempt(dot, perfect(dot), UNIT).check.filter((c) => c.kind === 'dot');
+  assert.ok(marks.length && marks.every((c) => !c.dash), `${dot.id}: ${JSON.stringify(marks)}`);
+});

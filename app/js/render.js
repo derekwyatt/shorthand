@@ -178,6 +178,15 @@ export function pathData(compiled, unit, origin) {
 // The pen-down strokes of compiled geometry, in writing order: runs of cubic segments
 // with no pen lift between them. A joined outline is one stroke; a sentence has one per
 // outline (and per punctuation mark). Each run has the shape of compiled geometry.
+// A mark ({ p, dash?, angle? } in U, y up) as SVG at `unit` px per U: a dot of radius r, or
+// for a dash a short line centred on p, level unless it has an angle.
+export function markSVG({ p, dash, angle = 0 }, unit, origin, r, cls, attrs = {}) {
+  const x = origin.x + p.x * unit, y = origin.y - p.y * unit;
+  if (!dash) return svgEl('circle', { cx: fmt(x), cy: fmt(y), r, class: cls });
+  const half = (dash * unit) / 2, hx = half * Math.cos(rad(angle)), hy = half * Math.sin(rad(angle));
+  return svgEl('line', { x1: fmt(x - hx), y1: fmt(y + hy), x2: fmt(x + hx), y2: fmt(y - hy), class: cls, ...attrs });
+}
+
 export function penStrokes(compiled) {
   const runs = [];
   let run = null;
