@@ -14,6 +14,7 @@ import { AUTHOR, sourceUrl } from '../data/source.js';
 import { assessRepeats } from './repeats.js';
 import { createLinePicks } from './linepicks.js';
 import { getWriterScale, learnWriterScale } from './writer.js';
+import { explainLink, showUnitOverview } from './explain.js';
 import { el, button, credit } from './dom.js';
 
 const STORE_KEY = 'gregg.lessons.v1';
@@ -357,7 +358,7 @@ export function createLessons({ panel, pad, assist, unitPx, linePicks }) {
     // Once answered, the outline is shown at actual size and can be tried on the pad.
     const reveal = () => {
       for (const b of choices.children) b.disabled = true;
-      meaning.replaceChildren(...example.meaning.map((line) => el('p', { textContent: line })));
+      meaning.replaceChildren(el('p', { className: 'explain-row' }, explainLink(example)), ...example.meaning.map((line) => el('p', { textContent: line })));
       const printed = printedOutline(example);
       ruled.replaceChildren(...stripSection([s.example]));
       after.replaceChildren(
@@ -526,6 +527,7 @@ export function createLessons({ panel, pad, assist, unitPx, linePicks }) {
       el('p', { className: 'lesson-text', textContent: c.done === c.total
         ? 'Every exercise in this unit is done. Keep practising the words in the Practice view, or move on.'
         : 'These exercises were skipped. Tap one to go back to it.' }),
+      el('p', { className: 'explain-row' }, button(`ⓘ ${lesson.title} in brief: every rule, with its §`, 'inline-link explain-link', () => showUnitOverview(lesson))),
       ...(left.length ? [el('ul', { className: 'lesson-left' }, ...left.map((x) => el('li', {}, button(label(x), 'choice', () => goTo(x.i)))))] : []),
     );
     pad.load([]);

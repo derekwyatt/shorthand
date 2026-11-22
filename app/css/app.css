@@ -641,3 +641,15 @@ body:not(.view-learn) .lesson-panel { display: none; }
 .credit { margin-top: 12px; }
 .thanks { max-width: 68ch; }
 .thanks p { margin: 0 0 14px; }
+
+/* "About this outline" study notes (js/explain.js) */
+.explain-row { margin: 0 0 6px; }
+.explain-link { font-size: 15px; }
+.explain-pop { width: min(620px, 100%); max-height: min(80vh, 760px); }
+.explain-body { font-size: 16px; line-height: 1.45; }
+.explain-body p { margin: 0 0 8px; }
+.explain-h { margin: 14px 0 6px; font-size: 14px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+.explain-h:first-child { margin-top: 0; }
+.explain-list { margin: 0 0 8px; padding-left: 20px; }
+.explain-list li { margin: 0 0 6px; }
+.explain-foot { line-height: 1.8; }

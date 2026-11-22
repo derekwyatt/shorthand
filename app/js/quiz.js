@@ -5,6 +5,7 @@ import { assessAttempt, PASS_SCORE } from './assess.js';
 import { generateQuiz } from './quizgen.js';
 import { actualSizeStrip, enlargedSVG, scoreClass, printedOutline, printedCaption } from './practice.js';
 import { getWriterScale, learnWriterScale } from './writer.js';
+import { explainLink } from './explain.js';
 import { el, button, svgEl } from './dom.js';
 
 const STORE_KEY = 'gregg.quiz.v1';
@@ -229,7 +230,7 @@ export function createQuiz({ panel, pad, assist, unitPx }) {
       status.textContent = correct ? 'Correct' : `Not quite: it says “${example.title}”`;
       // The manual's printed outline (it names the word, so only after answering).
       const printed = printedOutline(example);
-      reveal.replaceChildren(...meaningLines(example), ...(printed ? [
+      reveal.replaceChildren(el('p', { className: 'explain-row' }, explainLink(example)), ...meaningLines(example), ...(printed ? [
         printedCaption(printed.page),
         el('div', { className: 'ex-plate' }, printed),
       ] : []));
@@ -254,7 +255,7 @@ export function createQuiz({ panel, pad, assist, unitPx }) {
       checkBtn = null;
       status.className = `quiz-result ${correct ? 'good' : 'bad'}`;
       status.textContent = correct ? 'Correct' : 'Not quite';
-      feedback.replaceChildren(...(result ? [scoreBlock(result)] : []), enlarged(example, true), el('div', { className: 'ex-meaning' }, ...meaningLines(example)));
+      feedback.replaceChildren(...(result ? [scoreBlock(result)] : []), enlarged(example, true), el('div', { className: 'ex-meaning' }, el('p', { className: 'explain-row' }, explainLink(example)), ...meaningLines(example)));
       panel.append(nextButton());
       if (result) assist.drawCheck(result);
     }
@@ -330,7 +331,7 @@ export function createQuiz({ panel, pad, assist, unitPx }) {
       overlaySVG(state.strokes[i], result, unitPx()),
       el('span', { className: 'series-mark', textContent: correct ? '✓' : '✗' }),
       el('span', { className: 'series-score', textContent: result ? String(result.score) : '–' }),
-      el('span', { className: 'series-note', textContent: first }));
+      el('span', { className: 'series-note' }, first, first ? ' ' : '', explainLink(example, 'About')));
   }
 
   function renderSeriesReveal(question, state) {
@@ -356,10 +357,11 @@ export function createQuiz({ panel, pad, assist, unitPx }) {
     saveResult({ date: new Date().toISOString(), correct, total, levels: options.levels, types: options.types });
     const missed = quiz.questions.flatMap(({ question, example }, i) => {
       const answer = quiz.answers[i];
-      if (question.type !== 'series') return answer?.correct ? [] : [`${question.prompt} → ${example.title}`];
-      return question.exampleIds.flatMap((id, k) => (answer?.members?.[k]?.correct ? [] : [`${question.prompts[k]} → ${BY_ID.get(id).title}`]));
+      if (question.type !== 'series') return answer?.correct ? [] : [{ text: `${question.prompt} → ${example.title}`, example }];
+      return question.exampleIds.flatMap((id, k) => (answer?.members?.[k]?.correct ? [] : [{ text: `${question.prompts[k]} → ${BY_ID.get(id).title}`, example: BY_ID.get(id) }]));
     });
-    const list = el('ol', { className: 'quiz-missed' }, ...missed.map((text) => el('li', { textContent: text })));
+    // Each missed outline links to its study note.
+    const list = el('ol', { className: 'quiz-missed' }, ...missed.map(({ text, example }) => el('li', {}, `${text} `, explainLink(example, 'About'))));
     panel.replaceChildren(
       el('h2', { textContent: `You got ${correct} of ${total}` }),
       el('h3', { textContent: missed.length ? 'Missed' : 'Perfect score!' }),

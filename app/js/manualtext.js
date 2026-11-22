@@ -33,31 +33,52 @@ export function paragraphBlocks(from, to = from) {
   return out;
 }
 
-// A small window over the page with the paragraph(s) `from`–`to` of the Manual, a link to the
-// same paragraph on the site (in a new tab), and a button for the whole unit in the app.
-// Closes with ✕, Escape or a tap outside it.
-export function showSection(from, to = from) {
-  document.querySelector('.section-pop-shade')?.remove();
-  const unit = unitOfParagraph(from);
-  const label = `Manual §${from}${to > from ? `–${to}` : ''}`;
-  const close = () => { shade.remove(); document.removeEventListener('keydown', onKey); };
+// A small window over the page: a title bar with ✕, a scrolling body and a footer of links.
+// Closes with ✕, Escape or a tap outside it. Opening another replaces it; `reopen` (a function
+// that opens this window again) gives the next one a ◀ button back to this one.
+let shown = null; // { close, reopen } of the window on screen
+export function openPopup({ title, label = title, body, foot = [], className = '', reopen = null }) {
+  const back = shown?.reopen ?? null;
+  shown?.close();
+  const close = () => {
+    shade.remove();
+    document.removeEventListener('keydown', onKey);
+    if (shown?.close === close) shown = null;
+  };
   const onKey = (e) => { if (e.key === 'Escape') close(); };
   const closeBtn = el('button', { type: 'button', className: 'section-pop-close', textContent: '✕', ariaLabel: 'Close', title: 'Close' });
   closeBtn.onclick = close;
-  const body = el('div', { className: 'section-pop-body manual-text' }, ...renderBlocks(paragraphBlocks(from, to)));
-  // A cross-reference or link inside replaces the popup with what it opens.
-  body.addEventListener('click', (e) => { if (e.target.closest('a')) close(); });
-  const pop = el('div', { className: 'section-pop', role: 'dialog', ariaLabel: label },
-    el('div', { className: 'section-pop-bar' }, el('strong', { textContent: `${label} · Unit ${unit}` }), closeBtn),
+  const backBtn = back && el('button', { type: 'button', className: 'section-pop-close', textContent: '◀', ariaLabel: 'Back', title: 'Back' });
+  if (backBtn) backBtn.onclick = back;
+  const pop = el('div', { className: `section-pop ${className}`.trim(), role: 'dialog', ariaLabel: label },
+    el('div', { className: 'section-pop-bar' }, ...(backBtn ? [backBtn] : []), el('strong', { textContent: title }), closeBtn),
     body,
-    el('div', { className: 'section-pop-foot' },
-      outLink(sourceUrl.unit(unit, from), 'Open on greggshorthand.github.io'),
-      button('Whole unit ›', 'inline-link', () => { close(); openManual(unit, from); })));
+    ...(foot.length ? [el('div', { className: 'section-pop-foot' }, ...foot)] : []));
   const shade = el('div', { className: 'section-pop-shade' }, pop);
   shade.addEventListener('click', (e) => { if (e.target === shade) close(); });
+  document.querySelector('.section-pop-shade')?.remove();
   document.addEventListener('keydown', onKey);
   document.body.append(shade);
+  shown = { close, reopen };
   closeBtn.focus();
+  return close;
+}
+
+// The paragraph(s) `from`–`to` of the Manual in a small window, with a link to the same
+// paragraph on the site (in a new tab) and a button for the whole unit in the app.
+export function showSection(from, to = from) {
+  const unit = unitOfParagraph(from);
+  const label = `Manual §${from}${to > from ? `–${to}` : ''}`;
+  const body = el('div', { className: 'section-pop-body manual-text' }, ...renderBlocks(paragraphBlocks(from, to)));
+  const close = openPopup({
+    title: `${label} · Unit ${unit}`, label, body,
+    foot: [
+      outLink(sourceUrl.unit(unit, from), 'Open on greggshorthand.github.io'),
+      button('Whole unit ›', 'inline-link', () => { close(); openManual(unit, from); }),
+    ],
+  });
+  // A cross-reference or link inside replaces the popup with what it opens.
+  body.addEventListener('click', (e) => { if (e.target.closest('a')) close(); });
 }
 
 // "§14" (or "§14–22") anywhere in the app's text links to that paragraph of the Manual on

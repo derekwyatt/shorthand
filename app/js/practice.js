@@ -7,6 +7,7 @@ import { compileExample, translateCompiled } from './join.js';
 import { bbox, renderCompiledSVG, animateStroke } from './render.js';
 import { el, svgEl, outLink } from './dom.js';
 import { sourceUrl } from '../data/source.js';
+import { explainLink } from './explain.js';
 import { openManual, unitOfParagraph } from './manualtext.js';
 
 const STRIP_GAP = 2.5; // U between outlines in an actual-size strip
@@ -160,7 +161,7 @@ export function createExamplePanel({ art, title, meaning, source, counter, score
       current = { example, index, total, lineSpacing };
       counter.textContent = `Level ${example.level} · ${LEVELS[example.level - 1].name} · ${index + 1} of ${total}`;
       title.textContent = example.title;
-      meaning.replaceChildren(...example.meaning.map((line) => el('p', { textContent: line })));
+      meaning.replaceChildren(el('p', { className: 'explain-row' }, explainLink(example)), ...example.meaning.map((line) => el('p', { textContent: line })));
       source.replaceChildren('Source: ', ...sourceNodes(example.source));
       showPlate(example);
       draw({ animate });

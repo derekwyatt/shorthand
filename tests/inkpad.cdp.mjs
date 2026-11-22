@@ -291,6 +291,26 @@ try {
   })()`);
   check(word.title === 'hack' && word.ink && word.dots === 2 /* enlarged + actual size */ && /inside the curve/.test(word.meaning), `word example renders with its h dot and rule (${word.title})`);
 
+  // "About this outline" gathers the parts and rules with their §, and a § opens over it with a way back.
+  const about = await evaluate(`(async () => {
+    document.querySelector('#ex-meaning .explain-link').click();
+    await new Promise((r) => setTimeout(r, 100));
+    const pop = document.querySelector('.explain-pop');
+    const text = pop?.innerText ?? '';
+    const site = [...pop.querySelectorAll('.section-pop-foot a')].map((a) => a.href);
+    pop.querySelector('.section-link').click();
+    await new Promise((r) => setTimeout(r, 100));
+    const section = document.querySelector('.section-pop:not(.explain-pop) .section-pop-bar')?.innerText ?? '';
+    document.querySelector('.section-pop-bar [aria-label=Back]').click();
+    await new Promise((r) => setTimeout(r, 100));
+    const back = !!document.querySelector('.explain-pop');
+    document.querySelector('.section-pop-close[aria-label=Close]').click();
+    return { text, site, section, back, open: document.querySelectorAll('.section-pop-shade').length };
+  })()`);
+  check(/Its parts/i.test(about.text) && /The dot/.test(about.text) && /§3/.test(about.text) && /Unit 1/.test(about.text)
+    && about.site.some((h) => h.endsWith('anunit01.html#p3')) && /^◀/.test(about.section) && about.back && about.open === 0,
+    `“About this outline” lists the parts with their § and links to the site; a § opens with Back (${JSON.stringify({ ...about, text: about.text.slice(0, 80) })})`);
+
   // A §209 disjoined prefix is a second pen-down of the same word, not another repeat.
   await evaluate(`(() => { const s = document.querySelector('#level-select'); s.value = '33'; s.dispatchEvent(new Event('change', { bubbles: true })); })()`);
   await sleep(100);
@@ -504,6 +524,7 @@ try {
     await sleep(150);
     check(await evaluate(`document.querySelectorAll('#quiz-panel .choice.correct').length === 1`), 'exactly one choice is marked correct');
     check(await evaluate(`[...document.querySelectorAll('#quiz-panel button')].some((b) => /^(Next|Finish)$/.test(b.textContent))`), 'a Next button appears after answering');
+    check(await evaluate(`!!document.querySelector('#quiz-panel .ex-meaning .explain-link')`), 'an answered question links to its study note');
     await clickText(q === 0 ? 'Next' : 'Finish');
     await sleep(200);
   }
