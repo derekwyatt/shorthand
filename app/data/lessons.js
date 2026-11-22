@@ -179,7 +179,7 @@ const UNIT_3 = [
   choose('word-mend', ['word-mend', 'word-meant', 'word-minute', 'word-mental']),
   read('Frequent-word drill', 'Manual §28, pp. 13–14', [
     'The drill spells the most common words by sound: eight is ā t, had is h ă d, him is h ĭ m. Write each one until it comes without hesitation.',
-    'Eight and made share an outline you already know (ate, maid). Others differ from one only by the vowel mark (§8): aid (ā) and add (ă), meet (ē) and met (ĕ), came (ā) and calm (ä), man (ă) and main (ā), lack (ă) and lake (ā). Her is printed without the h dot; here has it.',
+    'Eight and made share an outline you already know (ate, maid). Others differ from one only by the vowel mark (§8): aid (ā) and add (ă), meet (ē) and met (ĕ), came (ā) and calm (ä), man (ă) and main (ā), lack (ă) and lake (ā). Had, him and her are printed without the h dot (had is written like add); here has it.',
   ], ['word-had', 'word-train']),
   write('word-ate', 'Write “eight” (the same outline as ate).'),
   ...writeAll('word-had', 'word-him', 'word-aid', 'word-net', 'word-need', 'word-meet', 'word-man', 'word-tin', 'word-cat', 'word-kid', 'word-came', 'word-her', 'word-here'),

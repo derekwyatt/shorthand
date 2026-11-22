@@ -41,8 +41,8 @@ tokens are stroke ids plus `a` / `e` circles and the `h` dot; vowel marks are om
 | 27 | 12 | emanate | e men a t |
 | 27 | 12 | mental | men t l |
 | 27 | 12 | minimum | men e men |
-| 28 | 13 | had | h a d |
-| 28 | 13 | him | h e m |
+| 28 | 13 | had | a d (printed without the h dot: the outline of add) |
+| 28 | 13 | him | e m (printed without the h dot) |
 | 28 | 13 | net | n e t |
 | 28 | 13 | need | n e d |
 | 28 | 13 | tin | t e n |

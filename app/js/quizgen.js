@@ -57,7 +57,9 @@ function similarity(answer, other) {
 }
 
 function pickChoices(answer, pool, rng) {
-  const inPool = (e) => e.title !== answer.title;
+  // Never a wrong choice with the answer's own outline (the Manual writes had as add, her as were).
+  const same = answer.outline.join(' ');
+  const inPool = (e) => e.title !== answer.title && e.outline.join(' ') !== same;
   const sameLevel = pool.filter((e) => e.level === answer.level && inPool(e));
   const sameLevelKind = sameLevel.filter((e) => e.kind === answer.kind);
   // Prefer the answer's level and kind (level 8 mixes words and brief forms).

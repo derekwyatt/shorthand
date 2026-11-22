@@ -44,8 +44,8 @@ test('circle-word outlines are unique and never equal a brief form', () => {
 });
 
 test('Unit 2 and Unit 3 examples cite a manual page and have unique outlines in their level', () => {
-  // p. 14 prints the brief form were as p. 13 prints her: e + r
-  const SAME = new Set(['brief-were']);
+  // p. 14 prints the brief form were as p. 13 prints her (e + r); p. 13 prints had as add
+  const SAME = new Set(['brief-were', 'word-had']);
   for (const n of [7, 8]) {
     const seen = new Map();
     for (const e of atLevel(n)) {
