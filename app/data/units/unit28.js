@@ -2,7 +2,7 @@
 export default {
   unit: 28,
   subtitle: 'Analogical word-beginnings, disjoined',
-  pages: 'pp. 121–123',
+  pages: 'pp. 121–124',
   level: { name: 'Disjoined word-beginnings', description: 'Prefixes disjoined to express tr and a following vowel (Manual §209–212)' },
   rules: {
     R209: '“Certain prefixes or letters are disjoined to express tr and a following vowel. The prefix is placed above the line, very close to the remainder of the word” (Manual §209).',

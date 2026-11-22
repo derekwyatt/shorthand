@@ -32,6 +32,10 @@ export default {
     ['whole lot', ['h', 'o', 'l', 'o', 't'], 131],
   ],
   lesson: [
+    { read: ["Understand and misunderstand", "Manual §218, p. 129", [
+      "“The words misunderstand and misunderstood are expressed by stand and stood placed under mis, with mis placed on the line of writing. This rule is extended to the words understand and understood when they are preceded by a pronoun, a brief form, or a short phrase form.”",
+      "The app cannot draw or score these outlines yet, so there is no writing practice for them here: study the forms in the Manual below and copy them on the pad.",
+    ], []], manual: [218, 218] },
     { read: ['Prefixes over the next word', 'Manual §219, p. 129', [
       '“The words extra, enter, over, under, short, center, counter, agree, grand are expressed by the prefixal forms placed over the next word:”',
       'Enter the, enter into, over the, under any.'
@@ -66,6 +70,14 @@ export default {
     { write: 'phrase-nearer-than' },
     { write: 'phrase-sooner-than' },
     { choose: ['phrase-sooner-than', ['phrase-nearer-than', 'phrase-sooner-than', 'phrase-have-done', 'phrase-under-any']] },
+    { read: ["Phrases with us", "Manual §222, p. 130", [
+      "“Many useful business phrases may be secured by slightly modifying the form for us”: give us, tell us, write us, to us, let us, mail us.",
+      "The app cannot draw or score these outlines yet, so there is no writing practice for them here: study the forms in the Manual below and copy them on the pad.",
+    ], []], manual: [222, 222] },
+    { read: ["Department", "Manual §223, p. 130", [
+      "“In many phrases department is expressed by a disjoined d”: credit department, shipping department, purchasing department, accounting department.",
+      "The app cannot draw or score these outlines yet, so there is no writing practice for them here: study the forms in the Manual below and copy them on the pad.",
+    ], []], manual: [223, 223] },
     { read: ['Modified forms', 'Manual §224, p. 131', [
       '“In a number of phrases the word forms are modified or a word is omitted where the grammatical construction of the sentence would compel its restoration when transcribing:”',
       'I always, on hand, whole lot.'

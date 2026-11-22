@@ -40,7 +40,7 @@ export default {
     ], [], []] },
     { read: ['Omission of minor vowels', 'Manual §121, p. 66', [
       '“When two vowels not forming a pure diphthong come together, the minor vowel may be omitted.”',
-      'So theory, genuine and renewal are written with the vowels that carry the sound and without the minor one.'
+      'In theory, genuine and renewal two vowels come together, and only one of them is written.'
     ], ['word-theory', 'word-genuine', 'word-renewal']] },
     { read: ['Idea and ideal', 'Manual §121, p. 66', [
       '“The long i in idea and ideal is expressed by the large circle.”'

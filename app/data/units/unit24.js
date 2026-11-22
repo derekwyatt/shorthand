@@ -2,7 +2,7 @@
 export default {
   unit: 24,
   subtitle: 'Words omitted in phrases',
-  pages: 'pp. 104–105',
+  pages: 'pp. 104–107',
   level: { name: 'Words omitted in phrases', description: 'Unimportant words such as or, of, the and a left out of common phrases where the sense restores them (Manual §189)' },
   rules: {
     R189: '“Any unimportant word may be omitted where the sense requires its restoration in transcribing” (Manual §189).',
@@ -35,13 +35,13 @@ export default {
     { write: 'phrase-one-or-two' },
     { write: 'phrase-week-or-two' },
     { choose: ['phrase-one-or-two', ['phrase-one-or-two', 'phrase-week-or-two', 'phrase-more-or-less', 'phrase-little-or-no']] },
-    { read: ['Of omitted', 'Manual §189, p. 104', [
+    { read: ['Of omitted', 'Manual §189, pp. 104–105', [
       'Some of them, I am of the opinion.'
     ], ['phrase-some-of-them', 'phrase-i-am-of-the-opinion']] },
     { write: 'phrase-some-of-them' },
     { write: 'phrase-i-am-of-the-opinion' },
     { choose: ['phrase-some-of-them', ['phrase-some-of-them', 'phrase-i-am-of-the-opinion', 'phrase-on-the-question', 'phrase-in-the-matter']] },
-    { read: ['The and a omitted', 'Manual §189, p. 104', [
+    { read: ['The and a omitted', 'Manual §189, pp. 104–105', [
       'In a week or two, on the question, in the matter.'
     ], ['phrase-in-a-week-or-two', 'phrase-on-the-question', 'phrase-in-the-matter']] },
     { write: 'phrase-in-a-week-or-two' },

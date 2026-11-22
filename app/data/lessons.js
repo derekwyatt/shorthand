@@ -19,7 +19,8 @@ import { speedForUnit } from './speed.js';
 export { PASS_SCORE } from '../js/assess.js';
 
 // `plates`: section plates (data/plates.js) shown with the rule, e.g. a table of the manual.
-const read = (title, ref, text, show = [], plates = []) => ({ type: 'read', title, ref, text, show, plates });
+// `manual`: [from, to], the Manual's own paragraphs (text and figures) to show with the step.
+const read = (title, ref, text, show = [], plates = [], manual = null) => ({ type: 'read', title, ref, text, show, plates, ...(manual ? { manual } : {}) });
 const write = (example, prompt = null) => ({ type: 'write', example, prompt });
 const choose = (example, choices) => ({ type: 'choose', example, choices });
 const writeAll = (...ids) => ids.map((id) => write(id));
@@ -60,7 +61,8 @@ const UNIT_1 = [
   write('letter-th-under', 'Write th, the under form: a short upward curve that bulges down to the right (left motion).'),
   read('Brief forms', 'Manual §3, pp. 1–2', [
     '“Many frequently recurring words are represented by simple alphabetic characters. Some of these signs represent two and even three words; for example, the sign for r represents are, our, hour.”',
-    '“A dot on the line of writing represents the articles a, an.”',
+    '“A dot on the line of writing represents the articles a, an. A dot at the end of a word expresses ing. The pronoun I is expressed by a large circle; he, by a small circle.”',
+    'The app has no writing practice yet for the ing dot or for a circle written alone, so learn those three from the Manual’s table.',
   ], ['brief-k', 'brief-r', 'brief-l']),
   ...writeAll('brief-k', 'brief-g', 'brief-l', 'brief-n', 'brief-t', 'brief-d', 'brief-th-over'),
   choose('brief-l', ['brief-r', 'brief-l', 'brief-k', 'brief-g']),
@@ -68,9 +70,10 @@ const UNIT_1 = [
   read('Sentences and the period', 'Manual §4–6, p. 2', [
     'The period is a short stroke slanting down to the right. “Capitals and proper names are indicated by two short dashes beneath the word.”',
     '“The joining of simple words is a great help to accuracy and speed in writing shorthand, and its acquirement should not be deferred until the habit of writing common words separately has been formed” (§4). So common pairs are written as one outline, without lifting the pen: I will (a large circle running into l), he can (a small circle into k), it will (t up, then straight on into the long l) and in the (n, then th rising off its end).',
-    'In “It will be good” the first two words are one phrase: t and l joined, then be, good and the period, each on its own. Be is a brief form the Manual gives in the next unit (§23): b alone, a long downward curve like a large left parenthesis.',
-  ], ['sentence-it-will-be-good'], ['p2-phrasing', 'p2-punctuation']),
-  write('sentence-it-will-be-good'),
+    'In “It will go well” the first two words are one phrase: t and l joined, then go, well and the period, each on its own. Every form in it is a Unit 1 brief form.',
+    'The Sentence Drill (§6) below is the Manual’s own practice in these forms: read it, then copy it on the pad.',
+  ], ['sentence-it-will-go-well'], ['p2-phrasing', 'p2-punctuation'], [6, 6]),
+  write('sentence-it-will-go-well'),
   read('Vowels: the A and E groups', 'Manual §7–8, pp. 3–4', [
     '“In shorthand there are twelve distinct vowel sounds, which are arranged in four groups … In this lesson we have the first two groups.”',
     'The A group (a as in mat, calm, came) is a large circle; the E group (i as in kit, e as in get, e as in need) is a small circle.',
@@ -191,6 +194,13 @@ const UNIT_3 = [
   ...writeAll('brief-ted', 'brief-tem', 'brief-when', 'brief-any', 'brief-were', 'brief-where', 'brief-my', 'brief-could', 'brief-come', 'brief-little', 'brief-country'),
   choose('brief-were', ['brief-were', 'brief-where', 'brief-when', 'brief-any']),
   choose('brief-could', ['brief-could', 'brief-country', 'brief-come', 'brief-k']),
+  read('General phrasing principles', 'Manual §30, p. 15', [
+    'Six suggestions for joining words into phrases: join only short, common words that make good sense together (of the, in the, it will be); join pronouns to the word they precede (I can, you are); join a qualifying word to the word it qualifies (good man); join to, of, in, with and and to the word that follows (to the, of which, in that, with that, and will); and do not phrase words that make no easily written, distinctive joining.',
+  ], [], [], [30, 30]),
+  read('Phrase drill', 'Manual §31, p. 15', [
+    '“The simple phrases given in the drill below are of very high frequency and will serve as models for other phrases.” Read them, then copy each one on the pad as a single outline.',
+    'The app cannot score these phrases yet, so there is no writing practice for them here.',
+  ], [], [], [31, 31]),
   read('Putting it together', 'Built from Manual §1–12 and §29', [
     'A sentence with the brief form for any. Write each word as its own outline, then the period.',
   ], ['sentence-any-day-is-good']),
@@ -207,11 +217,25 @@ export function stepKey(step) {
 
 // A unit module's lesson (data/units/) as steps.
 const stepOf = (s) => {
-  if (s.read) return read(...s.read);
+  if (s.read) return { ...read(...s.read), ...(s.manual ? { manual: s.manual } : {}) };
   if (s.write) return Array.isArray(s.write) ? write(...s.write) : write(s.write);
   if (s.choose) return choose(...s.choose);
   throw new Error(`unknown lesson step ${JSON.stringify(s)}`);
 };
+
+// The Writing Practice that closes each chapter (every third unit): [§, page]. Longhand
+// sentences and letters to write; the Manual prints no shorthand for them.
+const WRITING_PRACTICE = {
+  3: [33, 17], 6: [64, 33], 9: [90, 47], 12: [111, 60], 15: [132, 72], 18: [152, 83],
+  21: [173, 96], 24: [191, 107], 27: [208, 120], 30: [226, 133], 33: [237, 145], 36: [248, 161],
+};
+const writingPractice = ([n, page]) => ({
+  ...read('Writing Practice', `Manual §${n}, p. ${page}`, [
+    'The Manual closes the chapter with sentences and letters to write in shorthand. Write each one on the pad, a line at a time, using the outlines, brief forms and phrases of the units so far.',
+    'The Manual prints no shorthand for this practice, so there is no key to check against: look up any outline you are unsure of in the units’ word lists, the Reading and Dictation Practice, or the Reference.',
+  ]),
+  manual: [n, n],
+});
 
 const withReading = (l) => ({
   ...l,
@@ -219,13 +243,14 @@ const withReading = (l) => ({
     ...l.steps,
     ...speedForUnit(l.unit).map((speed) => ({ type: 'speed', speed })),
     ...(readingFor(l.unit) ? [{ type: 'reading', reading: readingFor(l.unit) }] : []),
+    ...(WRITING_PRACTICE[l.unit] ? [writingPractice(WRITING_PRACTICE[l.unit])] : []),
   ],
 });
 
 export const LESSONS = [
   { id: 'unit-1', unit: 1, title: 'Unit 1', subtitle: 'The first consonants, vowel circles and how circles join', pages: 'pp. 1–6', steps: UNIT_1 },
   { id: 'unit-2', unit: 2, title: 'Unit 2', subtitle: 'Circles between strokes and joined curves', pages: 'pp. 7–11', steps: UNIT_2 },
-  { id: 'unit-3', unit: 3, title: 'Unit 3', subtitle: 'The ted and men blends, the frequent-word drill and brief forms', pages: 'pp. 12–14', steps: UNIT_3 },
+  { id: 'unit-3', unit: 3, title: 'Unit 3', subtitle: 'The ted and men blends, the frequent-word drill and brief forms', pages: 'pp. 12–17', steps: UNIT_3 },
   ...UNITS.map((u) => ({ id: `unit-${u.unit}`, unit: u.unit, title: `Unit ${u.unit}`, subtitle: u.subtitle, pages: u.pages, steps: u.lesson.map(stepOf) })),
 ].map(withReading);
 

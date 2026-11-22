@@ -25,13 +25,13 @@ export default {
   brief: [],
   phrases: [],
   lesson: [
-    { read: ['A short vocabulary', 'Manual §246, p. 155', [
+    { read: ['A short vocabulary', 'Manual §246, pp. 155–159', [
       '“This short vocabulary will be a valuable addition to the equipment of every shorthand writer.”',
       'Many of the words are written by the abbreviating principle, so learn each outline as one unit.',
       'Argument, clerk, connect, vote.',
     ], ['word-argument', 'word-clerk', 'word-connect', 'word-vote']] },
     { read: ['Words beginning with k', 'Manual §246, p. 156', [
-      'Each begins with a small k, which stands for the opening syllable.',
+      'Each begins with a small k: in commerce, compare and connect it stands for the opening syllable com or con; in clerk it is the k sound itself.',
       'Clerk, commerce, compare, connect.',
     ], ['word-clerk', 'word-commerce', 'word-compare', 'word-connect']] },
     { write: 'word-clerk' },
@@ -40,7 +40,7 @@ export default {
     { write: 'word-connect' },
     { choose: ['word-connect', ['word-connect', 'word-clerk', 'word-commerce', 'word-compare']] },
     { read: ['Words beginning with a, def or g', 'Manual §246, pp. 155–157', [
-      'The vowel and the r are dropped from argument; defendant is the two blends def and nd.',
+      'Argument keeps its first vowel and drops the r (a, g, m); defendant is the two blends def and nd.',
       'Argument, defendant, God.',
     ], ['word-argument', 'word-defendant', 'word-god']] },
     { write: 'word-argument' },

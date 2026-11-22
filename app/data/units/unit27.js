@@ -2,7 +2,7 @@
 export default {
   unit: 27,
   subtitle: 'Compound words',
-  pages: 'p. 116',
+  pages: 'pp. 116–120',
   level: { name: 'Compound words', description: 'Compounds made by joining brief forms (Manual §201–202)' },
   rules: {
     R201: '“A number of compounds may be obtained by joining brief forms” (Manual §201).',
@@ -32,7 +32,7 @@ export default {
   brief: [],
   phrases: [],
   lesson: [
-    { read: ['Compounds with any, be and when', 'Manual §201, p. 116', [
+    { read: ['Compounds with any, be and when', 'Manual §201–202, p. 116', [
       '“A number of compounds may be obtained by joining brief forms:”',
       '“Slight modifications or omissions are made in the forms for anywhere, anyhow, hereinafter, herewith, however, sometime, somewhere, and the compounds beginning with every.”',
       'Anywhere, before, belong, whenever.',
@@ -69,5 +69,14 @@ export default {
     { write: 'word-somebody' },
     { write: 'word-someone' },
     { choose: ['word-hereon', ['word-hereon', 'word-herein', 'word-elsewhere', 'word-somebody']] },
+    { read: ["Irregular compounds", "Manual §203, p. 117", [
+      "Three compounds with forms of their own: meanwhile, otherwise, thanksgiving.",
+      "The app cannot draw or score these outlines yet, so there is no writing practice for them here: study the forms in the Manual below and copy them on the pad.",
+    ], []], manual: [203, 203] },
+    { read: ["Figures", "Manual §204–206, pp. 117–118", [
+      "After a numeral, a single sign stands for the unit: d for dollars, n under the numeral for hundred, th for thousand, m beside it for million, and others for pounds, gallons, barrels, bushels, feet, francs, cwt. and o’clock (§204). The same signs follow a, per, few and several (§205). Cents and percent have their own marks (§206).",
+      "The pad does not take numerals, so there is no writing practice for these: study them in the Manual below.",
+      "The transcription below lists “euros by eu”, which is not in the 1929 printing.",
+    ], []], manual: [204, 206] },
   ],
 };

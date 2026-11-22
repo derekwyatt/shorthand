@@ -2,8 +2,8 @@
 //
 // Accuracy policy: only outlines that can be drawn correctly from verified sources.
 //   - Single letters: the stroke table (data/strokes.js), checked against the 1929
-//     Anniversary manual and the Simplified chart. Brief-form meanings come from the
-//     Gregg Simplified chart. Strokes still marked `verify` there (standalone circles,
+//     Anniversary manual and the Simplified chart. Brief-form meanings are the 1929
+//     Manual's (§3, §23, §27, §29, §34). Strokes still marked `verify` there (standalone circles,
 //     o/u hooks, the def/jent blends) are left out until they are checked.
 //   - Words: exactly the words the 1929 manual prints with §11 and §12 (p. 5), built with
 //     those two joining rules (js/join.js). Vowel marks (§8: "seldom used") are added where
@@ -57,9 +57,11 @@ const letters = LETTER_ORDER.map((id) => {
   return { id: `letter-${id}`, kind: 'letter', level: 1, title, outline: [id], meaning: lines, source: 'Stroke chart' };
 });
 
-// Level 2: one example per brief-form stroke (Simplified chart), in chart order.
+// Level 2: one example per brief-form stroke. Their words are those the 1929 Manual gives:
+// §3 (p. 1) for the Unit 1 strokes, §23 (p. 10) for nd, §29 (p. 14) for ted and tem, §34
+// (p. 18) for the downward characters; men is the §27 blend written alone (p. 12).
 const BRIEF_STROKES = [
-  ['k', ['can']], ['g', ['go', 'good']], ['r', ['are', 'our']], ['l', ['will', 'well']],
+  ['k', ['can']], ['g', ['go', 'good']], ['r', ['are', 'our', 'hour']], ['l', ['will', 'well']],
   ['n', ['in', 'not']], ['m', ['am', 'more']], ['t', ['it', 'at']], ['d', ['would']],
   ['th-over', ['the']], ['th-under', ['their', 'there']], ['h', ['a', 'an']],
   ['s-right', ['is', 'his']], ['p', ['put']], ['b', ['be', 'by', 'but']], ['f', ['for']], ['v', ['have']],
@@ -67,13 +69,20 @@ const BRIEF_STROKES = [
   ['tem', ['time']], ['nd', ['and', 'end']],
 ];
 
+const BRIEF_SOURCE = {
+  k: '§3, p. 1', g: '§3, p. 1', r: '§3, p. 1', l: '§3, p. 1', n: '§3, p. 1', m: '§3, p. 1', t: '§3, p. 1',
+  d: '§3, p. 1', 'th-over': '§3, p. 1', 'th-under': '§3, p. 1', h: '§3, p. 1',
+  's-right': '§34, p. 18', p: '§34, p. 18', b: '§34, p. 18', f: '§34, p. 18', v: '§34, p. 18', sh: '§34, p. 18', ch: '§34, p. 18',
+  men: '§27, p. 12', ted: '§29, p. 14', tem: '§29, p. 14', nd: '§23, p. 10',
+};
+
 const briefs = BRIEF_STROKES.map(([id, forms]) => {
   const s = STROKE_BY_ID[id];
   if (s.briefForms.join('|') !== forms.join('|')) throw new Error(`brief forms of ${id} differ from the chart list`);
   return {
     id: `brief-${id}`, kind: 'brief', level: 2, title: forms.join(' / '), outline: [id],
     meaning: [`A brief form: the single stroke ${s.label} stands for the word${forms.length > 1 ? 's' : ''} ${forms.map((w) => `“${w}”`).join(' or ')}.`],
-    source: 'Brief forms (Gregg Simplified chart)',
+    source: `Gregg Shorthand Manual (1929), ${BRIEF_SOURCE[id]}`,
   };
 });
 
@@ -372,13 +381,13 @@ export const EXAMPLES = [
 ];
 
 // ---------------------------------------------------------------- sentences
-// Built only from verified pieces: brief forms (single strokes, Simplified chart; "any"
+// Built only from verified pieces: brief forms (single strokes, Manual §3, §23, §29, §34; "any"
 // from Manual §29) and the Manual p. 5 words and words built by §11–12 above. Each word is
 // its own outline, except the phrases the manual joins (§4).
 const BRIEF = {
   a: ['h'], an: ['h'], is: ['s-right'], his: ['s-right'], for: ['f'], have: ['v'],
   in: ['n'], not: ['n'], am: ['m'], more: ['m'], men: ['men'], it: ['t'], at: ['t'],
-  would: ['d'], did: ['ted'], date: ['ted'], are: ['r'], our: ['r'], will: ['l'], well: ['l'],
+  would: ['d'], did: ['ted'], date: ['ted'], are: ['r'], our: ['r'], hour: ['r'], will: ['l'], well: ['l'],
   put: ['p'], be: ['b'], by: ['b'], can: ['k'], go: ['g'], good: ['g'], shall: ['sh'], any: ['n', 'e'],
   which: ['ch'], the: ['th-over'], time: ['tem'], their: ['th-under'], there: ['th-under'],
   and: ['nd'], end: ['nd'],
@@ -392,6 +401,7 @@ const WORD_TOKENS = Object.fromEntries([...WORDS, ...WORDS_3B, ...WORDS_4].map((
 
 const SENTENCES = [
   'It will be good.',
+  'It will go well.',
   'It is good.',
   'Have a good day.',
   'It may be good.',
@@ -507,7 +517,7 @@ function sentenceExample(text) {
       ...(phrases.length ? [`Phrase (Manual §4): write ${phrases.join(' and ')} as one outline, without lifting the pen.`] : []),
       `Write each ${phrases.length ? 'other ' : ''}word as its own outline, in order, and end with the period mark.`,
     ],
-    source: `Brief forms (Simplified chart) and words built by Manual §11–12; ${phrases.length ? 'phrasing from Manual §4, ' : ''}period from Manual p. 2`,
+    source: `Brief forms (Manual §3, §23, §29, §34) and words built by Manual §11–12; ${phrases.length ? 'phrasing from Manual §4, ' : ''}period from Manual p. 2`,
   };
 }
 

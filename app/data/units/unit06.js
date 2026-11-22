@@ -7,7 +7,7 @@ export default {
   level: { name: 'Shun, past tense, brief forms', description: 'The suffix shun, the past tense, brief forms as prefixes, and frequent phrases (Manual §57–62)' },
   rules: {
     R58: 'The suffix shun (sion, tion) is expressed by sh (Manual §58).',
-    R59: 'The past tense is expressed by t or d: join it where a distinctive and facile joining is possible, otherwise disjoin t (Manual §59).',
+    R59: 'The past tense is expressed by t or d: after most abbreviated words by a disjoined t placed close to the preceding character; in other words join it where a distinctive and facile joining is possible, otherwise disjoin t (Manual §59).',
     R61: 'A brief form is frequently used as a prefix or as part of another word (Manual §61).',
   },
   words: [
@@ -41,6 +41,10 @@ export default {
     ['I have', ['a', 'v'], 31],
   ],
   lesson: [
+    { read: ["The letter x", "Manual §57, p. 29", [
+      "“When x occurs at the end of or within words, it is expressed by s slightly modified in slant”: mix, fix, tax. “The plural is formed by adding s as shown in mixes, taxes.”",
+      "The x is an s written at a slightly different slant. The difference is too small for the app to draw or score reliably, so there is no writing practice for it here: study the forms in the Manual below.",
+    ], []], manual: [57, 57] },
     { read: ['The suffix shun', 'Manual §58, p. 29', [
       '“The suffix shun (sion, tion) is expressed by sh.” The short sh stroke is added at the end of the word, so mention is men + sh and action is a + k + sh.',
     ], ['word-mention', 'word-fashion', 'word-vision', 'word-nation', 'word-action']] },
@@ -51,19 +55,12 @@ export default {
     { write: 'word-action' },
     { choose: ['word-mission', ['word-mission', 'word-vision', 'word-faction', 'word-diction']] },
     { read: ['The past tense', 'Manual §59, p. 30', [
-      '“The past tense is expressed by t or d”: join the t or d where a distinctive and facile joining is possible; otherwise disjoin t.',
-    ], ['word-mentioned', 'word-checked']] },
+      '“The past tense is expressed by t or d”: after most abbreviated words by a disjoined t placed close to the preceding character (changed, timed); in other words join the t or d where a distinctive and facile joining is possible (mentioned, checked), otherwise disjoin t.',
+      'The app cannot draw a disjoined t yet, so only the joined forms are practised here: study the disjoined ones in the Manual below.',
+    ], ['word-mentioned', 'word-checked']], manual: [59, 59] },
     { write: 'word-mentioned' },
     { write: 'word-checked' },
     { choose: ['word-checked', ['word-checked', 'word-mentioned', 'word-faction', 'word-diction']] },
-    { read: ['Brief forms as prefixes', 'Manual §61, p. 31', [
-      '“A brief form is frequently used as a prefix or as part of another word”: the f m of from / form is the start of inform and formal.',
-    ], ['word-inform', 'word-formal', 'word-income', 'word-forgot']] },
-    { write: 'word-inform' },
-    { write: 'word-formal' },
-    { write: 'word-income' },
-    { write: 'word-forgot' },
-    { choose: ['word-income', ['word-income', 'word-inform', 'word-formal', 'word-forgot']] },
     { read: ['Brief forms', 'Manual §60, p. 30', [
       'Five more common words with their own outlines: present / presence, big / beg, got, gave, tell / till.',
     ], ['brief-present', 'brief-big', 'brief-got', 'brief-gave', 'brief-tell']] },
@@ -73,6 +70,14 @@ export default {
     { write: 'brief-gave' },
     { write: 'brief-tell' },
     { choose: ['brief-gave', ['brief-gave', 'brief-got', 'brief-big', 'brief-tell']] },
+    { read: ['Brief forms as prefixes', 'Manual §61, p. 31', [
+      '“A brief form is frequently used as a prefix or as part of another word”: inform and income begin with in, formal with form, forgot with for.',
+    ], ['word-inform', 'word-formal', 'word-income', 'word-forgot']] },
+    { write: 'word-inform' },
+    { write: 'word-formal' },
+    { write: 'word-income' },
+    { write: 'word-forgot' },
+    { choose: ['word-income', ['word-income', 'word-inform', 'word-formal', 'word-forgot']] },
     { read: ['Frequent phrases', 'Manual §62, p. 31', [
       'Common phrases are written as one joined outline: would be, to be, can be, I have.',
       '“Before a downstroke, to is expressed by t.”',

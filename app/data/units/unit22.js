@@ -58,7 +58,7 @@ export default {
   brief: [],
   phrases: [],
   lesson: [
-    { read: ['t omitted after s, the s-left words', 'Manual §174, p. 97', [
+    { read: ['t omitted at the end of words', 'Manual §174, p. 97', [
       '“When slightly enunciated, t is omitted at the end of many words.”',
       'Best, rest, west, latest, contest, protest, detest, invest, oldest, forest, largest.'
     ], ['word-best', 'word-rest', 'word-west', 'word-latest', 'word-contest', 'word-protest', 'word-detest', 'word-invest', 'word-oldest', 'word-forest', 'word-largest']] },

@@ -21,14 +21,16 @@ export function actualSizeStrip(examples, { lineSpacing: ls, labels = true, onPi
   for (const example of examples) {
     const c = compileExample(example);
     const b = bbox(c);
-    placed.push({ example, c: translateCompiled(c, x - b.minX, -b.minY), from: x, to: x + b.maxX - b.minX, h: b.maxY - b.minY });
+    placed.push({ example, c: translateCompiled(c, x - b.minX, -c.base), from: x, to: x + b.maxX - b.minX, up: b.maxY - c.base, down: c.base - b.minY });
     x += b.maxX - b.minX + STRIP_GAP;
   }
-  const inkH = Math.max(...placed.map((p) => p.h)) * unit;
-  // The lowest point rests on a rule, with just enough ruled space above the ink and room
-  // for the labels (or one more rule) below.
+  const inkH = Math.max(...placed.map((p) => p.up)) * unit;
+  const below = Math.max(...placed.map((p) => p.down)) * unit;
+  // Each outline's base (§48) rests on a rule, with just enough ruled space above the ink,
+  // and room below for what hangs under the line and the labels (or one more rule).
   const baselineY = Math.max(1, Math.ceil((0.35 * ls + inkH) / ls)) * ls;
-  const height = baselineY + Math.max(0.8 * ls, 26);
+  const labelY = baselineY + Math.max(0.55 * ls, 18, below + 14);
+  const height = Math.max(baselineY + Math.max(0.8 * ls, 26), labelY + 8);
   const width = (x - STRIP_GAP) * unit + 32;
   const origin = { x: 16, y: baselineY };
   const compiled = { segments: placed.flatMap((p) => p.c.segments), start: placed[0].c.start, end: placed[placed.length - 1].c.end };
@@ -36,7 +38,7 @@ export function actualSizeStrip(examples, { lineSpacing: ls, labels = true, onPi
   const svg = renderCompiledSVG(compiled, { unit, width, height, origin, strokeWidth: 2.2, label });
   for (const p of placed) {
     if (labels) {
-      const text = svgEl('text', { x: origin.x + ((p.from + p.to) / 2) * unit, y: baselineY + Math.max(0.55 * ls, 18), 'text-anchor': 'middle', class: 'strip-label' });
+      const text = svgEl('text', { x: origin.x + ((p.from + p.to) / 2) * unit, y: labelY, 'text-anchor': 'middle', class: 'strip-label' });
       text.textContent = p.example.title;
       text.dataset.id = p.example.id;
       svg.append(text);
@@ -126,7 +128,8 @@ export function createExamplePanel({ art, title, meaning, source, counter, score
     const compiled = compileExample(example);
     const box = bbox(compiled);
     const inkW = (box.maxX - box.minX) * unit;
-    const inkH = (box.maxY - box.minY) * unit;
+    const inkH = (box.maxY - compiled.base) * unit; // above the line
+    const below = (compiled.base - box.minY) * unit; // hanging below it
 
     const label = `Gregg shorthand for ${example.title}`;
     const panelW = art.clientWidth || 300;
@@ -135,13 +138,13 @@ export function createExamplePanel({ art, title, meaning, source, counter, score
     const bigSvg = enlargedSVG(example, { maxUnit: 60, width: panelW - 48, height: 100, pad: 24, strokeWidth: 4, label: `${label}, enlarged` });
     big.replaceChildren(bigSvg);
 
-    // Actual size: the lowest point of the outline sits on a ruled line.
+    // Actual size: the outline's base (§48) sits on a ruled line.
     const width = Math.max(panelW, inkW + 32);
     const left = Math.max(16, (width - inkW) / 2);
     const baselineIndex = Math.max(2, Math.ceil((0.75 * lineSpacing + inkH) / lineSpacing));
     const baselineY = baselineIndex * lineSpacing;
-    const height = baselineY + lineSpacing;
-    const origin = { x: left - box.minX * unit, y: baselineY + box.minY * unit };
+    const height = baselineY + Math.max(lineSpacing, below + 8);
+    const origin = { x: left - box.minX * unit, y: baselineY + compiled.base * unit };
     const actualSvg = renderCompiledSVG(compiled, { unit, width, height, origin, strokeWidth: 2.2, label: `${label}, actual size` });
     actual.style.height = `${height}px`;
     actual.replaceChildren(actualSvg);

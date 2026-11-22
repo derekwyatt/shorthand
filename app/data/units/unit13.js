@@ -118,14 +118,6 @@ export default {
     { write: 'word-noise' },
     { write: 'word-choice' },
     { choose: ['word-noise', ['word-annoy', 'word-noise', 'word-oil', 'word-choice']] },
-    { read: ['More oi words', 'Manual §113, p. 62', [
-      'The same sign in enjoy, join, boy, toy, voice.'
-    ], ['word-enjoy', 'word-join', 'word-boy', 'word-toy', 'word-voice']] },
-    { write: 'word-enjoy' },
-    { write: 'word-join' },
-    { write: 'word-boy' },
-    { write: 'word-toy' },
-    { choose: ['word-toy', ['word-join', 'word-boy', 'word-toy', 'word-voice']] },
     { read: ['The broken circle', 'Manual §112, p. 61', [
       '“The sign for the diphthong i is a large circle with an indentation”, generally called “the broken circle”.',
       '“The sign for the diphthong i is treated as a circle, and conforms to the rules for joining circles.”',
@@ -136,6 +128,14 @@ export default {
     { write: 'word-fine' },
     { write: 'word-file' },
     { choose: ['word-fine', ['word-rise', 'word-fight', 'word-fine', 'word-file']] },
+    { read: ['More oi words', 'Manual §113, p. 62', [
+      'The same sign in enjoy, join, boy, toy, voice.'
+    ], ['word-enjoy', 'word-join', 'word-boy', 'word-toy', 'word-voice']] },
+    { write: 'word-enjoy' },
+    { write: 'word-join' },
+    { write: 'word-boy' },
+    { write: 'word-toy' },
+    { choose: ['word-toy', ['word-join', 'word-boy', 'word-toy', 'word-voice']] },
     { read: ['ī after another stroke', 'Manual §113, p. 62', [
       'The broken circle joins as a circle does, before or after a stroke: sign, fire, fly, sight, ride, lie.'
     ], ['word-sign', 'word-fire', 'word-fly', 'word-sight', 'word-ride', 'word-lie']] },
@@ -161,8 +161,8 @@ export default {
     { write: 'word-try' },
     { write: 'word-drive' },
     { choose: ['word-drive', ['word-type', 'word-pipe', 'word-try', 'word-drive']] },
-    { read: ['Word drill: mixed', 'Manual §113, p. 62', [
-      'Two more: realize, final, tried, excited. Smile follows the brief form mile: the l is dropped.'
+    { read: ['Word drill: mixed', 'Manual §113, pp. 62–63', [
+      'Four more: realize, final, tried, excited. Smile follows the brief form mile: the l is dropped.'
     ], ['word-realize', 'word-final', 'word-tried', 'word-excited', 'word-smile']] },
     { write: 'word-realize' },
     { write: 'word-final' },
@@ -201,5 +201,9 @@ export default {
     { write: 'brief-light' },
     { write: 'brief-thousand' },
     { choose: ['brief-mile', ['brief-point', 'brief-mile', 'brief-light', 'brief-thousand']] },
+    { read: ["Ly after the diphthong ī", "Manual §116, p. 63", [
+      "“When word forms end with the diphthong i, the double circle is used to express the diphthong and the termination ly”: lightly, kindly, rightly, nightly.",
+      "The app cannot draw or score these outlines yet, so there is no writing practice for them here: study the forms in the Manual below and copy them on the pad.",
+    ], []], manual: [116, 116] },
   ],
 };

@@ -7,7 +7,7 @@ export default {
   level: { name: 'th, con / com, ly, phrases', description: 'The two th motions, the prefixes con and com, the suffix ly, phrasing principles, frequent phrases and brief forms (Manual §78–88)' },
   rules: {
     R78: 'The left-motion th is used before and after o, r, l; in other cases the right-motion th is used (Manual §78).',
-    R80: 'The prefixes con, com, coun, cog, followed by a consonant, are expressed by k, and the suffix ly is expressed by a small circle (Manual §80).',
+    R80: 'The prefixes con, com, coun, cog, followed by a consonant, are expressed by k, and the suffix ly is expressed by a small circle; ily and ally, by a loop (Manual §80).',
     R81: 'In words beginning with comm or conn, the second m or n is written; when con or com is followed by a vowel or by r or l, write kn for con and km for com (Manual §81).',
   },
   words: [
@@ -133,18 +133,14 @@ export default {
     { write: 'word-comrade' },
     { write: 'word-comic' },
     { choose: ['word-comedy', ['word-comedy', 'word-comic', 'word-comrade', 'word-common']] },
-    { read: ['Brief forms', 'Manual §88, p. 45', [
-      'Seven more common words: special / speak / speech, week / weak, floor / flour, value, office, complete / complain, future.',
-      '“The angle between k and p is maintained in the word complete to make a distinction between complete and keep.”',
-    ], ['brief-special', 'brief-week', 'brief-floor', 'brief-value', 'brief-office', 'brief-complete']] },
-    { write: 'brief-special' },
-    { write: 'brief-week' },
-    { write: 'brief-floor' },
-    { write: 'brief-value' },
-    { write: 'brief-office' },
-    { write: 'brief-complete' },
-    { write: 'brief-future' },
-    { choose: ['brief-office', ['brief-office', 'brief-floor', 'brief-value', 'brief-future']] },
+    { read: ["Ly after a circle vowel", "Manual §82, p. 43", [
+      "“After a circle vowel, ly is written on the opposite side from the vowel”: dearly, daily, nearly.",
+      "The app cannot draw or score these outlines yet, so there is no writing practice for them here: study the forms in the Manual below and copy them on the pad.",
+    ], []], manual: [82, 82] },
+    { read: ["Plurals with s joined differently", "Manual §83, p. 43", [
+      "“To express the plural of some brief forms ending in a circle and of some words ending in a loop, a slight change is made in the manner of joining s”: names, letters, families.",
+      "The app cannot draw or score these outlines yet, so there is no writing practice for them here: study the forms in the Manual below and copy them on the pad.",
+    ], []], manual: [83, 83] },
     { read: ['To before a downstroke, o, r, l', 'Manual §84, p. 44', [
       '“Before words beginning with a downward character or o, r, l, the word to is expressed by t”: to see, to say, to pay, to which, to ship, to our, to place.',
     ], ['phrase-to-see', 'phrase-to-say', 'phrase-to-pay', 'phrase-to-which', 'phrase-to-ship', 'phrase-to-our']] },
@@ -186,5 +182,17 @@ export default {
     { write: 'phrase-he-will' },
     { write: 'phrase-he-is' },
     { choose: ['phrase-of-it', ['phrase-of-it', 'phrase-of-its', 'phrase-of-their', 'phrase-of-which']] },
+    { read: ['Brief forms', 'Manual §88, p. 45', [
+      'Seven more common words: special / speak / speech, week / weak, floor / flour, value, office, complete / complain, future.',
+      '“The angle between k and p is maintained in the word complete to make a distinction between complete and keep.”',
+    ], ['brief-special', 'brief-week', 'brief-floor', 'brief-value', 'brief-office', 'brief-complete']] },
+    { write: 'brief-special' },
+    { write: 'brief-week' },
+    { write: 'brief-floor' },
+    { write: 'brief-value' },
+    { write: 'brief-office' },
+    { write: 'brief-complete' },
+    { write: 'brief-future' },
+    { choose: ['brief-office', ['brief-office', 'brief-floor', 'brief-value', 'brief-future']] },
   ],
 };

@@ -78,6 +78,21 @@ export default {
     { write: 'word-replace' },
     { write: 'word-repent' },
     { choose: ['word-replace', ['word-reasonable', 'word-reception', 'word-replace', 'word-repent']] },
+    { read: ["De before k and g", "Manual §146, p. 80", [
+      "“The vowel is retained when de precedes k, g, as in decay, degrade.”",
+    ], []], manual: [146, 146] },
+    { read: ["Re before a downward character", "Manual §147, p. 80", [
+      "“The vowel in re is omitted only before a downward character, as in replace, repent, review, repair, resign, reception.” Before any other stroke the vowel of re is written.",
+    ], []], manual: [147, 147] },
+    { read: ['Phrasing', 'Manual §148, p. 81', [
+      '“The word had when following a pronoun is expressed as shown in the following illustrations.” The phrase I had is one outline.'
+    ], ['phrase-i-had']] },
+    { write: 'phrase-i-had' },
+    { read: ["Was not and is not", "Manual §149, p. 81", [
+      "“The phrases was-not and is-not are expressed easily and legibly by using the blending principle”: was not, he was not, it is not, it was not, there was not, there is not.",
+      "“If the contractions wasn’t, isn’t, etc. need to be positively indicated, the apostrophe is placed above the forms.”",
+      "The app cannot draw or score these outlines yet, so there is no writing practice for them here: study the forms in the Manual below and copy them on the pad.",
+    ], []], manual: [149, 149] },
     { read: ['Brief forms', 'Manual §150, p. 81', [
       'Brief forms for common words: record, nevertheless / envelope, insure / insurance, educate / education, difficult / difficulty, newspaper / inspect.'
     ], ['brief-record', 'brief-nevertheless', 'brief-insure', 'brief-educate', 'brief-difficult', 'brief-newspaper']] },
@@ -86,9 +101,5 @@ export default {
     { write: 'brief-insure' },
     { write: 'brief-educate' },
     { choose: ['brief-insure', ['brief-record', 'brief-insure', 'brief-difficult', 'brief-newspaper']] },
-    { read: ['Phrasing', 'Manual §148, p. 81', [
-      '“The word had when following a pronoun is expressed as shown in the following illustrations.” The phrase I had is one outline.'
-    ], ['phrase-i-had']] },
-    { write: 'phrase-i-had' },
   ],
 };

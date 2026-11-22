@@ -101,6 +101,9 @@ export default {
     { write: 'word-unseen' },
     { write: 'word-envy' },
     { write: 'word-impel' },
+    { write: 'word-indeed' },
+    { write: 'word-impression' },
+    { choose: ['word-impression', ['word-indeed', 'word-impression', 'word-infer', 'word-unseen']] },
     { choose: ['word-engine', ['word-infer', 'word-envy', 'word-engine', 'word-impel']] },
     { read: ['Prefixes before a vowel', 'Manual §106, p. 57', [
       '“when a written vowel follows the prefix, the initial vowel is retained.”',
@@ -111,10 +114,8 @@ export default {
     { choose: ['word-emit', ['word-innate', 'word-emotion', 'word-emit', 'word-indeed']] },
     { read: ['Ex, ings and ingly', 'Manual §106, p. 57', [
       '“Ex is expressed by es. The suffix ings is expressed by a left s and ingly by a small circle substituted for the ing-dot.”',
-    ], ['word-indeed', 'word-impression']] },
-    { write: 'word-indeed' },
-    { write: 'word-impression' },
-    { choose: ['word-impression', ['word-indeed', 'word-impression', 'word-infer', 'word-unseen']] },
+      'The app cannot draw or score these outlines yet, so there is no writing practice for them here: study the forms in the Manual below and copy them on the pad.',
+    ], []], manual: [106, 106] },
     { read: ['Negative words', 'Manual §107, p. 57', [
       '“Negative words beginning with in, un, im in which the n or m is doubled are distinguished from the positive forms by omitting one of the doubled consonants and inserting the initial vowel.”',
     ], ['word-unknown']] },

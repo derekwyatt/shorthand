@@ -9,7 +9,7 @@ export default {
     R72: 'It is generally more facile to use the circle for the obscure vowel sound heard in ur, as in church, murmur, urge, hurt (Manual §72).',
     R73: 'Frequent-word drill (Manual §73).',
     R74: 'The letter s is added to a final left-motion circle on straight strokes by changing the circle to a loop (Manual §74).',
-    R76: 'After a word ending in a left-motion circle, or an abbreviated word, a distinctive form joins the r: bigger, former (Manual §76).',
+    R76: 'After abbreviated words and words ending in a left-motion circle on straight strokes, a disjoined r expresses er, or; when the forms are distinctive the r is joined (bigger); when a brief form ends with the last consonant of a word, the left-motion circle expresses or, er after straight strokes (former) (Manual §76).',
   },
   words: [
     ['art', ['a-rev', 't'], 'R71', 39],
@@ -76,7 +76,7 @@ export default {
     { choose: ['word-art', ['word-art', 'word-arch', 'word-arm', 'word-heart']] },
     { read: ['Between straight strokes', 'Manual §71–72, p. 39', [
       '“Between straight strokes in the same direction”: tart, dared, church, murmur. One circle written the other way stands for the vowel and the r.',
-      '“It is generally more facile to use the circle for the obscure vowel sound heard in ur as in church, murmur, urge, hurt.” So the obscure ur takes the small circle, written left-motion.',
+      '“It is generally more facile to use the circle for the obscure vowel sound heard in ur as in church, murmur, urge, hurt.” On the plates the obscure ur is a small circle, written left-motion.',
     ], ['word-tart', 'word-dared', 'word-church', 'word-murmur', 'word-urge', 'word-hurt']] },
     { write: 'word-tart' },
     { write: 'word-dared' },
@@ -108,12 +108,6 @@ export default {
     { write: 'word-nears' },
     { write: 'word-manners' },
     { choose: ['word-stairs', ['word-stairs', 'word-shares', 'word-tears', 'word-nears']] },
-    { read: ['Joining r after another form', 'Manual §76, p. 40', [
-      '“When the forms are distinctive, the r is joined, thus:” greater, bigger, smaller.',
-      '“When a brief form ends with the last consonant of a word, the left motion circle is used to express or, er after straight strokes:” sooner, former.',
-    ], ['word-bigger', 'word-former']] },
-    { write: 'word-bigger' },
-    { write: 'word-former' },
     { read: ['Brief forms', 'Manual §75, p. 40', [
       'Nine more common words with their own outlines: real / regard, company / keep, become / book, importance / important, love, collect, children, opinion, deal / dear.',
     ], ['brief-real', 'brief-company', 'brief-become', 'brief-importance', 'brief-love', 'brief-collect']] },
@@ -128,5 +122,12 @@ export default {
     { write: 'brief-deal' },
     { choose: ['brief-company', ['brief-company', 'brief-become', 'brief-collect', 'brief-children']] },
     { choose: ['brief-love', ['brief-love', 'brief-real', 'brief-importance', 'brief-opinion']] },
+    { read: ['Joining r after another form', 'Manual §76, p. 40', [
+      '“After abbreviated words and words ending in a left-motion circle on straight strokes, a disjoined r expresses er, or, thus:” keeper, dearer, worker. The app cannot draw a disjoined r yet: study those in the Manual below.',
+      '“When the forms are distinctive, the r is joined, thus:” greater, bigger, smaller.',
+      '“When a brief form ends with the last consonant of a word, the left motion circle is used to express or, er after straight strokes:” sooner, former.',
+    ], ['word-bigger', 'word-former']], manual: [76, 76] },
+    { write: 'word-bigger' },
+    { write: 'word-former' },
   ],
 };

@@ -77,7 +77,7 @@ export default {
   lesson: [
     { read: ['Omitting short u', 'Manual §124, p. 68', [
       '“In the body of a word short u and ow are omitted before n and m, and short u before straight downstrokes.”',
-      'So sun, sunk, fun, funny, town, down, run, rung are written without the u.'
+      'So sun, sunk, fun, funny, run and rung are written without the u, and town and down without the ow.'
     ], ['word-sun', 'word-sunk', 'word-fun', 'word-funny', 'word-town', 'word-down', 'word-run', 'word-rung']] },
     { write: 'word-sun' },
     { write: 'word-fun' },
@@ -101,7 +101,7 @@ export default {
     { write: 'word-million' },
     { choose: ['word-luncheon', ['word-summer', 'word-sunshine', 'word-luncheon', 'word-million']] },
     { read: ['Omitting u before other strokes', 'Manual §124, p. 68', [
-      'Short u is omitted before straight downstrokes as well: crush, clutch, touch, trunk, rush, judge, drown.'
+      'Short u is omitted before straight downstrokes as well: crush, clutch, touch, rush, judge. Trunk (u before n) and drown (ow before n) are more words for the first half of the rule.'
     ], ['word-crush', 'word-clutch', 'word-touch', 'word-trunk', 'word-rush', 'word-judge', 'word-drown']] },
     { write: 'word-crush' },
     { write: 'word-clutch' },

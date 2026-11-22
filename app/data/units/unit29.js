@@ -5,7 +5,7 @@ export default {
   pages: 'pp. 125–128',
   level: { name: 'More disjoined word-beginnings', description: 'Disjoined prefixes for decl, recl, magn, para, self, over, grand, short, super, trans and under (Manual §214–216)' },
   rules: {
-    R214: 'Analogical word-beginnings are disjoined and written above the rest of the word: “The prefix para is written above the rest of the word” (Manual §214).',
+    R214: 'Analogical word-beginnings are disjoined: “The prefix para is written above the rest of the word; post is written on the line close before the following character” (Manual §214).',
     R216: 'Compounds are formed by joining simple syllable characters to the disjoined signs, as in unrestricted (Manual §216).',
   },
   words: [
@@ -109,7 +109,7 @@ export default {
     { write: 'word-transaction' },
     { choose: ['word-translation', ['word-translation', 'word-transaction', 'word-transacted', 'word-transact']] },
     { read: ['A compound', 'Manual §216, p. 127', [
-      'Unrestricted: un and restr joined to the self sign, then the rest of the word below it.',
+      'Unrestricted: un and the restr sign (n, r and the left s, as in unrestrained), with ict (k t) written below it.',
       'Unrestricted.',
     ], ['word-unrestricted']] },
     { write: 'word-unrestricted' },

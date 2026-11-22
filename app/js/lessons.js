@@ -7,7 +7,7 @@
 // Progress (current step and steps done) is kept in localStorage; strokes are not.
 import { LESSONS, PASS_SCORE, stepKey, exampleFor, isTask } from '../data/lessons.js';
 import { sectionPlate, readingPlate } from '../data/plates.js';
-import { openManual, unitOfParagraph } from './manualtext.js';
+import { openManual, unitOfParagraph, renderBlocks, paragraphBlocks } from './manualtext.js';
 import { animateStroke } from './render.js';
 import { createExamplePanel, actualSizeStrip, enlargedSVG, printedOutline, printedCaption, pageLink } from './practice.js';
 import { AUTHOR, sourceUrl } from '../data/source.js';
@@ -146,6 +146,17 @@ export function createLessons({ panel, pad, assist, unitPx, linePicks }) {
     persist();
     renderUnits();
     renderNav();
+  }
+
+  // The Manual's own paragraphs, text and figures, as transcribed on the source site.
+  function manualParagraphs(range) {
+    if (!range) return [];
+    const [from, to] = range;
+    return [
+      el('div', { className: 'ex-caption', textContent: `The Manual, §${from}${to > from ? `–${to}` : ''}` }),
+      el('div', { className: 'manual-text lesson-manual' }, ...renderBlocks(paragraphBlocks(from, to))),
+      credit(`As transcribed by ${AUTHOR}:`, sourceUrl.unit(unitOfParagraph(from), from), 'read it at greggshorthand.github.io'),
+    ];
   }
 
   // Section plates of a rule: whole figures or tables from the manual.
@@ -305,6 +316,7 @@ export function createLessons({ panel, pad, assist, unitPx, linePicks }) {
       manualRef(s.ref),
       ...s.text.map((t) => el('p', { className: 'lesson-text', textContent: t })),
       ...sectionPlates(s.plates),
+      ...manualParagraphs(s.manual),
       ...(figures.length ? [
         el('div', { className: 'ex-caption', textContent: 'Enlarged (green = start, red = end), and as printed in the manual' }),
         el('div', { className: 'lesson-figs' }, ...figures.map((f) => f.fig)),

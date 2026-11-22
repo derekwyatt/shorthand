@@ -104,7 +104,7 @@ export default {
     { write: 'word-pull' },
     { choose: ['word-foot', ['word-foot', 'word-food', 'word-fool', 'word-fur']] },
     { read: ['Us without an angle', 'Manual §93, p. 49', [
-      '“The combination us is written without an angle at the beginning of words, or when it follows a downstroke or k, g, as in us, shoes, campus, cousin, etc.” The s continues the turn of the hook in one smooth curve.',
+      '“The combination us is written without an angle at the beginning of words, or when it follows a downstroke or k, g, as in us, shoes, campus, cousin, etc.” The s continues the turn of the hook in one smooth curve; the plates join it the same way after l and th (plus, lose, thus).',
     ], ['word-us', 'word-does', 'word-plus', 'word-thus', 'word-cousin', 'word-lose']] },
     { write: 'word-us' },
     { write: 'word-does' },

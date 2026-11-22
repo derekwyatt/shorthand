@@ -140,6 +140,10 @@ export default {
     { write: 'word-child' },
     { write: 'word-appealed' },
     { choose: ['word-held', ['word-failed', 'word-held', 'word-child', 'word-hold']] },
+    { read: ["Days and months", "Manual §137, p. 75", [
+      "The Manual gives a short form for each day of the week and each month of the year. Learn them from the table below.",
+      "The app cannot draw or score these outlines yet, so there is no writing practice for them here: study the forms in the Manual below and copy them on the pad.",
+    ], []], manual: [137, 137] },
     { read: ['Brief forms', 'Manual §138, p. 75', [
       'Brief forms for common words: refer / reference, unable, stock, suggest / suggestion.'
     ], ['brief-refer', 'brief-unable', 'brief-stock', 'brief-suggest']] },

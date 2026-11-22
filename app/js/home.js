@@ -51,10 +51,11 @@ function linked(text) {
 
 export function buildHome(container) {
   const lines = STORY.lines.map((s) => ({ text: s, words: layoutWords(storyWords(s)).map((w) => w.compiled) }));
-  // One frame for every word: each sits with its lowest point on the rule (as on the pad),
-  // and the frame is as tall as the tallest outline.
+  // One frame for every word: each sits with its base on the rule (§48, as on the pad), and
+  // the frame reaches from the tallest outline to the lowest one hanging below the line.
   const top = Math.max(...lines.flatMap((l) => l.words.map((c) => bbox(c).maxY)));
-  const height = (top + 2 * PAD_Y) * UNIT;
+  const bottom = Math.min(0, ...lines.flatMap((l) => l.words.map((c) => bbox(c).minY)));
+  const height = (top - bottom + 2 * PAD_Y) * UNIT;
   const baseline = (top + PAD_Y) * UNIT;
 
   const storyLines = lines.map(({ text, words }) => {

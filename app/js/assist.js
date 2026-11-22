@@ -51,8 +51,9 @@ export function createAssist({ overlay, check, hint, model, modelOf, unitPx, ena
     const compiled = compileExample(example);
     const box = bbox(compiled);
     const u = unitPx() * scale;
-    const baseline = Math.max(1, Math.ceil(((box.maxY - box.minY) * u + 4) / lineSpacing)) * lineSpacing;
-    const origin = { x: MODEL_LEFT - box.minX * u, y: baseline + box.minY * u };
+    // Its base (§48) on the rule; a circle under the first consonant hangs below it.
+    const baseline = Math.max(1, Math.ceil(((box.maxY - compiled.base) * u + 4) / lineSpacing)) * lineSpacing;
+    const origin = { x: MODEL_LEFT - box.minX * u, y: baseline + compiled.base * u };
     const path = svgEl('path', { d: pathData(compiled, u, origin), class: 'model-path' });
     const dots = compiled.segments.filter((s) => s.type === 'dot').map((s) => markSVG(s, u, origin, 2.8, s.dash ? 'model-path' : 'model-dot'));
     model.replaceChildren(path, ...dots);

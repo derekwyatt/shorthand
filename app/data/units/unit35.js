@@ -45,6 +45,10 @@ export default {
       'Birmingham.'
     ], ['word-birmingham']] },
     { write: ['word-birmingham', 'Write “Birmingham”.'] },
+    { read: ["Cities and states joined", "Manual §242, p. 152", [
+      "“The names of cities and states often may be joined”: Buffalo, N. Y.; St. Paul, Minn.; Boston, Mass.; Chicago, Ill.; and more in the table below.",
+      "The app cannot draw or score these outlines yet, so there is no writing practice for them here: study the forms in the Manual below and copy them on the pad.",
+    ], []], manual: [242, 242] },
     { read: ['State of', 'Manual §243, p. 152', [
       'When the words State of precede the name of a state, “omit of and join the words, if convenient”',
       'State is its brief form, and the name of the state is joined to its t.',
@@ -61,5 +65,9 @@ export default {
     { write: ['phrase-state-of-minn', 'Write “State of Minn.”.'] },
     { choose: ['phrase-state-of-pa', ['phrase-state-of-pa', 'phrase-state-of-la', 'phrase-state-of-ga', 'phrase-state-of-minn']] },
     { choose: ['phrase-state-of-minn', ['phrase-state-of-minn', 'phrase-state-of-pa', 'phrase-state-of-la', 'phrase-state-of-ga']] },
+    { read: ["Canadian provinces and cities", "Manual §244, p. 153", [
+      "The Manual’s forms for the Canadian provinces and principal cities, including Newfoundland and Labrador.",
+      "The app cannot draw or score these outlines yet, so there is no writing practice for them here: study the forms in the Manual below and copy them on the pad.",
+    ], []], manual: [244, 244] },
   ],
 };

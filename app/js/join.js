@@ -357,7 +357,33 @@ function compileDisjoined(outline) {
   };
 }
 
+// §48: "The base of the first consonant of a word rests on the line of writing, but when s
+// precedes another consonant, the base of the consonant following the s is placed on the
+// line." `base` is the y of that point: a vowel circle or hook before or under it may hang
+// below the line. An outline with a disjoined part, or with no consonant, rests its lowest
+// point on the line instead.
+const NOT_CONSONANT = new Set(['a', 'a-rev', 'a-rev-s', 'e', 'e-rev', 'e-rev-s', 'i', 'o', 'u', 'h', 'period']);
+const isConsonant = (tok) => !NOT_CONSONANT.has(tok) && !isMark(tok) && !isDisjoin(tok);
+function baseOf(outline, c) {
+  const lowest = bbox(c).minY;
+  if (outline.some(isDisjoin)) return lowest;
+  let at = outline.findIndex(isConsonant);
+  if (at < 0) return lowest;
+  if (outline[at] === 's-left' || outline[at] === 's-right') {
+    const next = outline.findIndex((tok, i) => i > at && isConsonant(tok));
+    if (next >= 0) at = next;
+  }
+  const own = c.segments.filter((seg, k) => c.tokenOf[k] === at && seg.type === 'cubic');
+  if (!own.length) return lowest;
+  return Math.min(...own.flatMap((seg) => Array.from({ length: 17 }, (_, i) => cubicPoint(seg, i / 16).y)));
+}
+
 export function compileOutline(outline) {
+  const c = compileParts(outline);
+  return { ...c, base: baseOf(outline, c) };
+}
+
+function compileParts(outline) {
   if (outline.some(isDisjoin)) return compileDisjoined(outline);
   if (!outline.some(isMark)) return compileCore(outline);
   const core = [], origin = [], marks = [];
@@ -509,6 +535,7 @@ export function translateCompiled(c, dx, dy) {
     ...c,
     start: movePoint(c.start, dx, dy),
     end: movePoint(c.end, dx, dy),
+    ...(c.base === undefined ? {} : { base: c.base + dy }),
     segments: c.segments.map((s) => (s.type === 'dot'
       ? { ...s, p: movePoint(s.p, dx, dy) }
       : { type: 'cubic', p0: movePoint(s.p0, dx, dy), c1: movePoint(s.c1, dx, dy), c2: movePoint(s.c2, dx, dy), p3: movePoint(s.p3, dx, dy) })),
@@ -518,7 +545,8 @@ export function translateCompiled(c, dx, dy) {
 export const WORD_GAP = 1.0; // space between outlines, in U
 const BRIEF_DOT_HEIGHT = 0.35; // the "a, an" dot sits a little above the line
 
-// Lays words ({ text, tokens }) out left to right, each outline resting on the line (y = 0).
+// Lays words ({ text, tokens }) out left to right, each outline resting on the line (y = 0)
+// at its base (§48).
 // Gregg has no position writing (Manual p. x), so resting on the line is a free choice.
 export function layoutWords(words) {
   let x = 0;
@@ -526,7 +554,7 @@ export function layoutWords(words) {
     const c = compileOutline(w.tokens);
     const b = bbox(c);
     const dotOnly = c.segments.every((s) => s.type === 'dot');
-    const placed = translateCompiled(c, x - b.minX, dotOnly ? BRIEF_DOT_HEIGHT - b.minY : -b.minY);
+    const placed = translateCompiled(c, x - b.minX, dotOnly ? BRIEF_DOT_HEIGHT - b.minY : -c.base);
     x += (b.maxX - b.minX) + WORD_GAP;
     return { ...w, compiled: placed };
   });
@@ -536,7 +564,7 @@ export function compileSentence(words) {
   const placed = layoutWords(words);
   const segments = placed.flatMap((w) => w.compiled.segments);
   const firstCubic = segments.find((s) => s.type === 'cubic');
-  return { segments, start: firstCubic ? firstCubic.p0 : placed[0].compiled.start, end: placed[placed.length - 1].compiled.end };
+  return { segments, start: firstCubic ? firstCubic.p0 : placed[0].compiled.start, end: placed[placed.length - 1].compiled.end, base: 0 };
 }
 
 // Geometry for any practice example (letter, word or sentence).

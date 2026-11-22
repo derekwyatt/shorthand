@@ -2,7 +2,7 @@
 export default {
   unit: 20,
   subtitle: 'Expressing r',
-  pages: 'pp. 88–91',
+  pages: 'pp. 88–92',
   level: { name: 'Expressing r', description: 'The left-motion circle for r, the r omitted in ar, er, or, ir words, and the syllable ther (Manual §161–168)' },
   rules: {
     R161: '“A circle or loop is written with the left motion to express r following the vowel” between a downward character and a forward straight stroke: chat, sham with the right motion; chart, charm with the left (Manual §161).',
@@ -78,8 +78,8 @@ export default {
     { write: 'word-sham' },
     { write: 'word-charm' },
     { choose: ['word-chart', ['word-chat', 'word-chart', 'word-sham', 'word-charm']] },
-    { read: ['The left circle after ch, sh, j', 'Manual §162, pp. 88–89', [
-      '“The circle is placed above the next stroke after p, b, as in burn, bird, and below the next stroke in all others, as in charm, farm.” So after ch, sh and j it goes below.',
+    { read: ['The left circle after ch, sh, j', 'Manual §161–162, pp. 88–89', [
+      '“The circle is placed above the next stroke after p, b, as in burn, bird, and below the next stroke in all others, as in charm, farm.” So after ch, sh and j it goes below; after p and b, above.',
       'Shirt, charter, cheered, shared, chairman, germ, adjourn.'
     ], ['word-shirt', 'word-charter', 'word-cheered', 'word-shared', 'word-chairman', 'word-germ', 'word-adjourn']] },
     { write: 'word-shirt' },
@@ -99,7 +99,7 @@ export default {
     { read: ['The s and th contrary joinings', 'Manual §164, p. 89', [
       '“Before straight lines, s in ser, cer, sar, and th in ther, thir, may be written contrary to the usual method of joining to express r.”'
     ], []] },
-    { read: ['The r omitted', 'Manual §165, p. 90', [
+    { read: ['The r omitted', 'Manual §165–166, p. 90', [
       '“In many words containing ar, er, or, ir, as in the words large, serve, warm, sort, firm, circle, corner, the r is omitted. In applying this principle advantage is simply taken of dropping a sound that ordinarily is not stressed in speaking.”',
       'Large, larger, learn, terms, cord, toward, towards, sport, board, border, quarter.'
     ], ['word-large', 'word-larger', 'word-learn', 'word-terms', 'word-cord', 'word-toward', 'word-towards', 'word-sport', 'word-board', 'word-border', 'word-quarter']] },
@@ -125,6 +125,10 @@ export default {
     { write: 'word-western' },
     { write: 'word-modern' },
     { choose: ['word-ascertain', ['word-certain', 'word-ascertain', 'word-eastern', 'word-modern']] },
+    { read: ["Worthy and worth", "Manual §167, p. 91", [
+      "“The termination worthy, as in noteworthy, trustworthy, is expressed by thi, and worth by ūth”: noteworthy, trustworthy, Ainsworth.",
+      "The app cannot draw or score these outlines yet, so there is no writing practice for them here: study the forms in the Manual below and copy them on the pad.",
+    ], []], manual: [167, 167] },
     { read: ['The syllable ther', 'Manual §168, p. 91', [
       '“The syllable ther, as in either, other, is conveniently expressed by the sign for th.” The left-motion th is used in father to distinguish this word from faith.',
       'Mother, neither, gather, brother, weather, father, leather.'

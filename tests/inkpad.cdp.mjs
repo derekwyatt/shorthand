@@ -883,7 +883,7 @@ try {
   })()`);
   check(/Annivman\.pdf#page=\d+$/.test(src.page ?? '') && /read it in the Manual/.test(src.para ?? '') && /anunit\d\d\.html#p\d+$/.test(src.back ?? '') && src.closed,
     `a Practice source line links its page to the scan, and opens the Manual in the app, which links on to the site (${JSON.stringify(src)})`);
-  check(src.sections.join() === '§11–12 https://greggshorthand.github.io/anunit01.html#p11,§4 https://greggshorthand.github.io/anunit01.html#p4',
+  check(src.sections.join() === '§3 https://greggshorthand.github.io/anunit01.html#p3,§23 https://greggshorthand.github.io/anunit02.html#p23,§29 https://greggshorthand.github.io/anunit03.html#p29,§34 https://greggshorthand.github.io/anunit04.html#p34,§11–12 https://greggshorthand.github.io/anunit01.html#p11,§4 https://greggshorthand.github.io/anunit01.html#p4',
     `a Practice source line links each § to its paragraph on the source site (${src.sections.join()})`);
 
   // Settings: the menu opens and closes; a theme recolours the app and the pad's pen.

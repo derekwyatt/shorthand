@@ -28,7 +28,7 @@ export default {
   brief: [],
   phrases: [],
   lesson: [
-    { read: ['States, territories and cities', 'Manual §238, p. 146', [
+    { read: ['States, territories and cities', 'Manual §238, pp. 146–147', [
       '“The abbreviations used in the following list are those adopted by the Post Office Department”',
       'Each state is written as its Post Office abbreviation, not as the full name.',
       'Ala., Md., Okla., Va.'

@@ -3,7 +3,7 @@ export default {
   unit: 23,
   subtitle: 'Omission of d; ul, al, sub, less',
   pages: 'pp. 100–103',
-  level: { name: 'Omission of d; ul, al, sub, less', description: 'The d omitted in many words, before m or v and after n, and the syllables ul, al, sub and less (Manual §178–185)' },
+  level: { name: 'Omission of d; ul, al, sub, less', description: 'The d omitted when slightly enunciated and before m or v, and the syllables ul, al, sub and less (Manual §178–185)' },
   rules: {
     R178: '“When slightly enunciated, d is often omitted” (Manual §178).',
     R179: '“The d is written in the following words”: commend, contend, attend (Manual §179).',
@@ -76,6 +76,17 @@ export default {
     { write: 'word-advance' },
     { write: 'word-advise' },
     { choose: ['word-advance', ['word-advance', 'word-admit', 'word-admonish', 'word-advise']] },
+    { read: ['Phrases with admire, advance', 'Manual §181, p. 101', [
+      '“In the words admire, advice, advise, advance, coming under this rule, the initial vowel also is omitted to facilitate phrasing, as illustrated in the following useful phrases:”',
+      'We admire, in advance.'
+    ], ['phrase-we-admire', 'phrase-in-advance']] },
+    { write: 'phrase-we-admire' },
+    { write: 'phrase-in-advance' },
+    { choose: ['phrase-in-advance', ['phrase-in-advance', 'phrase-we-admire', 'word-advance', 'word-admit']] },
+    { read: ['Disjoined t for the past tense', 'Manual §182, p. 101', [
+      '“Where the last letter of a primitive form is omitted, the past tense is indicated by a disjoined t, thus:”',
+      'Contested, insisted, extended, requested, demanded, compounded.'
+    ], [], []] },
     { read: ['sub and al', 'Manual §183, p. 101', [
       '“The syllable ul is expressed by the oo-hook; al (pronounced aw-l), by the o-hook”.',
       '“Sub is expressed by a joined s; less, by l”.',
@@ -92,20 +103,16 @@ export default {
     { write: 'word-homeless' },
     { write: 'word-needless' },
     { choose: ['word-homeless', ['word-homeless', 'word-needless', 'word-thoughtless', 'word-subway']] },
-    { read: ['Disjoined t for the past tense', 'Manual §182, p. 101', [
-      '“Where the last letter of a primitive form is omitted, the past tense is indicated by a disjoined t, thus:”',
-      'Contested, insisted, extended, requested, demanded, compounded.'
-    ], [], []] },
+    { read: ["Sub before r, l, ch, j or a hook", "Manual §184, p. 101", [
+      "“Before r, l, ch, j, or a hook, s is written contrary to rule to express sub, as in suburb, sublime, subchief, subjoin.”",
+      "The app cannot draw or score these outlines yet, so there is no writing practice for them here: study the forms in the Manual below and copy them on the pad.",
+    ], []], manual: [184, 184] },
     { read: ['Disjoined s for sub', 'Manual §185, p. 101', [
       '“When sub is followed by a circle vowel, s is disjoined and placed on the line close to the following character, thus:”',
       'Subeditor, subhead.'
     ], [], []] },
-    { read: ['Phrases with admire, advance', 'Manual §181, p. 101', [
-      '“In the words admire, advice, advise, advance, coming under this rule, the initial vowel also is omitted to facilitate phrasing, as illustrated in the following useful phrases:”',
-      'We admire, in advance.'
-    ], ['phrase-we-admire', 'phrase-in-advance']] },
-    { write: 'phrase-we-admire' },
-    { write: 'phrase-in-advance' },
-    { choose: ['phrase-in-advance', ['phrase-in-advance', 'phrase-we-admire', 'word-advance', 'word-admit']] },
+    { read: ["Brief-form derivative drill", "Manual §186–187, p. 102", [
+      "Ten lines of words built from brief forms. Read each line, then check it against the key that follows the drill (§187).",
+    ], []], manual: [186, 187] },
   ],
 };

@@ -94,24 +94,6 @@ export default {
     { write: 'word-button' },
     { write: 'word-sweeten' },
     { choose: ['word-cotton', ['word-sudden', 'word-hidden', 'word-cotton', 'word-broaden']] },
-    { read: ['The syllable tain', 'Manual §155, p. 84', [
-      '“The blend is not employed when a strongly accented vowel or diphthong occurs in the syllable. Such words as dean, dine, team, tame, dome, dime, and other words of one syllable are written in full. The syllable tain, as in maintain, attain, however, is expressed by ten.”',
-      'Attain, detain, contain, maintain, attainable, bulletin.'
-    ], ['word-attain', 'word-detain', 'word-contain', 'word-maintain', 'word-attainable', 'word-bulletin']] },
-    { write: 'word-attain' },
-    { write: 'word-detain' },
-    { write: 'word-contain' },
-    { write: 'word-maintain' },
-    { choose: ['word-maintain', ['word-attain', 'word-detain', 'word-maintain', 'word-bulletin']] },
-    { read: ['Ten in longer words', 'Manual §156, p. 84', [
-      '“Where it is possible to use either ten-den or ent-end, as in intention, the right-motion blend is given preference.”',
-      'Continue, continued, continues / continuous, extension, intention, sentence, condense, continent.'
-    ], ['word-continue', 'word-continued', 'word-continues', 'word-extension', 'word-intention', 'word-sentence', 'word-condense', 'word-continent']] },
-    { write: 'word-continue' },
-    { write: 'word-continued' },
-    { write: 'word-intention' },
-    { write: 'word-sentence' },
-    { choose: ['word-extension', ['word-continue', 'word-extension', 'word-condense', 'word-continent']] },
     { read: ['The blend tem at the start', 'Manual §154, p. 85', [
       'Timid, item, items, itemize, temper, timber, temple.'
     ], ['word-timid', 'word-item', 'word-items', 'word-itemize', 'word-temper', 'word-timber', 'word-temple']] },
@@ -128,6 +110,24 @@ export default {
     { write: 'word-medium' },
     { write: 'word-seldom' },
     { choose: ['word-estimate', ['word-academy', 'word-estimate', 'word-medium', 'word-seldom']] },
+    { read: ['The syllable tain', 'Manual §155, p. 84', [
+      '“The blend is not employed when a strongly accented vowel or diphthong occurs in the syllable. Such words as dean, dine, team, tame, dome, dime, and other words of one syllable are written in full. The syllable tain, as in maintain, attain, however, is expressed by ten.”',
+      'Attain, detain, contain, maintain, attainable.'
+    ], ['word-attain', 'word-detain', 'word-contain', 'word-maintain', 'word-attainable']] },
+    { write: 'word-attain' },
+    { write: 'word-detain' },
+    { write: 'word-contain' },
+    { write: 'word-maintain' },
+    { choose: ['word-maintain', ['word-attain', 'word-detain', 'word-maintain', 'word-contain']] },
+    { read: ['Ten in longer words', 'Manual §156, p. 84', [
+      '“Where it is possible to use either ten-den or ent-end, as in intention, the right-motion blend is given preference.”',
+      'Intention is the Manual’s example. The rest are more words from the §154 drill (pp. 84–85): continue, continued, continues / continuous, extension, sentence, condense, continent, bulletin.'
+    ], ['word-bulletin', 'word-continue', 'word-continued', 'word-continues', 'word-extension', 'word-intention', 'word-sentence', 'word-condense', 'word-continent']] },
+    { write: 'word-continue' },
+    { write: 'word-continued' },
+    { write: 'word-intention' },
+    { write: 'word-sentence' },
+    { choose: ['word-extension', ['word-continue', 'word-extension', 'word-condense', 'word-continent']] },
     { read: ['Phrasing with the blends', 'Manual §157, p. 86', [
       '“The blending principle makes possible some interesting and valuable phrases.”',
       'To me, to my, to meet, to mean, to know, it may be, at any, at any time.'
@@ -146,5 +146,9 @@ export default {
     { write: 'phrase-we-do-not' },
     { write: 'phrase-you-do-not' },
     { choose: ['phrase-we-do-not-believe', ['phrase-i-do-not-believe', 'phrase-we-do-not', 'phrase-we-do-not-believe', 'phrase-you-do-not-know']] },
+    { read: ["Don’t", "Manual §159, p. 86", [
+      "“When necessary, don’t may be distinguished from do not by writing don for don’t”: I don’t, we don’t, they don’t.",
+      "The app cannot draw or score these outlines yet, so there is no writing practice for them here: study the forms in the Manual below and copy them on the pad.",
+    ], []], manual: [159, 159] },
   ],
 };

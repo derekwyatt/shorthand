@@ -115,14 +115,14 @@ export default {
     { choose: ['brief-v', ['brief-p', 'brief-b', 'brief-f', 'brief-v']] },
     { read: ['Pr and pl', 'Manual §36–37, p. 19', [
       '“Many of the consonants follow each other consecutively; for example, r and l frequently follow p, b, as in play, brave.”',
-      '“In writing pr and pl, start to the left”: the p rolls straight on into the r or l, one smooth movement with no angle.',
+      '“In writing pr and pl, start to the left.” On the plates the p rolls straight on into the r or l, one smooth movement with no visible angle.',
     ], ['word-pray', 'word-play', 'word-plate', 'word-apple']] },
     { write: 'word-pray' },
     { write: 'word-play' },
     { write: 'word-preach' },
     { write: 'word-apple' },
     { read: ['Br and bl', 'Manual §38, p. 19', [
-      '“In writing br and bl, start down, thus”: the long b, then on into r or l without a stop.',
+      '“In writing br and bl, start down, thus”: the long b, then (as the plates show) on into r or l without a stop.',
     ], ['word-brain', 'word-blame', 'word-brave', 'word-bled']] },
     { write: 'word-brain' },
     { write: 'word-blame' },

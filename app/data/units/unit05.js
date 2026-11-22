@@ -3,7 +3,7 @@
 export default {
   unit: 5,
   subtitle: 'The signs for s: left s and right s',
-  pages: 'pp. 23–27',
+  pages: 'pp. 23–28',
   level: { name: 'The s signs', description: 'The left and right s, s between strokes, the ses blend, the frequent-word drill and brief forms (Manual §46–53)' },
   rules: {
     R47: 'The sound of z is expressed by the sign for s, since no confusion arises from using the same character for both sounds in connected writing (Manual §47).',
@@ -133,14 +133,18 @@ export default {
   lesson: [
     { read: ['The two signs for s', 'Manual §46–47, p. 23', [
       '“The signs for s, written downward, are taken from a small elliptical figure.” The right-motion s is called “right s” and the left-motion s is called “left s”: two tiny curves, one bulging each way.',
-      '“In practical writing the sound of z is expressed by the sign for s, since no confusion arises from using the same character for both sounds in connected writing.” So raise is written like race, and gaze like gas: the z sound takes the s sign.',
+      '“In practical writing the sound of z is expressed by the sign for s, since no confusion arises from using the same character for both sounds in connected writing.” So raise is written like race, and gaze like gas: the z sound takes the s sign. “It is seldom necessary to make a distinction between s and z, but when it is, a short dash is struck at a right angle to the sign for s to show that it has the sound of z.”',
     ], ['letter-s-left', 'letter-s-right', 'word-race', 'word-gas']] },
     { write: ['letter-s-left', 'Write the left s: a tiny curve written downward, bulging to the left.'] },
     { write: ['letter-s-right', 'Write the right s: a tiny curve written downward, bulging to the right.'] },
     { choose: ['letter-s-left', ['letter-s-left', 'letter-sh', 'letter-f', 'letter-p']] },
+    { read: ["S before a consonant", "Manual §48, p. 23", [
+      "“The base of the first consonant of a word rests on the line of writing, but when s precedes another consonant, the base of the consonant following the s is placed on the line.”",
+      "So in a word that begins with s and another consonant, the s sits above the line and the stroke after it rests on the line.",
+    ], []], manual: [48, 48] },
     { read: ['Which s?', 'Manual §49, p. 23', [
       'The s-sign rule in short: look at the consonant the s touches. Use the left s before p, b, r, l, and after p, b, r, l, t, d, n, m, o. Use the right s in all other cases: before k, g, t, d, n, m, f, v, ch, j, sh, th, after k, g, f, v, ch, j, sh, and when the s stands with circles only (see, say, as).',
-      '“A circle placed outside the angle in any of these joinings does not change the motion.” A circle between the s and the stroke does not change the choice either.',
+      '“A circle placed outside the angle in any of these joinings does not change the motion.”',
     ], ['word-sips', 'word-phrase', 'word-slim', 'word-saves', 'word-seeds', 'word-snap']] },
     { write: 'word-race' },
     { write: 'word-sips' },
@@ -187,5 +191,14 @@ export default {
     { write: 'brief-business' },
     { choose: ['brief-again', ['brief-again', 'brief-against', 'brief-matter', 'brief-such']] },
     { choose: ['brief-must', ['brief-must', 'brief-some', 'brief-such', 'brief-matter']] },
+    { read: ["The suffix thing", "Manual §54, p. 27", [
+      "“The suffix thing is expressed by a dot in the following words”: anything, something, everything.",
+      "The app cannot draw or score these outlines yet, so there is no writing practice for them here: study the forms in the Manual below and copy them on the pad.",
+    ], []], manual: [54, 54] },
+    { read: ["Plurals of brief forms", "Manual §55, p. 27", [
+      "“The plurals of brief forms ending in s are formed by adding another s of the same motion” (cause, causes; business, businesses).",
+      "“In other brief forms the plurals are formed by adding s to the singular forms” (parts, changes, ships, forms).",
+      "The transcription below adds a sentence on force, course, invoice and office that is not in the 1929 printing.",
+    ], []], manual: [55, 55] },
   ],
 };

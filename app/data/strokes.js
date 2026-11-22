@@ -76,7 +76,7 @@ export const STROKES = [
   // turn tightly at the start and run out almost straight.
   { id: 'k', label: 'k', sounds: ['k'], size: 'short', primitives: [arc(0, 1.7, 0.17, { ctrl: [[0.27, 0.13], [1.12, 0.31]] })], briefForms: ['can'] },
   { id: 'g', label: 'g', sounds: ['g (hard)'], size: 'long', primitives: [arc(0, 3.5, 0.156, { ctrl: [[0.32, 0.16], [1.11, 0.25]] })], briefForms: ['go', 'good'] },
-  { id: 'r', label: 'r', sounds: ['r'], size: 'short', primitives: [arc(0, 1.6, -0.18, { ctrl: [[0, -0.34], [0.74, -0.11]] })], briefForms: ['are', 'our'] },
+  { id: 'r', label: 'r', sounds: ['r'], size: 'short', primitives: [arc(0, 1.6, -0.18, { ctrl: [[0, -0.34], [0.74, -0.11]] })], briefForms: ['are', 'our', 'hour'] },
   { id: 'l', label: 'l', sounds: ['l'], size: 'long', primitives: [arc(0, 3.2, -0.15, { ctrl: [[-0.07, -0.26], [0.63, -0.13]] })], briefForms: ['will', 'well'] },
   // §136 ld: "giving l a swinging upward turn at the finish" (old, fold, held, p. 74): the l
   // runs on nearly level, then rises steeply at the end, about 70° on the plates.

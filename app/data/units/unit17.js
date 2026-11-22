@@ -82,6 +82,10 @@ export default {
     { write: 'word-device' },
     { write: 'word-motive' },
     { choose: ['word-device', ['word-defer', 'word-defy', 'word-device', 'word-defense']] },
+    { read: ['Business forms', 'Manual §142, p. 78', [
+      'The salutation Gentlemen is written with the jent blend alone.'
+    ], ['phrase-gentlemen']] },
+    { write: 'phrase-gentlemen' },
     { read: ['Brief forms', 'Manual §143, p. 78', [
       'Brief forms for common words: differ / different / difference, definite, credit, railway / rule.'
     ], ['brief-differ', 'brief-definite', 'brief-credit', 'brief-railway']] },
@@ -90,9 +94,5 @@ export default {
     { write: 'brief-credit' },
     { write: 'brief-railway' },
     { choose: ['brief-credit', ['brief-differ', 'brief-definite', 'brief-credit', 'brief-railway']] },
-    { read: ['Business forms', 'Manual §142, p. 78', [
-      'The salutation Gentlemen is written with the jent blend alone.'
-    ], ['phrase-gentlemen']] },
-    { write: 'phrase-gentlemen' },
   ],
 };

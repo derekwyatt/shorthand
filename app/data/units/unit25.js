@@ -2,7 +2,7 @@
 export default {
   unit: 25,
   subtitle: 'The abbreviating principle',
-  pages: 'pp. 108–111',
+  pages: 'pp. 108–112',
   level: { name: 'The abbreviating principle', description: 'Words cut off after the accented syllable, and the longhand abbreviations (Manual §193–196)' },
   rules: {
     R193: '“In a small but useful group of common words—many illustrations of which have been given throughout this manual in "Brief Forms for Common Words"—the form stops with a diphthong or a strongly accented vowel” (Manual §193).',
@@ -67,6 +67,10 @@ export default {
   brief: [],
   phrases: [],
   lesson: [
+    { read: ["The abbreviating principle", "Manual §192, p. 108", [
+      "“The application of the abbreviating principle discussed in Chapter I, paragraph 23, many illustrations of which previously have been given, is more or less flexible and depends to a large extent upon the familiarity of the writer with the words and subject matter in the dictation.”",
+      "“The abbreviating principle is not employed when advantage may be taken of analogical or definite word-building rules, and it should not be employed when easily written word forms are possible without it: When in doubt write it out.”",
+    ], []], manual: [192, 192] },
     { read: ['Short words: a diphthong or accented vowel', 'Manual §193, p. 109', [
       '“In a small but useful group of common words—many illustrations of which have been given throughout this manual in "Brief Forms for Common Words"—the form stops with a diphthong or a strongly accented vowel”.',
       'Arrive, engage, strike, trade.'
@@ -116,6 +120,9 @@ export default {
     { write: 'word-prevail' },
     { write: 'word-repeat' },
     { choose: ['word-decide', ['word-decide', 'word-proceed', 'word-prevail', 'word-repeat']] },
+    { read: ["Long words", "Manual §194, p. 109", [
+      "“An analysis of hundreds of words shows that the abbreviations of long words fall into three classes, from which the following rules have been established”. The rules follow in §195 and §196.",
+    ], []], manual: [194, 194] },
     { read: ['Longhand abbreviations', 'Manual §195, p. 110', [
       '“If there is a longhand abbreviation, it is generally used, if it furnishes a distinctive outline”.',
       'Amount, balance, magazine, post office.'

@@ -9,6 +9,9 @@ import { READINGS } from '../app/data/reading.js';
 import { readingPlate } from '../app/data/plates.js';
 import { splitSentences, keyItems, shuffled } from '../app/js/lessons.js';
 import fs from 'node:fs';
+import { unitOfParagraph, paragraphBlocks } from '../app/js/manualtext.js';
+
+const paragraphText = (n) => paragraphBlocks(n).map(([, h]) => h.replace(/<[^>]+>/g, '')).join(' ').trim();
 
 test('the units, in order from Unit 1, each with read, write and choose steps', () => {
   assert.deepEqual(LESSONS.map((l) => l.unit), LESSONS.map((_, i) => i + 1));
@@ -17,6 +20,28 @@ test('the units, in order from Unit 1, each with read, write and choose steps', 
     for (const type of ['read', 'write', 'choose']) assert.ok(l.steps.some((s) => s.type === type), `${l.id} has a ${type} step`);
     assert.equal(l.steps[0].type, 'read', `${l.id} opens with a rule`);
     assert.ok(l.steps.filter(isTask).length >= 15, `${l.id} has enough practice`);
+  }
+});
+
+const isWritingPractice = (s) => s.type === 'read' && s.title === 'Writing Practice';
+
+test('every chapter (every third unit) ends with the Manual’s Writing Practice, after the reading', () => {
+  for (const l of LESSONS) {
+    const wp = l.steps.filter(isWritingPractice);
+    assert.equal(wp.length, l.unit % 3 === 0 ? 1 : 0, `Unit ${l.unit}`);
+    if (!wp.length) continue;
+    assert.equal(l.steps.at(-1), wp[0], `Unit ${l.unit}: Writing Practice is last`);
+    assert.equal(l.steps.at(-2).type, 'reading', `Unit ${l.unit}: after the reading`);
+    const [n] = wp[0].manual;
+    assert.match(paragraphText(n), new RegExp(`^${n}\\. Writing Practice`, 'i'), `Unit ${l.unit}: §${n} is the Writing Practice`);
+  }
+});
+
+test('every manual range on a step is a run of paragraphs of that unit', () => {
+  for (const l of LESSONS) for (const s of l.steps.filter((x) => x.manual)) {
+    const [a, b] = s.manual;
+    assert.ok(a <= b && unitOfParagraph(a) === l.unit && unitOfParagraph(b) === l.unit, `Unit ${l.unit} ${s.title}: §${a}–${b}`);
+    assert.ok(paragraphBlocks(a, b).length > 0, `Unit ${l.unit} ${s.title}: no text`);
   }
 });
 
@@ -31,7 +56,8 @@ test('every step refers to existing examples and has a unique key in its unit', 
         assert.equal(s.speed.unit, l.unit, key);
       } else if (s.type === 'reading') {
         assert.equal(s.reading.unit, l.unit, key);
-        assert.equal(s, l.steps.at(-1), `${key} closes the unit`);
+        const after = l.steps.slice(l.steps.indexOf(s) + 1);
+        assert.ok(after.every(isWritingPractice), `${key} closes the unit (only its Writing Practice follows)`);
       } else if (s.type === 'read') {
         assert.ok(s.title && s.ref && s.text.length > 0, key);
         for (const id of s.show) assert.ok(exampleFor(id), `${key}: unknown example ${id}`);
@@ -64,10 +90,11 @@ test('the lessons cover the Unit 2 and Unit 3 examples they teach from', () => {
 });
 
 test('every unit closes with its Reading and Dictation Practice page and key', () => {
+  const closing = (l) => l.steps.filter((x) => !isWritingPractice(x)).at(-1);
   assert.deepEqual(READINGS.map((r) => r.unit), LESSONS.map((l) => l.unit));
   const crops = new Set(JSON.parse(fs.readFileSync(new URL('../tools/plates.json', import.meta.url), 'utf8')).crops.map((c) => c.id));
   for (const r of READINGS) {
-    assert.equal(LESSONS[r.unit - 1].steps.at(-1).type, 'reading', `Unit ${r.unit}`);
+    assert.equal(closing(LESSONS[r.unit - 1]).type, 'reading', `Unit ${r.unit}`);
     assert.ok(Number.isInteger(r.section) && /^pp?\. \d+/.test(r.pages), `Unit ${r.unit}: section and pages`);
     for (const id of r.plates) {
       assert.ok(crops.has(id), `Unit ${r.unit}: ${id} is cut by tools/plates.json`);
@@ -108,7 +135,7 @@ test('Speed Studies sections: real units, cut plates, and steps after the unit�
     }
     const steps = LESSONS[s.unit - 1].steps;
     const at = steps.findIndex((x) => x.type === 'speed' && x.speed === s);
-    assert.ok(at > 0 && steps.slice(at).every((x) => x.type === 'speed' || x.type === 'reading'), `${id}: placed after Unit ${s.unit}'s own steps`);
+    assert.ok(at > 0 && steps.slice(at).every((x) => x.type === 'speed' || x.type === 'reading' || isWritingPractice(x)), `${id}: placed after Unit ${s.unit}'s own steps`);
   }
 });
 
