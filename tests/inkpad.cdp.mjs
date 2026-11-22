@@ -767,6 +767,15 @@ try {
   check(reader.open && reader.key && reader.big, `the page opens full screen beside its key, and zooms (${JSON.stringify(reader)})`);
   await evaluate(`[...document.querySelectorAll('.reader button')].find((b) => /Close/.test(b.textContent)).click()`);
   check(await evaluate(`!document.querySelector('.reader') && !!document.querySelector('#lesson-panel .reading-keybox')`), 'closing the reader puts the key back in the lesson');
+  const words = await evaluate(`(async () => {
+    [...document.querySelectorAll('#lesson-panel .explain-link')].find((b) => /each word/.test(b.textContent)).click();
+    await new Promise((r) => setTimeout(r, 200));
+    const rows = [...document.querySelectorAll('.word-help tbody tr')];
+    const res = { rows: rows.length, drawn: document.querySelectorAll('.word-help svg').length, sections: document.querySelectorAll('.word-help .section-link').length };
+    document.querySelector('.section-pop-close[aria-label=Close]').click();
+    return res;
+  })()`);
+  check(words.rows > 20 && words.drawn > 5 && words.sections > 5, `a reading's “How each word is written” lists its words with outlines and § links (${JSON.stringify(words)})`);
 
   await goStep(`s.type === 'speed' && s.speed.figures.length > 0`);
   const speed = await evaluate(`(() => ({ title: document.querySelector('#lesson-panel .lesson-title')?.textContent, figs: document.querySelectorAll('#lesson-panel .speed-fig').length, source: document.querySelector('#lesson-panel .ex-source')?.textContent }))()`);

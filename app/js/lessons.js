@@ -7,7 +7,7 @@
 // Progress (current step and steps done) is kept in localStorage; strokes are not.
 import { LESSONS, PASS_SCORE, stepKey, exampleFor, isTask } from '../data/lessons.js';
 import { sectionPlate, readingPlate } from '../data/plates.js';
-import { openManual, unitOfParagraph, renderBlocks, paragraphBlocks } from './manualtext.js';
+import { openManual, unitOfParagraph, renderBlocks, paragraphBlocks, paragraphLines } from './manualtext.js';
 import { animateStroke } from './render.js';
 import { createExamplePanel, actualSizeStrip, enlargedSVG, printedOutline, printedCaption, pageLink } from './practice.js';
 import { AUTHOR, sourceUrl } from '../data/source.js';
@@ -15,7 +15,8 @@ import { assessRepeats } from './repeats.js';
 import { createLinePicks } from './linepicks.js';
 import { getWriterScale, learnWriterScale } from './writer.js';
 import { explainLink, showUnitOverview } from './explain.js';
-import { el, button, credit } from './dom.js';
+import { wordHelpLink } from './wordhelp.js';
+import { el, button, credit, outLink } from './dom.js';
 
 const STORE_KEY = 'gregg.lessons.v1';
 
@@ -318,6 +319,7 @@ export function createLessons({ panel, pad, assist, unitPx, linePicks }) {
       ...s.text.map((t) => el('p', { className: 'lesson-text', textContent: t })),
       ...sectionPlates(s.plates),
       ...manualParagraphs(s.manual),
+      ...(s.title === 'Writing Practice' && s.manual ? [el('p', { className: 'explain-row' }, wordHelpLink({ title: `Writing Practice, Unit ${lesson.unit}: every word`, unit: lesson.unit, warn: false, note: 'Write the sentences first, then use the table to check an outline or to see the rule behind it.', groups: [{ text: paragraphLines(...s.manual) }] }))] : []),
       ...(figures.length ? [
         el('div', { className: 'ex-caption', textContent: 'Enlarged (green = start, red = end), and as printed in the manual' }),
         el('div', { className: 'lesson-figs' }, ...figures.map((f) => f.fig)),
@@ -402,6 +404,11 @@ export function createLessons({ panel, pad, assist, unitPx, linePicks }) {
       manualRef(`Manual §${r.section}, ${r.pages}`),
       el('p', { className: 'lesson-text', textContent: 'The manual closes every unit with a page of connected shorthand to read, and later to take from dictation. Read it a sentence at a time and check each against the key. Full screen puts the page and the key side by side. Copying outlines onto the pad as you read fixes the forms.' }),
       button('Read full screen', 'quiz-btn', () => { keyBox.replaceWith(slot); open(); }),
+      el('p', { className: 'explain-row' }, wordHelpLink({
+        title: `Unit ${r.unit} reading: every word`, unit: r.unit,
+        groups: r.passages.map((p, i) => ({ caption: r.passages.length > 1 ? `Passage ${i + 1}` : null, text: p.text })),
+        links: [outLink(sourceUrl.readingKey(r.unit), 'reading key')],
+      })),
       ...r.plates.map((id) => {
         const img = el('img', { src: readingPlate(id).src, className: 'plate reading-plate', alt, title: 'Tap to read full screen' });
         img.onclick = () => { keyBox.replaceWith(slot); open(); };
@@ -456,7 +463,7 @@ export function createLessons({ panel, pad, assist, unitPx, linePicks }) {
       img.onclick = () => openReader({ title: `${x.title}: ${f.label}`, plates: [f.plate] }, f.key ? hiddenKey([{ paras: f.key }], null) : el('div'), () => {}, img.alt);
       return el('figure', { className: 'lesson-plate speed-fig' },
         el('figcaption', { textContent: f.label }), img,
-        ...(f.key ? [hiddenKey([{ paras: f.key }], null)] : []),
+        ...(f.key ? [hiddenKey([{ paras: f.key }], null), el('p', { className: 'explain-row' }, wordHelpLink({ title: `${x.title}: ${f.label}`, unit: x.unit, groups: [{ text: f.key }] }))] : []),
         ...(f.after ?? []).map((t) => el('p', { className: 'lesson-text', textContent: t })));
     };
     body.replaceChildren(
@@ -465,7 +472,8 @@ export function createLessons({ panel, pad, assist, unitPx, linePicks }) {
       el('div', { className: 'ex-source', textContent: where }),
       ...(x.writing
         ? [el('p', { className: 'lesson-text', textContent: 'Write these sentences in shorthand on the pad, then read your notes back. The book prints no shorthand for them: write each word as the lessons so far have taught.' }),
-          el('ol', { className: 'lesson-text writing-list' }, ...x.text.map((t) => el('li', { textContent: t })))]
+          el('ol', { className: 'lesson-text writing-list' }, ...x.text.map((t) => el('li', { textContent: t }))),
+          el('p', { className: 'explain-row' }, wordHelpLink({ title: `${x.title}: every word`, unit: x.unit, warn: false, note: 'Write the sentences first, then use the table to check an outline or to see the rule behind it.', groups: [{ text: x.text }] }))]
         : x.text.map((t) => el('p', { className: 'lesson-text', textContent: t }))),
       ...(x.reading ? [el('p', { className: 'ex-caption', textContent: 'Speed Studies prints no key for this practice: read what you can, and come back to it after the next units.' })] : []),
       ...x.figures.map(figure),

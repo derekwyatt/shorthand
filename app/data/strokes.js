@@ -48,14 +48,15 @@ export const FAMILIES = [
 export const STROKES = [
   // Vowel circles. Ovals tilted with the writing slope; standing alone (the chart, p. 16) they
   // are rounder than when joined in words (JOIN_OVAL in join.js). The 1929 Manual gives no
-  // direction for a circle written alone; Owen's transcription of §3 adds "(written
-  // counterclockwise)" for I, and the app draws every lone circle that way.
+  // direction for a circle written alone (Owen's transcription of §3 adds "(written
+  // counterclockwise)" for I); Gregg Speed Studies (1929), Speed Study I §2, p. 18, does:
+  // "When they appear alone, they are written with left motion."
   { id: 'a', label: 'a', sounds: ['a (as in at, arm, ate)'], size: 'large',
     primitives: [{ type: 'circle', width: 1.05, height: 0.8, tilt: 25, dir: 'ccw' }],
-    briefForms: [], note: 'Written alone, counter-clockwise: Owen’s transcription of §3 says so for I; the 1929 printing gives no direction.' },
+    briefForms: [], note: 'Written alone with left motion, counter-clockwise: Gregg Speed Studies (1929), Speed Study I §2, p. 18. The Manual itself gives no direction.' },
   { id: 'e', label: 'e', sounds: ['e (as in pet, peat), short i'], size: 'small',
     primitives: [{ type: 'circle', width: 0.4, height: 0.34, tilt: 25, dir: 'ccw' }],
-    briefForms: [], note: 'Written alone, counter-clockwise: Owen’s transcription of §3 says so for I; the 1929 printing gives no direction.' },
+    briefForms: [], note: 'Written alone with left motion, counter-clockwise: Gregg Speed Studies (1929), Speed Study I §2, p. 18. The Manual itself gives no direction.' },
   { id: 'i', label: 'ī', sounds: ['long i (as in ice)'], size: 'large',
     // §112 (p. 61): the broken circle, a large oval about 0.47 as wide as long, tilted about
     // 36°, whose end runs on over its start and turns in to a tick at the top, measured on the

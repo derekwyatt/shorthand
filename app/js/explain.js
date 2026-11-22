@@ -8,6 +8,7 @@ import { TOKEN_NOTES, JOIN_NOTES, CIRCLE_NOTES, KIND_NOTES } from '../data/notes
 import { LESSONS } from '../data/lessons.js';
 import { sourceUrl } from '../data/source.js';
 import { pageLink } from './practice.js';
+import { wordRows, wordTable } from './wordhelp.js';
 
 const sec = ([a, b]) => `§${a}${b > a ? `–${b}` : ''}`;
 
@@ -89,6 +90,8 @@ export function showExplain(example) {
     ...(kind ? [withSec(`${kind[0]}: ${kind[1]}`, kind[2])] : []),
     ...(parts.length ? [heading('Its parts'), el('ul', { className: 'explain-list' }, ...parts.map(([name, text, range]) => el('li', {}, el('b', { textContent: name }), `: ${text} (${sec(range)})`)))] : []),
     ...(joins.length ? [heading('How the parts join'), el('ul', { className: 'explain-list' }, ...joins.map(([text, range]) => el('li', { textContent: `${text} (${sec(range)})` })))] : []),
+    // A sentence: every word, with its outline and how it is written.
+    ...(example.kind === 'sentence' ? [heading('Each word'), wordTable(wordRows(example.title, { unit: taught?.unit ?? null }))] : []),
     heading('Where it is taught'),
     el('p', {}, ...(taught ? [`Unit ${taught.unit}, “${taught.title}”${taught.ref ? ` (${taught.ref})` : ''}.`] : ['Practice only.']),
       ...(page ? [' Printed in the Manual on ', pageLink(Number(page[1])), '.'] : [])),

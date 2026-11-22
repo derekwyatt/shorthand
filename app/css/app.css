@@ -654,3 +654,18 @@ body:not(.view-learn) .lesson-panel { display: none; }
 .explain-list { margin: 0 0 8px; padding-left: 20px; }
 .explain-list li { margin: 0 0 6px; }
 .explain-foot { line-height: 1.8; }
+
+/* "How each word is written" tables (js/wordhelp.js) */
+.word-help { width: 100%; table-layout: fixed; border-collapse: collapse; margin: 0 0 12px; font-size: 15px; }
+.word-help th:nth-child(1) { width: 22%; }
+.word-help th:nth-child(2) { width: 136px; }
+.word-help th { text-align: left; font-size: 13px; color: var(--muted); font-weight: 600; padding: 4px 6px; border-bottom: 1px solid var(--gutter-border); }
+.word-help td { padding: 6px; vertical-align: middle; border-bottom: 1px solid var(--gutter-border); }
+.word-help-word { font-weight: 600; }
+.word-help-outline img, .word-help-svg { display: block; max-width: 120px; height: auto; }
+.word-help-built { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 2px; max-width: 100%; }
+.word-help-built .word-help-built img, .word-help-built .word-help-svg, .word-help-built img { max-width: 60px; }
+.word-help-word { overflow-wrap: anywhere; }
+.word-help-unknown td { color: var(--muted); }
+.word-help-pop { width: min(760px, 100%); }
+@media (max-width: 520px) { .word-help th:nth-child(2) { width: 88px; } .word-help-outline img, .word-help-svg { max-width: 80px; } }

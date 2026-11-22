@@ -33,6 +33,16 @@ export function paragraphBlocks(from, to = from) {
   return out;
 }
 
+// The text of paragraphs `from`–`to` as plain lines, without their numbered heading: each
+// block, and each line within a block, on its own.
+export function paragraphLines(from, to = from) {
+  const text = (html) => html.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&quot;/g, '"').trim();
+  return paragraphBlocks(from, to)
+    .filter(([, html]) => !/^(?:<span id="m\d+"><\/span>)?<strong>\d+\./.test(html))
+    .flatMap(([, html]) => html.split(/<br\s*\/?>/).map(text))
+    .filter(Boolean);
+}
+
 // A small window over the page: a title bar with ✕, a scrolling body and a footer of links.
 // Closes with ✕, Escape or a tap outside it. Opening another replaces it; `reopen` (a function
 // that opens this window again) gives the next one a ◀ button back to this one.
