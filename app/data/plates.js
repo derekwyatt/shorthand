@@ -1617,6 +1617,8 @@ export const SECTION_PLATES = {
   'p4-kg-rl': { page: 4, caption: 'K-G are right-motion strokes; R-L are left-motion strokes' },
   'p8-kr-gl': { page: 8, caption: 'The kr and gl combinations' },
   'p9-gr-kl': { page: 9, caption: 'gr is written like longhand y; kl like longhand h' },
+  'p10-briefs': { page: 10, caption: 'Brief forms for common words (§23)' },
+  'p10-business': { page: 10, caption: 'Business abbreviations (§24)' },
   'p42-th': { page: 42, caption: 'Unit 9: which th to use in a word' },
 };
 

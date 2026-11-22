@@ -68,7 +68,7 @@ const UNIT_1 = [
   read('Sentences and the period', 'Manual §4–6, p. 2', [
     'The period is a short stroke slanting down to the right. “Capitals and proper names are indicated by two short dashes beneath the word.”',
     '“The joining of simple words is a great help to accuracy and speed in writing shorthand, and its acquirement should not be deferred until the habit of writing common words separately has been formed” (§4). So common pairs are written as one outline, without lifting the pen: I will (a large circle running into l), he can (a small circle into k), it will (t up, then straight on into the long l) and in the (n, then th rising off its end).',
-    'In “It will be good” the first two words are one phrase: t and l joined, then be, good and the period, each on its own.',
+    'In “It will be good” the first two words are one phrase: t and l joined, then be, good and the period, each on its own. Be is a brief form the Manual gives in the next unit (§23): b alone, a long downward curve like a large left parenthesis.',
   ], ['sentence-it-will-be-good'], ['p2-phrasing', 'p2-punctuation']),
   write('sentence-it-will-be-good'),
   read('Vowels: the A and E groups', 'Manual §7–8, pp. 3–4', [
@@ -145,6 +145,18 @@ const UNIT_2 = [
   choose('word-dark', ['word-dark', 'word-mark', 'word-ark', 'word-milk']),
   choose('word-deed', ['word-deed', 'word-dad', 'word-mean', 'word-main']),
   choose('word-greet', ['word-greet', 'word-greed', 'word-green', 'word-grim']),
+  read('Brief forms for common words', 'Manual §23, p. 10', [
+    '“A comparatively small number of frequently recurring words make up a large part of the English language. As an illustration, ten words—the, of, and, to, a, in, that, it, is, I—form one-fourth of the entire written and spoken language.”',
+    'Learn the fifteen forms in the table before the reading practice: it uses be, to, with, without, that, you and great. Each is spelled in brackets by its sounds.',
+    'Be, by and but are b alone: a long downward curve, like a large left parenthesis. To, too and two are t with the small oo hook on its end (the hook itself is taught in Unit 10, §91).',
+    'With is a circle and th; without adds t, rising from the end of the th.',
+    'In the reading practice “to take” is one outline (phrasing, §4): t, its hook turning over at the top and coming down a little, then the t of take rising out of it, its circle and the k. The short downward turn between the two t’s is the hook of to, not another stroke. Later, before a downward stroke, to is written t alone (§84).',
+  ], ['brief-b', 'brief-nd', 'brief-s-right'], ['p10-briefs']),
+  ...writeAll('brief-b', 'brief-nd'),
+  read('Business abbreviations', 'Manual §24, p. 10', [
+    'Three forms for business letters: Mr. (also market), Yours truly, and Dear Sir (also desire).',
+    'All three come up in the reading practice: its letters open with Dear Sir and close with Yours truly, and one sentence is about the grain market.',
+  ], [], ['p10-business']),
 ];
 
 const UNIT_3 = [

@@ -97,6 +97,8 @@
     {"id": "word-acre", "page": 8, "box": [473, 701, 620, 748]},
     {"id": "word-maker", "page": 8, "box": [473, 750, 620, 790]},
     {"id": "p9-gr-kl", "page": 9, "box": [165, 212, 476, 272]},
+    {"id": "p10-briefs", "page": 10, "box": [128, 390, 610, 605]},
+    {"id": "p10-business", "page": 10, "box": [128, 712, 620, 785]},
     {"id": "word-gray", "page": 9, "box": [95, 272, 248, 306]},
     {"id": "word-grain", "page": 9, "box": [95, 310, 248, 346]},
     {"id": "word-greed", "page": 9, "box": [95, 346, 248, 388]},
