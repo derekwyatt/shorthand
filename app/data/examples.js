@@ -253,6 +253,23 @@ const WORDS_8 = [
   ['headache', ['h', 'e', 'd', 'a', 'k'], R28, 14],
 ];
 
+// Manual §23 brief forms (p. 10) of more than one stroke, as the brief-form chart spells them and
+// checked by eye against its images (CHART_OUTLINES in data/briefs.js). Left out: was and this,
+// whose drawings did not match the page. Be, and, is are the single strokes of `briefs` above.
+// [words, outline, note]
+const BRIEF_7 = [
+  ['that', ['th-over', 'a']],
+  ['they', ['th-over', 'e'], 'In some phrases they is written the same as the, as in they will.'],
+  ['than / then', ['th-over', 'n']],
+  ['them', ['th-over', 'm']],
+  ['with', ['e', 'th-over']],
+  ['without', ['e', 'th-over', 't'], 'With, and t rising from the end of the th.'],
+  ['of', ['o'], 'The o hook alone (taught in full in Unit 7, §65).'],
+  ['you / your', ['u'], 'The oo hook alone (taught in full in Unit 10, §91).'],
+  ['to / too / two', ['t', 'u'], 'T with the oo hook on its end.'],
+  ['great', ['g', 'r'], 'G and r joined without an angle, the gr of §20.'],
+];
+
 // Manual §29 brief forms that use only strokes in the stroke table (p. 14). Left out:
 // other, all, what, those, truth (hooks and th), into, like (see the reference file).
 // [words, outline, note]
@@ -346,6 +363,15 @@ const wordExampleAt = (level) => ([title, plain, rule, page, note]) => {
   };
 };
 
+const briefExample7 = ([title, outline, note]) => {
+  const names = title.split(' / ');
+  return {
+    id: `brief-${names[0]}`, kind: 'brief', level: 7, title, outline,
+    meaning: [`A brief form for the word${names.length > 1 ? 's' : ''} ${quote(names)}: ${spell(outline)} (Manual §23).`, ...(note ? [note] : [])],
+    source: 'Gregg Shorthand Manual (1929), p. 10',
+  };
+};
+
 const briefExample8 = ([title, outline, note]) => {
   const names = title.split(' / ');
   return {
@@ -389,6 +415,7 @@ export const EXAMPLES = [
   ...WORDS_4.map(wordExample(4, BUILT_SOURCE)),
   ...WORDS_7.map(wordExampleAt(7)),
   ...WORDS_8.map(wordExampleAt(8)),
+  ...BRIEF_7.map(briefExample7),
   ...BRIEF_8.map(briefExample8),
   ...UNITS.flatMap(unitExamples),
 ];

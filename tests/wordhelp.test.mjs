@@ -21,8 +21,9 @@ test('the rows say how each word is written, from what the app can stand behind'
   assert.equal(row(rows, 'Hale').kind, 'name', 'a capital inside a sentence is a name');
   assert.equal(row(rows, 'Helena').kind, 'name');
   assert.equal(row(rows, 'ray').kind, 'example', 'a name the app draws keeps its outline');
-  assert.equal(row(rows, 'that').kind, 'chart');
-  assert.match(row(rows, 'that').how, /§23/);
+  assert.equal(row(rows, 'that').kind, 'example', 'a §23 brief form the lessons teach');
+  assert.match(row(rows, 'that').how, /A brief form \(§23\)/);
+  assert.equal(row(rows, 'Dear Sir').example, undefined);
   assert.equal(row(rows, 'is').kind, 'example');
   assert.match(row(rows, 'is').how, /brief form \(§34\)/i);
 });
