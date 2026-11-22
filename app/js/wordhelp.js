@@ -205,6 +205,31 @@ function unmarked(e) {
   return UNMARKED.get(e.id);
 }
 
+// A list of separate words has no sentence to tell apart two words with one outline (had and add,
+// p. 13): such a row names the other words, taught by the text's unit, that the outline reads as.
+const plainKey = (o) => o.filter((t) => t !== 'v-dash' && t !== 'v-dot').join(' ');
+const READS_AS = (key) => {
+  const m = new Map();
+  for (const e of EXAMPLES.filter((x) => x.kind === 'word')) {
+    const k = key(e.outline);
+    m.set(k, [...(m.get(k) ?? []), e]);
+  }
+  return m;
+};
+const READS_MARKED = READS_AS((o) => o.join(' '));
+const READS_PLAIN = READS_AS(plainKey);
+// The unit an example belongs to: the lesson that teaches it, else the paragraph its rule cites.
+const unitOfExample = (e) => taughtIn(e.id)?.unit ?? unitOfParagraph(Number((/§(\d+)/.exec(`${e.source} ${e.meaning.join(' ')}`) ?? [])[1])) ?? 99;
+// Only printed outlines: one the app derived by sound may differ from the page.
+function alsoReads(row, marks, unit) {
+  const outline = row.example?.outline;
+  if (row.kind !== 'example' || row.example.kind !== 'word') return [];
+  const own = new Set([row.text.toLowerCase(), ...(row.example?.title ?? '').toLowerCase().split(' / ')]);
+  const same = (marks ? READS_MARKED.get(outline.join(' ')) : READS_PLAIN.get(plainKey(outline))) ?? [];
+  return [...new Set(same.filter((e) => !unit || unitOfExample(e) <= unit)
+    .flatMap((e) => e.title.split(' / ')).filter((t) => !own.has(t.toLowerCase())))];
+}
+
 // Rows for `text` (a string or paragraphs): each word or phrase once, in order of first use.
 // `unit`: the unit the text belongs to, for the words the app has no outline for.
 export function wordRows(text, { unit = null } = {}) {
@@ -243,7 +268,15 @@ export function wordRows(text, { unit = null } = {}) {
       }
     }
   }
-  return [...rows.values()];
+  const out = [...rows.values()];
+  if (!isWordList(paras)) return out;
+  return out.map((r) => {
+    // a name the row already gives (“the outline of add”) is not repeated
+    const others = alsoReads(r, marks, unit).filter((t) => !new RegExp(`outline of ${t}\\b`).test(r.how));
+    if (!others.length) return r;
+    const names = others.map((t) => `“${t}”`).join(' and ');
+    return { ...r, how: `${r.how} The same outline as ${names}: in a list of separate words there is no sentence to tell them apart, so check the key.` };
+  });
 }
 
 // ---------------------------------------------------------------- the window

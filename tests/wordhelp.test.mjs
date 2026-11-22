@@ -45,3 +45,13 @@ test('every reading has a row per word, and every § a row cites is a paragraph 
     }
   }
 });
+
+test('in a list of separate words, an outline that reads as another word says so', () => {
+  const drill = wordRows('ham, eating, had, him, hat, Ed', { unit: 2 });
+  assert.match(row(wordRows('limb, lemon, raid, rated, aid, aided.', { unit: 3 }), 'aid').how, /The same outline as “add” and “had”: in a list of separate words/);
+  assert.doesNotMatch(row(drill, 'had').how, /same outline as/, 'its note already names add');
+  assert.match(row(drill, 'had').how, /the outline of add/);
+  assert.doesNotMatch(row(drill, 'ham').how, /same outline as/);
+  assert.doesNotMatch(row(wordRows('I had to add it up.', { unit: 2 }), 'had').how, /same outline as/, 'a sentence tells them apart');
+  assert.doesNotMatch(row(wordRows('take, rate, rule, raid', { unit: 2 }), 'raid').how, /same outline as/, 'a word written by sound is not compared');
+});
