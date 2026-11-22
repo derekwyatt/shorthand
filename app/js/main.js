@@ -9,6 +9,7 @@ import { createAssist } from './assist.js';
 import { createQuiz } from './quiz.js';
 import { createLessons } from './lessons.js';
 import { createLinePicks } from './linepicks.js';
+import { watchSections } from './manualtext.js';
 import { exportProgress, importProgress, backupFileName } from './backup.js';
 import { getWriterScale, learnWriterScale } from './writer.js';
 import { el, saveFile } from './dom.js';
@@ -181,6 +182,8 @@ function route() {
     if (first) gallery.replayAll();
   }
 }
+// Every § in the app's text links to the Manual on the source site.
+watchSections(document.body);
 window.addEventListener('hashchange', route);
 route();
 $('replay-all').addEventListener('click', () => gallery?.replayAll());

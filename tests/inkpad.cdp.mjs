@@ -691,6 +691,13 @@ try {
     }
     return document.querySelector('#lesson-panel .ex-counter').textContent;
   })()`);
+  const sections = await evaluate(`(() => {
+    const links = [...document.querySelectorAll('#lesson-panel a.section-link')];
+    const plain = [...document.querySelectorAll('#lesson-panel p, #lesson-panel li, #lesson-panel .ex-source')].some((e) => [...e.childNodes].some((n) => n.nodeType === 3 && /§\\s*\\d/.test(n.data)));
+    return { n: links.length, hrefs: links.map((a) => a.href), plain, option: !!document.querySelector('option a') };
+  })()`);
+  check(sections.n > 0 && sections.hrefs.every((h) => /^https:\/\/greggshorthand\.github\.io\/anunit\d\d\.html#p\d+$/.test(h)) && !sections.plain && !sections.option,
+    `every § in the lesson links to its paragraph on the source site (${JSON.stringify(sections).slice(0, 300)})`);
   await click('#lesson-panel .manual-ref');
   await sleep(200);
   const manual = await evaluate(`(() => { const r = document.querySelector('.manual-reader'); return { open: !!r, flash: !!r?.querySelector('.flash'), next: [...(r?.querySelectorAll('button') ?? [])].map((b) => b.textContent) }; })()`);
@@ -853,10 +860,13 @@ try {
     const reader = document.querySelector('.manual-reader');
     const back = reader?.querySelector('.credit a')?.getAttribute('href');
     reader?.querySelector('.reader-bar button:last-child').click();
-    return { text: line.textContent, page, para: para?.textContent, back, closed: !document.querySelector('.manual-reader') };
+    const sections = [...line.querySelectorAll('a.section-link')].map((a) => a.textContent + ' ' + a.getAttribute('href'));
+    return { text: line.textContent, page, para: para?.textContent, back, closed: !document.querySelector('.manual-reader'), sections };
   })()`);
-  check(/Annivman\.pdf#page=\d+$/.test(src.page ?? '') && /§/.test(src.para ?? '') && /anunit\d\d\.html#p\d+$/.test(src.back ?? '') && src.closed,
-    `a Practice source line links its page to the scan, and its § to the Manual in the app, which links on to the site (${JSON.stringify(src)})`);
+  check(/Annivman\.pdf#page=\d+$/.test(src.page ?? '') && /read it in the Manual/.test(src.para ?? '') && /anunit\d\d\.html#p\d+$/.test(src.back ?? '') && src.closed,
+    `a Practice source line links its page to the scan, and opens the Manual in the app, which links on to the site (${JSON.stringify(src)})`);
+  check(src.sections.join() === '§11–12 https://greggshorthand.github.io/anunit01.html#p11,§4 https://greggshorthand.github.io/anunit01.html#p4',
+    `a Practice source line links each § to its paragraph on the source site (${src.sections.join()})`);
 
   // Settings: the menu opens and closes; a theme recolours the app and the pad's pen.
   await evaluate(`location.hash = '#pad'`);

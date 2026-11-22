@@ -84,20 +84,22 @@ export function pageLink(page) {
 }
 export const printedCaption = (page) => el('div', { className: 'ex-caption' }, 'In the manual, ', pageLink(page));
 
-// A source line such as "Manual §14–18; period from Manual p. 3": each § opens the Manual's
-// text at that paragraph in the app; each page links to the scan.
+// A source line such as "Manual §14–18; period from Manual p. 3": each page links to the scan
+// (and each §, once on screen, to the source site); then a button opens the first § in the
+// Manual's text in the app.
 export function sourceNodes(text) {
-  return text.split(/(§\s*\d+(?:–\d+)?|\bp\. \d+)/).map((part) => {
-    const para = /^§\s*(\d+)/.exec(part);
-    const unit = para && unitOfParagraph(Number(para[1]));
-    if (unit) {
-      const b = el('button', { type: 'button', className: 'inline-link', textContent: part, title: 'Read this in the Manual' });
-      b.onclick = () => openManual(unit, Number(para[1]));
-      return b;
-    }
+  const nodes = text.split(/(\bp\. \d+)/).map((part) => {
     const page = /^p\. (\d+)$/.exec(part);
     return page ? pageLink(Number(page[1])) : part;
   });
+  const para = /§\s*(\d+)/.exec(text);
+  const unit = para && unitOfParagraph(Number(para[1]));
+  if (unit) {
+    const b = el('button', { type: 'button', className: 'inline-link manual-ref-inline', textContent: 'read it in the Manual ›', title: 'Show this paragraph in the full text of the unit' });
+    b.onclick = () => openManual(unit, Number(para[1]));
+    nodes.push(' · ', b);
+  }
+  return nodes;
 }
 
 export function createExamplePanel({ art, title, meaning, source, counter, score, verdict, hint, critiques }) {

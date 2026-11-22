@@ -8,9 +8,49 @@ import { MANUAL_TEXT } from '../data/manual.js';
 import { LESSONS } from '../data/lessons.js';
 import { AUTHOR, sourceUrl } from '../data/source.js';
 
-// The unit whose text holds the Manual's paragraph n.
-const PARA_UNIT = new Map(Object.entries(MANUAL_TEXT).flatMap(([u, d]) => d.blocks.flatMap(([, html]) => [...html.matchAll(/id="m(\d+)"/g)].map((m) => [Number(m[1]), Number(u)]))));
+// The unit whose text holds the Manual's paragraph n. A unit's first paragraph has no anchor,
+// only its bold number.
+const PARA_UNIT = new Map(Object.entries(MANUAL_TEXT).flatMap(([u, d]) => d.blocks.flatMap(([, html]) => [...html.matchAll(/id="m(\d+)"|^<strong>(\d+)\./g)].map((m) => [Number(m[1] ?? m[2]), Number(u)]))));
 export const unitOfParagraph = (n) => PARA_UNIT.get(n) ?? null;
+
+// "§14" (or "§14–22") anywhere in the app's text links to that paragraph of the Manual on
+// greggshorthand.github.io. Text already in a link or a control is left alone, and so is a
+// Speed Studies section ("Speed Study IV §3").
+const SECTION = /§\s*(\d+)(?:\s*[–-]\s*\d+)?/g;
+const LEAVE = 'a, button, select, textarea, svg, script, style';
+export function linkSections(root) {
+  const walk = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+    acceptNode: (t) => (t.data.includes('§') && !t.parentElement?.closest(LEAVE) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT),
+  });
+  const texts = [];
+  while (walk.nextNode()) texts.push(walk.currentNode);
+  for (const t of texts) {
+    const parts = [];
+    let last = 0;
+    for (const m of t.data.matchAll(SECTION)) {
+      const n = Number(m[1]), unit = unitOfParagraph(n);
+      if (!unit || /Speed Study [IVXLC]+\s*$/.test(t.data.slice(0, m.index))) continue;
+      parts.push(t.data.slice(last, m.index), el('a', { href: sourceUrl.unit(unit, n), target: '_blank', rel: 'noopener', className: 'section-link', textContent: m[0], title: `Manual §${n} on ${AUTHOR}'s site` }));
+      last = m.index + m[0].length;
+    }
+    if (!parts.length) continue;
+    parts.push(t.data.slice(last));
+    t.replaceWith(...parts);
+  }
+}
+
+// Links sections in `root` now and in whatever is written into it later.
+export function watchSections(root) {
+  linkSections(root);
+  new MutationObserver((records) => {
+    const roots = new Set();
+    for (const r of records) {
+      if (r.type === 'characterData') roots.add(r.target.parentElement);
+      for (const n of r.addedNodes) roots.add(n.nodeType === Node.TEXT_NODE ? n.parentElement : n);
+    }
+    for (const n of roots) if (n?.isConnected && n.nodeType === Node.ELEMENT_NODE) linkSections(n);
+  }).observe(root, { childList: true, characterData: true, subtree: true });
+}
 
 export function renderBlocks(blocks) {
   return blocks.map(([align, html]) => {

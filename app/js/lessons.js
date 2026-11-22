@@ -460,13 +460,14 @@ export function createLessons({ panel, pad, assist, unitPx, linePicks }) {
     );
   }
 
-  // A step's source line; "Manual §46, p. 23" opens the unit's text at paragraph 46.
+  // A step's source line: "Manual §46, p. 23" (the § links to the source site), then a button
+  // that opens the unit's text in the app at paragraph 46.
   function manualRef(ref) {
     const m = /§\s*(\d+)/.exec(ref);
     if (!m) return el('div', { className: 'ex-source', textContent: ref });
-    const link = el('button', { type: 'button', className: 'ex-source manual-ref', textContent: `${ref} · read it in the Manual ›`, title: 'Show this paragraph in the full text of the unit' });
-    link.onclick = () => openManual(unitOfParagraph(Number(m[1])) ?? lesson.unit, Number(m[1]));
-    return link;
+    const read = el('button', { type: 'button', className: 'manual-ref', textContent: 'read it in the Manual ›', title: 'Show this paragraph in the full text of the unit' });
+    read.onclick = () => openManual(unitOfParagraph(Number(m[1])) ?? lesson.unit, Number(m[1]));
+    return el('div', { className: 'ex-source' }, `${ref} · `, read);
   }
 
   // Full screen: the page (tap it to switch between fitting the width and 2×) beside the key.

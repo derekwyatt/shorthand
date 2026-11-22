@@ -558,7 +558,7 @@ body:not(.view-learn) .lesson-panel { display: none; }
 /* The Manual's text of a unit, full screen. */
 .lesson-head { display: flex; align-items: flex-start; gap: 8px; }
 .lesson-head > div { flex: 1; }
-.manual-ref { display: block; padding: 0; border: 0; background: none; text-align: left; font: inherit; font-size: 12px; color: var(--link); cursor: pointer; }
+.manual-ref { display: inline; padding: 0; border: 0; background: none; text-align: left; font: inherit; font-size: 12px; color: var(--link); cursor: pointer; }
 .manual-reader { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); }
 .manual-scroll { background: var(--paper); }
 .manual-text { max-width: 760px; margin: 0 auto; padding: 8px 4px 48px; font-size: 18px; line-height: 1.5; color: var(--text); }
@@ -625,7 +625,8 @@ body:not(.view-learn) .lesson-panel { display: none; }
 
 /* Links back to the source site, and in-line links that open the Manual in the app. */
 .out-link { color: var(--link); text-decoration: underline; text-underline-offset: 2px; }
-.out-link:hover, .inline-link:hover { text-decoration-thickness: 2px; }
+.section-link { color: var(--link); text-decoration: underline; text-decoration-style: dotted; text-underline-offset: 2px; }
+.out-link:hover, .inline-link:hover, .section-link:hover { text-decoration-thickness: 2px; }
 .inline-link { padding: 0; border: 0; background: none; font: inherit; color: var(--link); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
 .credit { margin-top: 12px; }
 .thanks { max-width: 68ch; }
