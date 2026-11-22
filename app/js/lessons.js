@@ -12,6 +12,7 @@ import { animateStroke } from './render.js';
 import { createExamplePanel, actualSizeStrip, enlargedSVG, printedOutline, printedCaption, pageLink } from './practice.js';
 import { AUTHOR, sourceUrl } from '../data/source.js';
 import { assessRepeats } from './repeats.js';
+import { createLinePicks } from './linepicks.js';
 import { getWriterScale, learnWriterScale } from './writer.js';
 import { el, button, credit } from './dom.js';
 
@@ -84,7 +85,7 @@ function writePrompt(example) {
   return `Write “${first}”.`;
 }
 
-export function createLessons({ panel, pad, assist, unitPx }) {
+export function createLessons({ panel, pad, assist, unitPx, linePicks }) {
   const progress = loadProgress();
   let lesson = LESSONS.find((l) => l.id === progress.unit);
   let index = 0;
@@ -103,6 +104,16 @@ export function createLessons({ panel, pad, assist, unitPx }) {
     hint: el('div', { className: 'repeat-hint' }), critiques: el('ul', { className: 'critiques' }),
   };
   const examplePanel = createExamplePanel(parts);
+  // The pad's numbered lines: tap one to see that line's stats.
+  const evaluate = (strokes) => {
+    try {
+      return assessRepeats(exampleFor(target), strokes, { unitPx: unitPx(), lineSpacing: pad.lineSpacing, scale: getWriterScale() });
+    } catch (err) {
+      console.error('assessment failed', err);
+      return null;
+    }
+  };
+  const picks = createLinePicks({ box: linePicks, pad, unitPx, evaluate, show: (r, opts) => examplePanel.showAssessment(r, opts) });
   const feedback = el('section', { className: 'feedback', ariaLabel: 'Your attempt' },
     el('div', { className: 'score-row' }, parts.score, parts.verdict, parts.hint), parts.critiques);
   let status = null; // the step's status line, while on screen
@@ -191,6 +202,7 @@ export function createLessons({ panel, pad, assist, unitPx }) {
     if (target === id) return;
     if (target) tried.set(target, pad.strokes.slice());
     target = id;
+    picks.reset();
     const example = exampleFor(id);
     pad.load(tried.get(id) || []);
     examplePanel.show(example, { index: 0, total: 1, lineSpacing: pad.lineSpacing, animate: false });
@@ -478,6 +490,7 @@ export function createLessons({ panel, pad, assist, unitPx }) {
     strip = null;
     tryPrompt = null;
     figures = [];
+    picks.clear();
     assist.drawCheck(null);
     assist.reset();
     renderUnits();
@@ -533,16 +546,14 @@ export function createLessons({ panel, pad, assist, unitPx }) {
   // Re-scores the pad against the outline being tried.
   function onPadChange() {
     const s = screen === 'step' ? step() : null;
-    if (!s || !target) return null;
-    let result = null;
-    try {
-      result = assessRepeats(exampleFor(target), pad.strokes, { unitPx: unitPx(), lineSpacing: pad.lineSpacing, scale: getWriterScale() });
-    } catch (err) {
-      console.error('assessment failed', err);
+    if (!s || !target) {
+      picks.clear();
+      return null;
     }
+    const result = evaluate(pad.strokes);
     if (result?.lastCompleted && result.completedCount > completedBefore) learnWriterScale(result.lastCompleted);
     completedBefore = result?.completedCount ?? 0;
-    examplePanel.showAssessment(result);
+    picks.update(result);
     assist.drawCheck(result);
     const passed = (result?.correctCount ?? 0) > 0;
     if (s.type !== 'write') {

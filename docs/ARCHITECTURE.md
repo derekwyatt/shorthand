@@ -6,11 +6,12 @@ The app is plain ES modules loaded by `app/index.html`; there is no bundler. Mod
 
 | Module | Role |
 | --- | --- |
-| `app/js/main.js` | Entry point. Routing between views, toolbar, persistence, export, per-line pickers. Creates the pad, the example panel, the assist overlay, the quiz, the lessons and the UI chrome. |
+| `app/js/main.js` | Entry point. Routing between views, toolbar, persistence, export. Creates the pad, the example panel, the assist overlay, the quiz, the lessons and the UI chrome. |
 | `app/js/ui.js` | The chrome: themes (`THEMES`, set as `data-theme` on `<html>`; every colour in `app.css` is a token the theme redefines), the Settings menu, and the handle (`#split`) that resizes the panel against the pad (its width in landscape, its height in portrait; the pad keeps at least 40%). Kept in `gregg.ui.v1`. |
 | `app/js/dom.js` | Shared DOM helpers: `el()`, `button()`, `svgEl()`, `saveFile()` (share sheet, else a download), `outLink()` and `credit()` (links out, in a new tab). |
 | `app/js/ink.js` | `InkPad`: pointer capture, canvas drawing, undo/clear, `toJSON()` and `strokesFromJSON()`. |
 | `app/js/assess.js` | `assessAttempt()`: scores one repeat against the model outline and produces critiques. Matches outlines with joined consonants or an s loop as whole shapes (`assessShape()`), smooths the model as well as the learner's ink, and checks the r circle for left motion. Also `guideUnits()` for the guide and shared helpers. |
+| `app/js/linepicks.js` | `createLinePicks()`: the numbered per-line buttons in the pad's left column, for Practice and Lessons. |
 | `app/js/repeats.js` | `assessRepeats()`: splits pad strokes into repeats, scores each, aggregates. `practiceLines()` and `repeatIndexFor()`. |
 | `app/js/assist.js` | Real-time guide, live warnings, per-stroke notes, green/red check overlay. |
 | `app/js/practice.js` | The example panel: enlarged and actual-size art, meaning, source, score badge, critiques. Also the pieces Lessons and Quiz share: `actualSizeStrip()`, `enlargedSVG()`, `printedOutline()` and `scoreClass()`. |
@@ -102,11 +103,11 @@ Undo and Clear also call `onChange(null)`, so the same path re-evaluates the pad
 - **Letters** (`kind: 'letter'`): every stroke is one repeat. Strokes smaller than 0.15 U are ignored as pen bounces, except for the h dot (`letter-h`).
 - **Everything else** (brief forms, words, sentences): every line of writing is one repeat. A stroke joins the nearest existing line if its vertical centre is within 0.6 of a line spacing of that line (1.0 for dots); otherwise it starts a new line.
 
-`assessRepeats()` scores each group with `assessAttempt()` and returns the repeats, the latest repeat, the count of completed repeats, how many scored 70 or more, the best score, the mean score of completed repeats as `score`, and the critiques (those for the latest repeat, plus up to three notes for issues that recur in two or more completed repeats). `practiceLines()` lists the lines of writing top to bottom, ignoring lines with only dots; `main.js` uses it for the per-line pickers. `repeatIndexFor()` tells the guide how many outlines are already written on the current line.
+`assessRepeats()` scores each group with `assessAttempt()` and returns the repeats, the latest repeat, the count of completed repeats, how many scored 70 or more, the best score, the mean score of completed repeats as `score`, and the critiques (those for the latest repeat, plus up to three notes for issues that recur in two or more completed repeats). `practiceLines()` lists the lines of writing top to bottom, ignoring lines with only dots; `linepicks.js` uses it for the per-line pickers. `repeatIndexFor()` tells the guide how many outlines are already written on the current line.
 
 ## Per-line pickers
 
-When `practiceLines()` returns two or more lines, `main.js` renders one numbered button per line in `#line-picks`, positioned at the line's y. Picking a line evaluates only that line's strokes and shows that in the panel; pressing the same button again shows all lines. The pick is stored as a y position and re-matched after each change, and dropped if its line disappears or only one line remains.
+When `practiceLines()` returns two or more lines, `linepicks.js` renders one numbered button per line in `#line-picks`, positioned at the line's y. Picking a line evaluates only that line's strokes and shows that in the panel; pressing the same button again shows all lines. The pick is stored as a y position and re-matched after each change, and dropped if its line disappears or only one line remains. Practice (`main.js`) and Lessons (`lessons.js`) each create one with their own example and panel; a lesson step that scores nothing clears the column.
 
 ## Persistence
 

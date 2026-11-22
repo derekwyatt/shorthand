@@ -106,7 +106,7 @@ With the guide on, the whole example is drawn faintly on the top rule at the siz
 
 ### Statistics for one line
 
-When the pad holds two or more lines of writing, a numbered button appears next to each line in a left column of the pad. Tap a number to see the score and critiques for that line only. Tap the same number again to go back to all lines. Changing to another example clears the pick.
+When the pad holds two or more lines of writing, in Practice or in a lesson, a numbered button appears next to each line in a left column of the pad. Tap a number to see the score and critiques for that line only. Tap the same number again to go back to all lines. Changing to another example or outline clears the pick.
 
 ![Line 2 picked: the panel shows that line's score and critiques only, and the overlay marks its mistakes in red](docs/screenshots/line-stats.png)
 
@@ -169,7 +169,8 @@ app/
   index.html          single page: the views, the toolbar and the Settings menu
   css/app.css         styles; the themes are sets of colour tokens
   js/
-    main.js           wiring: routing, toolbar, persistence, export, per-line pickers
+    main.js           wiring: routing, toolbar, persistence, export
+    linepicks.js      the per-line pickers in the pad's left column (Practice and Lessons)
     ui.js             themes, the Settings menu, the panel/pad resize handle
     dom.js            small DOM helpers (el, button, svgEl, saveFile)
     ink.js            InkPad: pointer capture, ink drawing, undo, JSON (de)serialisation

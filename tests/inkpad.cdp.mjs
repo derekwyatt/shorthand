@@ -615,7 +615,19 @@ try {
   await click('#lesson-panel .lesson-fig');
   await sleep(150);
   check(Number(await evaluate(`document.querySelector('#lesson-panel .score').textContent`)) >= 85, 'tapping "aim" again brings back its ink and score');
+  // A second line of "aim": the gutter numbers the lines, and picking one shows its stats.
+  const lineGap = 2 * Number(await evaluate(`document.getElementById('spacing').value`));
+  for (const st of await modelPts('word-aim', 200, 300 + lineGap)) await pen(st);
+  await sleep(200);
+  const lessonPicks = () => evaluate(`({ n: document.querySelectorAll('.line-pick').length, shown: getComputedStyle(document.getElementById('line-picks')).display !== 'none', verdict: document.querySelector('#lesson-panel .verdict').textContent })`);
+  let lpk = await lessonPicks();
+  check(lpk.n === 2 && lpk.shown && lpk.verdict.includes('2 repeats'), `lessons number the pad's lines in the gutter too (${JSON.stringify(lpk)})`);
+  await evaluate(`document.querySelectorAll('.line-pick')[1].click()`);
+  lpk = await lessonPicks();
+  check(lpk.verdict.startsWith('Line 2') && lpk.verdict.includes('1 repeat '), `picking a line in a lesson shows that line's stats (${lpk.verdict})`);
   await evaluate(`document.getElementById('clear').click()`);
+  await sleep(100);
+  check((await lessonPicks()).n === 0, 'clearing the pad removes the line numbers');
 
   await lessonNext();
   await lessonNext();

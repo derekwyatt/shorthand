@@ -154,7 +154,6 @@ body.view-quiz #stats,
 body.view-quiz .line-picks,
 body.view-learn #export,
 body.view-learn #stats,
-body.view-learn .line-picks,
 body:not(.view-strokes) .for-strokes { display: none; }
 .view[hidden] { display: none; }
 
@@ -349,7 +348,7 @@ body:not(.view-strokes) .for-strokes { display: none; }
 /* Practice view: a column down the left of the pad holds one button per line of writing
    (tap to see that line's stats in the panel). The ink and its overlays start to its right. */
 .page { --gutter: 0px; }
-body.view-pad .page { --gutter: 48px; }
+body.view-pad .page, body.view-learn .page { --gutter: 48px; }
 .line-picks {
   position: absolute; left: 0; top: 0; bottom: 0; width: var(--gutter);
   background: var(--gutter); border-right: 1px solid var(--gutter-border);

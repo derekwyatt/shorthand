@@ -4,10 +4,11 @@ import { buildReference } from './reference.js';
 import { createExamplePanel } from './practice.js';
 import { EXAMPLES, LEVELS } from '../data/examples.js';
 import { U_PER_LINE } from '../data/strokes.js';
-import { assessRepeats, repeatIndexFor, practiceLines } from './repeats.js';
+import { assessRepeats, repeatIndexFor } from './repeats.js';
 import { createAssist } from './assist.js';
 import { createQuiz } from './quiz.js';
 import { createLessons } from './lessons.js';
+import { createLinePicks } from './linepicks.js';
 import { exportProgress, importProgress, backupFileName } from './backup.js';
 import { getWriterScale, learnWriterScale } from './writer.js';
 import { el, saveFile } from './dom.js';
@@ -31,8 +32,6 @@ const guideInput = $('guide-on');
 const unitPx = () => pad.lineSpacing / U_PER_LINE;
 const inQuiz = () => document.body.classList.contains('view-quiz');
 const inLessons = () => document.body.classList.contains('view-learn');
-// y (px) of the line whose stats the panel shows; null shows every line.
-let pickedY = null;
 
 const pad = new InkPad($('ink'), {
   lineSpacing: saved.lineSpacing,
@@ -74,7 +73,8 @@ const panel = createExamplePanel({
 const assist = createAssist({ overlay: $('guide'), check: $('check'), hint: $('hint'), model: $('model'), modelOf: () => ({ example: inQuiz() ? null : guidedExample(), scale: getWriterScale(), lineSpacing: pad.lineSpacing }), unitPx, nextIndex: (strokes, point) => repeatIndexFor(guidedExample(), strokes, point, { unitPx: unitPx(), lineSpacing: pad.lineSpacing, scale: getWriterScale() }), enabled: () => guideInput.checked && !inQuiz() && !!guidedExample() });
 createUi({ menuButton: $('menu-btn'), menu: $('menu'), themes: $('themes'), split: $('split'), area: $('practice'), onTheme: () => pad.redraw() });
 const quiz = createQuiz({ panel: $('quiz-panel'), pad, assist, unitPx });
-const lessons = createLessons({ panel: $('lesson-panel'), pad, assist, unitPx });
+const practicePicks = createLinePicks({ box: $('line-picks'), pad, unitPx, evaluate, show: (r, opts) => panel.showAssessment(r, opts) });
+const lessons = createLessons({ panel: $('lesson-panel'), pad, assist, unitPx, linePicks: $('line-picks') });
 
 spacingInput.value = saved.lineSpacing;
 fingerInput.checked = saved.acceptTouch;
@@ -208,7 +208,7 @@ function goTo(i, { animate = true } = {}) {
   index = i;
   const ex = currentExample();
   saved.exampleId = ex.id;
-  pickedY = null;
+  practicePicks.reset();
   pad.load(InkPad.strokesFromJSON({ strokes: saved.attempts[ex.id]?.strokes || [] }));
   showPanel(animate);
   assist.setExample(ex);
@@ -244,55 +244,9 @@ function refreshAssessment() {
   assist.drawCheck(result);
 }
 
-function lines() {
-  return practiceLines(pad.strokes, { unitPx: unitPx(), lineSpacing: pad.lineSpacing });
-}
-
-// The picked line ({ line, number }), found again after the strokes change; the pick is
-// dropped once its line is gone or only one line is left.
-function pickedLine(all) {
-  if (pickedY === null || all.length < 2) {
-    pickedY = null;
-    return null;
-  }
-  let best = null;
-  all.forEach((line, i) => {
-    if (!best || Math.abs(line.y - pickedY) < Math.abs(best.line.y - pickedY)) best = { line, number: i + 1 };
-  });
-  if (Math.abs(best.line.y - pickedY) > pad.lineSpacing / 2) {
-    pickedY = null;
-    return null;
-  }
-  pickedY = best.line.y;
-  return best;
-}
-
 // The panel shows the stats for every line, or for the one line picked on the pad.
 function showAssessment(full) {
-  const all = lines();
-  const picked = pickedLine(all);
-  panel.showAssessment(picked ? evaluate(picked.line.strokes) : full, { line: picked?.number ?? null });
-  renderLinePicks(all, picked?.number ?? null);
-}
-
-// One button per line of writing; at most one is pressed, and pressing it again unpicks it.
-function renderLinePicks(all, picked) {
-  const box = $('line-picks');
-  if (all.length < 2) {
-    box.replaceChildren();
-    return;
-  }
-  box.replaceChildren(...all.map((line, i) => {
-    const n = i + 1;
-    const b = el('button', { type: 'button', className: 'line-pick', textContent: String(n), title: picked === n ? 'Show stats for every line' : `Show stats for line ${n} only` });
-    b.style.top = `${line.y}px`;
-    b.setAttribute('aria-pressed', String(picked === n));
-    b.addEventListener('click', () => {
-      pickedY = picked === n ? null : line.y;
-      showAssessment(evaluate());
-    });
-    return b;
-  }));
+  practicePicks.update(full);
 }
 
 const summary = (r) => (r ? { score: r.score, complete: r.complete, completedCount: r.completedCount, count: r.count, correctCount: r.correctCount, best: r.best, critiques: r.critiques.map(({ level, text }) => ({ level, text })) } : null);
