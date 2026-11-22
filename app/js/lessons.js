@@ -397,18 +397,19 @@ export function createLessons({ panel, pad, assist, unitPx, linePicks }) {
     pad.load([]);
     const keyBox = readingKey(r);
     const alt = `Reading and Dictation Practice, Manual §${r.section}: a page of shorthand`;
-    const open = () => openReader(r, keyBox, () => body.contains(slot) && slot.replaceWith(keyBox), alt);
+    const help = {
+      title: `Unit ${r.unit} reading: every word`, unit: r.unit,
+      groups: r.passages.map((p, i) => ({ caption: r.passages.length > 1 ? `Passage ${i + 1}` : null, text: p.text })),
+      links: [outLink(sourceUrl.readingKey(r.unit), 'reading key')],
+    };
+    const open = () => openReader(r, keyBox, () => body.contains(slot) && slot.replaceWith(keyBox), alt, help);
     const slot = el('div');
     body.replaceChildren(
       el('h2', { className: 'lesson-title', textContent: 'Reading and Dictation Practice' }),
       manualRef(`Manual §${r.section}, ${r.pages}`),
       el('p', { className: 'lesson-text', textContent: 'The manual closes every unit with a page of connected shorthand to read, and later to take from dictation. Read it a sentence at a time and check each against the key. Full screen puts the page and the key side by side. Copying outlines onto the pad as you read fixes the forms.' }),
       button('Read full screen', 'quiz-btn', () => { keyBox.replaceWith(slot); open(); }),
-      el('p', { className: 'explain-row' }, wordHelpLink({
-        title: `Unit ${r.unit} reading: every word`, unit: r.unit,
-        groups: r.passages.map((p, i) => ({ caption: r.passages.length > 1 ? `Passage ${i + 1}` : null, text: p.text })),
-        links: [outLink(sourceUrl.readingKey(r.unit), 'reading key')],
-      })),
+      el('p', { className: 'explain-row' }, wordHelpLink(help)),
       ...r.plates.map((id) => {
         const img = el('img', { src: readingPlate(id).src, className: 'plate reading-plate', alt, title: 'Tap to read full screen' });
         img.onclick = () => { keyBox.replaceWith(slot); open(); };
@@ -460,10 +461,11 @@ export function createLessons({ panel, pad, assist, unitPx, linePicks }) {
     const where = `Gregg Speed Studies, Speed Study ${roman(x.study)}${x.section ? ` §${x.section}` : ''}, ${x.pages}`;
     const figure = (f) => {
       const img = el('img', { src: readingPlate(f.plate).src, className: 'plate speed-plate', alt: `${f.label}, from ${where}`, title: 'Tap to enlarge' });
-      img.onclick = () => openReader({ title: `${x.title}: ${f.label}`, plates: [f.plate] }, f.key ? hiddenKey([{ paras: f.key }], null) : el('div'), () => {}, img.alt);
+      const help = f.key ? { title: `${x.title}: ${f.label}`, unit: x.unit, groups: [{ text: f.key }] } : null;
+      img.onclick = () => openReader({ title: `${x.title}: ${f.label}`, plates: [f.plate] }, f.key ? hiddenKey([{ paras: f.key }], null) : el('div'), () => {}, img.alt, help);
       return el('figure', { className: 'lesson-plate speed-fig' },
         el('figcaption', { textContent: f.label }), img,
-        ...(f.key ? [hiddenKey([{ paras: f.key }], null), el('p', { className: 'explain-row' }, wordHelpLink({ title: `${x.title}: ${f.label}`, unit: x.unit, groups: [{ text: f.key }] }))] : []),
+        ...(f.key ? [hiddenKey([{ paras: f.key }], null), el('p', { className: 'explain-row' }, wordHelpLink(help))] : []),
         ...(f.after ?? []).map((t) => el('p', { className: 'lesson-text', textContent: t })));
     };
     body.replaceChildren(
@@ -492,13 +494,15 @@ export function createLessons({ panel, pad, assist, unitPx, linePicks }) {
   }
 
   // Full screen: the page (tap it to switch between fitting the width and 2×) beside the key.
-  function openReader(r, keyBox, restore, alt) {
+  // `help`: the options of the word table for the page (wordhelp.js), linked from the bar.
+  function openReader(r, keyBox, restore, alt, help = null) {
     const page = el('div', { className: 'reader-page' }, ...r.plates.map((id) => el('img', { src: readingPlate(id).src, className: 'plate', alt })));
     page.onclick = () => page.classList.toggle('big');
     const close = () => { shade.remove(); restore(); };
     const shade = el('div', { className: 'reader', role: 'dialog', ariaLabel: alt },
       el('div', { className: 'reader-bar' },
         el('strong', { textContent: r.title ?? `Unit ${r.unit} · Reading and Dictation Practice (§${r.section}, ${r.pages})` }),
+        ...(help ? [wordHelpLink(help)] : []),
         button('Close ✕', 'quiz-btn key-btn', close)),
       page, el('div', { className: 'reader-key' }, keyBox));
     document.body.append(shade);

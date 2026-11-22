@@ -540,6 +540,7 @@ body:not(.view-learn) .lesson-panel { display: none; }
 .reader { position: fixed; inset: 0; z-index: 50; display: grid; grid-template-columns: minmax(0, 62fr) minmax(0, 38fr); grid-template-rows: auto minmax(0, 1fr); background: var(--panel); }
 .reader-bar { grid-column: 1 / -1; display: flex; align-items: center; gap: 12px; padding: 8px 16px; padding-top: max(8px, env(safe-area-inset-top)); background: var(--accent); color: var(--on-accent); }
 .reader-bar strong { flex: 1; font-size: 16px; }
+.reader-bar .explain-link { color: inherit; text-decoration-color: currentColor; white-space: nowrap; }
 .reader-page { overflow: auto; background: var(--card); padding: 12px; -webkit-overflow-scrolling: touch; cursor: zoom-in; }
 .reader-page .plate { display: block; width: 100%; max-width: none; height: auto; margin: 0 auto 12px; }
 .reader-page.big { cursor: zoom-out; }
@@ -548,6 +549,11 @@ body:not(.view-learn) .lesson-panel { display: none; }
 .reader-key .reading-tools { top: 0; }
 @media (max-width: 760px), (orientation: portrait) {
   .reader { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 3fr) minmax(0, 2fr); }
+}
+@media (max-width: 600px) {
+  .reader-bar { flex-wrap: wrap; row-gap: 4px; }
+  .reader-bar strong { flex-basis: 100%; }
+  .reader-bar .explain-link { flex: 1; text-align: left; }
 }
 /* Gregg Speed Studies figures: the drill on white, its label above, its key below. */
 .speed-fig { align-items: stretch; gap: 6px; background: var(--card); }
