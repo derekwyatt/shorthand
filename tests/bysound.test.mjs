@@ -30,11 +30,11 @@ test('the rules give the Manual’s own outlines for the words of Units 1–19',
 });
 
 test('the rules of the drill words (Speed Studies, Review Drill on Circle Joinings, checked on the plate)', () => {
-  assert.equal(out('deem', 2), 'd v-dash e m');
-  assert.equal(out('realm', 2), 'r v-dot e l m');
-  assert.equal(out('enemy', 2), 'v-dot e n e m e');
-  assert.equal(out('leaky', 2), 'l v-dash e k e');
-  assert.equal(out('gaining', 2), 'g v-dash a n ing');
+  assert.equal(out('deem', 2), 'd e m');
+  assert.equal(out('realm', 2), 'r e l m');
+  assert.equal(out('enemy', 2), 'e n e m e');
+  assert.equal(out('leaky', 2), 'l e k e');
+  assert.equal(out('gaining', 2), 'g a n ing');
 });
 
 test('each rule waits for the unit that teaches it', () => {
@@ -66,7 +66,7 @@ test('every rule cites paragraphs of the Manual', () => {
   }
 });
 
-test('§8 marks: long vowels a dash, medium a dot, as the Manual marks its Unit 1–3 words', () => {
+test('§8 marks: long vowels a dash, medium a dot, where the Manual prints them', () => {
   let n = 0, ok = 0;
   for (const e of EXAMPLES.filter((x) => x.kind === 'word')) {
     const w = e.title.split(' / ')[0];
@@ -75,10 +75,18 @@ test('§8 marks: long vowels a dash, medium a dot, as the Manual marks its Unit 
     if (markVowels(w, e.outline).join(' ') === e.outline.join(' ')) ok++;
   }
   assert.ok(ok / n >= 0.95, `${ok} of ${n}`);
-  assert.equal(out('deem', 2), 'd v-dash e m');
-  assert.equal(out('realm', 2), 'r v-dot e l m');
-  assert.equal(out('deem', 9), 'd e m', 'after Unit 3 the Manual prints no marks');
-  const row = (t) => wordRows('taking Harry', { unit: 2 }).find((r) => r.text === t);
-  assert.deepEqual(row('taking').outline, ['t', 'v-dash', 'a', 'k', 'ing']);
+  const of = (text, unit, w) => wordRows(text, { unit }).find((r) => r.text === w)?.example.outline.join(' ');
+  // a Unit 2 drill of isolated words (Speed Studies, Review Drill on Circle Joinings) is marked
+  const drill = 'deem, meat, rare, realm, gaining, taking, raid, Harry';
+  assert.equal(of(drill, 2, 'deem'), 'd v-dash e m');
+  assert.equal(of(drill, 2, 'realm'), 'r v-dot e l m');
+  assert.equal(of(drill, 2, 'taking'), 't v-dash a k ing');
+  assert.equal(of(drill, 2, 'raid'), 'r v-dash a d', 'a printed example keeps its marks');
+  assert.equal(of(drill, 2, 'Harry'), 'h a r e cap');
+  // its sentences, the readings and Unit 3 on are not
+  assert.equal(of('Dick will lead the airmen in the raid.', 2, 'raid'), 'r a d');
+  assert.equal(of('Deem it done, Ed.', 2, 'Deem'), 'd e m');
+  assert.equal(of('limb, lemon, raid, rated, aid, aided.', 3, 'raid'), 'r a d', 'Unit 3 prints no marks');
+  assert.match(wordRows('He came in the raid.', { unit: 2 })[3].how, /^Written r \+ a-circle \+ d\./);
   assert.equal(markVowels('harry', ['h', 'a', 'r', 'e']).join(' '), 'h a r e', 'ă before rr is short');
 });

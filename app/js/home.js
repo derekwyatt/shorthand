@@ -11,7 +11,7 @@ const GAP = 1.1;      // U between words
 const PAD_Y = 0.6;    // U of ruled space above the tallest outline and below the rule
 const LONGEST = 6;    // most words in a phrase
 
-// Every outline the app teaches, by word ("rid / red / read" gives all three). Running text
+// Every outline the app teaches, by word ("knees / niece" gives both). Running text
 // leaves out the §8 vowel marks ("seldom used"); the marks the outline needs stay.
 const LEXICON = new Map();
 for (const e of EXAMPLES) {

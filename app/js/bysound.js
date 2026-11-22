@@ -517,7 +517,7 @@ export function soundOutline(word, unit = 36) {
       const base = parts && soundOutline(parts.base, unit);
       if (base) {
         const out = withEnding(base.outline, parts.ending, unit, parts.added);
-        if (out) result = { outline: unit <= MARKED_UNTIL ? markVowels(w, out) : out, rules: base.rules, base: parts.base, ending: parts.ending };
+        if (out) result = { outline: out, rules: base.rules, base: parts.base, ending: parts.ending };
       }
       if (!result) {
         const rules = [];
@@ -528,7 +528,7 @@ export function soundOutline(word, unit = 36) {
         need(out.some((t) => !['h', 'ing', 'w-dash', 'a-dot'].includes(t)));
         compileOutline(out);
         const seen = new Set();
-        result = { outline: unit <= MARKED_UNTIL ? markVowels(w, out) : out, rules: rules.filter(([t]) => !seen.has(t) && seen.add(t)) };
+        result = { outline: out, rules: rules.filter(([t]) => !seen.has(t) && seen.add(t)) };
       }
     } catch (e) {
       if (!(e instanceof Skip) && !/circle|hook|loop|join|disjoin|goes before|ends the word|stroke/i.test(e.message)) throw e;
@@ -540,9 +540,9 @@ export function soundOutline(word, unit = 36) {
 }
 
 // §8: "the medium sound is marked with a dot, and the long sound with a short dash"; the short
-// sound is not marked. The Manual marks them in the word lists of Units 1–3 (VOWEL_MARKS in
-// data/examples.js) and in the drills that go with them, so outlines for those units carry them.
-export const MARKED_UNTIL = 3;
+// sound is not marked. The Manual marks them in its lists of isolated words in Units 1 and 2
+// (VOWEL_MARKS in data/examples.js) and in the Speed Studies drills that go with them; its
+// sentences and readings, and Unit 3 on, leave them out (wordhelp.js decides which applies).
 const markOf = (v) => {
   if (v.stress === 0) return null;
   if (v.p === 'EY' || v.p === 'IY' || (v.p === 'EH' && v.v === 'a')) return 'v-dash';

@@ -17,7 +17,7 @@ import { MANUAL_TEXT } from '../data/manual.js';
 import { sourceUrl } from '../data/source.js';
 import { openPopup, linkSections, unitOfParagraph } from './manualtext.js';
 import { taughtIn, joiningNotes } from './explain.js';
-import { soundOutline, withEnding, decompose, markVowels, MARKED_UNTIL } from './bysound.js';
+import { soundOutline, withEnding, decompose, markVowels } from './bysound.js';
 import { enlargedSVG } from './practice.js';
 
 const sec = ([a, b]) => `§${a}${b > a ? `–${b}` : ''}`;
@@ -81,8 +81,8 @@ const phraseFits = (key, unit) => {
   return !unit || !t || t.unit <= unit;
 };
 
-function direct(w, unit) {
-  if (EXAMPLE.has(w)) return exampleRow(EXAMPLE.get(w), unit);
+function direct(w, unit, marks = false) {
+  if (EXAMPLE.has(w)) return exampleRow(marks ? EXAMPLE.get(w) : unmarked(EXAMPLE.get(w)), unit);
   if (ABBR.has(w)) {
     const p = ABBR.get(w);
     return { kind: 'abbr', chart: CHART.get(w) ?? null, how: `A business abbreviation (§${p}).`, refs: [[p, p]] };
@@ -112,9 +112,10 @@ const outlineOf = (row) => row?.example?.outline ?? row?.outline ?? null;
 const SOUND_NOTE = 'Not in the Manual’s word lists: the outline the rules so far give it; the printed page may write it otherwise.';
 
 // A word written by sound (js/bysound.js): its outline, the rules used, and the joinings.
-function soundRow(w, unit) {
-  const s = soundOutline(w, unit ?? 36);
-  if (!s) return null;
+function soundRow(w, unit, marks) {
+  const found = soundOutline(w, unit ?? 36);
+  if (!found) return null;
+  const s = marks ? { ...found, outline: markVowels(w, found.outline) } : found;
   const rules = s.rules.filter(([, [a]]) => a > 1);
   const joins = joiningNotes(s.outline).filter(([, [a]]) => !rules.some(([, [b]]) => b === a));
   const all = [...rules, ...joins];
@@ -125,8 +126,8 @@ function soundRow(w, unit) {
   };
 }
 
-function resolve(w, unit, depth = 0, bySound = true) {
-  const hit = direct(w, unit);
+function resolve(w, unit, depth = 0, bySound = true, marks = false) {
+  const hit = direct(w, unit, marks);
   if (hit || depth > 1) return hit;
   // A base the Manual prints comes first; a base by sound only when the pronunciations agree
   // that the word is it plus the ending (taking is take + ing, not "tak").
@@ -144,8 +145,7 @@ function resolve(w, unit, depth = 0, bySound = true) {
       const joined = baseOutline && (ending === 'ings'
         ? (unit ?? 36) >= 12 ? [...baseOutline.filter((t) => !t.startsWith('v-')), 's-left'] : null
         : withEnding(baseOutline, ending, unit ?? 36, parts?.base === b ? parts.added : ending === 'ed' ? (/[td]$/.test(b) ? 'IH0 D' : 'D') : ''));
-      // §8 marks, as the Manual prints them in Units 1–3
-      const outline = joined && (unit ?? 36) <= MARKED_UNTIL ? markVowels(w, joined) : joined;
+      const outline = joined && marks ? markVowels(w, joined) : joined;
       return {
         kind: 'built', base: { ...base, text: b }, outline: outline ?? null,
         example: outline ? { id: `built-${w}`, kind: 'word', title: w, outline } : null,
@@ -164,12 +164,12 @@ function resolve(w, unit, depth = 0, bySound = true) {
       refs: [[61, 61]],
     };
   }
-  return bySound ? soundRow(w, unit) : null;
+  return bySound ? soundRow(w, unit, marks) : null;
 }
 
-function rowFor(key, word, initial, unit) {
+function rowFor(key, word, initial, unit, marks) {
   const name = /^[A-Z]/.test(word) && !initial;
-  const hit = resolve(key, unit, 0, !name);
+  const hit = resolve(key, unit, 0, !name, marks);
   if (hit) return hit;
   const parts = key.split('-');
   if (parts.length > 1 && parts.every((p) => resolve(p, unit))) {
@@ -177,7 +177,7 @@ function rowFor(key, word, initial, unit) {
   }
   if (name) {
     const s = soundOutline(key, unit ?? 36);
-    const outline = s && [...s.outline, 'cap'];
+    const outline = s && [...(marks ? markVowels(key, s.outline) : s.outline), 'cap'];
     return {
       kind: 'name', outline, example: outline ? { id: `name-${key}`, kind: 'word', title: word, outline } : null,
       how: `A name: written by sound (§1)${s ? `, ${spellOutline(s.outline)},` : ''} with the capital mark, two short dashes, under it (§5).`,
@@ -187,11 +187,30 @@ function rowFor(key, word, initial, unit) {
   return { kind: 'unknown', how: `Written by sound (§1)${unit ? ` with the rules of Units 1–${unit}` : ''}. A sound or joining in it is beyond what the app can derive, so it has no outline here.`, refs: [[1, 1]] };
 }
 
+// §8 marks are drawn as the page prints them: on a list of isolated words in Units 1 and 2 (the
+// Speed Studies drills); a sentence, a reading or a later unit's text leaves them out, so a
+// printed example's marks are dropped there.
+const isWordList = (paras) => {
+  const items = paras.flatMap((p) => p.replace(/\([^)]*\)/g, '').replace(/[.]\s*$/, '').split(/[,;]\s*/));
+  return items.length > 2 && items.every((x) => x.trim().split(/\s+/).length <= 2 && !/[.?!:]/.test(x));
+};
+const marksFor = (paras, unit) => unit != null && unit <= 2 && isWordList(paras);
+const UNMARKED = new Map();
+function unmarked(e) {
+  if (e.kind !== 'word' || !e.outline.some((t) => t === 'v-dash' || t === 'v-dot')) return e;
+  if (!UNMARKED.has(e.id)) {
+    const outline = e.outline.filter((t) => t !== 'v-dash' && t !== 'v-dot');
+    UNMARKED.set(e.id, { ...e, outline, meaning: [e.meaning[0].replace(/: [^:]+\.$/, `: ${spellOutline(outline)}.`), ...e.meaning.slice(1)] });
+  }
+  return UNMARKED.get(e.id);
+}
+
 // Rows for `text` (a string or paragraphs): each word or phrase once, in order of first use.
 // `unit`: the unit the text belongs to, for the words the app has no outline for.
 export function wordRows(text, { unit = null } = {}) {
   const rows = new Map();
   const paras = Array.isArray(text) ? text : [text];
+  const marks = marksFor(paras, unit);
   for (const para of paras) {
     // Runs of words between punctuation (a phrase never crosses it); a word is `initial` at the
     // start of a sentence: after . ? ! :, a numbered item or the start of the paragraph.
@@ -212,14 +231,14 @@ export function wordRows(text, { unit = null } = {}) {
         for (let n = Math.min(LONGEST, run.length - i); n >= 2 && !taken; n--) {
           const key = run.slice(i, i + n).map((x) => x.word).join(' ').toLowerCase();
           if (EXAMPLE.has(key) && phraseFits(key, unit) || ABBR.has(key)) {
-            if (!rows.has(key)) rows.set(key, { text: run.slice(i, i + n).map((x) => x.word).join(' '), ...direct(key, unit) });
+            if (!rows.has(key)) rows.set(key, { text: run.slice(i, i + n).map((x) => x.word).join(' '), ...direct(key, unit, marks) });
             taken = n;
           }
         }
         if (taken) { i += taken; continue; }
         const { word, initial: first } = run[i];
         const key = word.toLowerCase().replace(/’/g, '\'');
-        if (!rows.has(key)) rows.set(key, { text: word, ...rowFor(key, word, first, unit) });
+        if (!rows.has(key)) rows.set(key, { text: word, ...rowFor(key, word, first, unit, marks) });
         i++;
       }
     }

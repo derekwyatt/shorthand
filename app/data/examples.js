@@ -149,11 +149,14 @@ const WORDS_7 = [
   ['rainy', ['r', 'a', 'n', 'e'], R14, 7],
   ['dream', ['d', 'r', 'e', 'm'], R14, 7],
   ['writ', ['r', 'e', 't'], R15, 7],
-  ['rid / red / read', ['r', 'e', 'd'], R15, 7],
+  ['rid', ['r', 'e', 'd'], R15, 7],
+  ['red', ['r', 'e', 'd'], R15, 7],
+  ['read', ['r', 'e', 'd'], R15, 7],
   ['rate', ['r', 'a', 't'], R15, 7],
   ['raid', ['r', 'a', 'd'], R15, 7],
   ['ticket', ['t', 'e', 'k', 'e', 't'], R15, 7],
-  ['tack / take', ['t', 'a', 'k'], R15, 7],
+  ['tack', ['t', 'a', 'k'], R15, 7],
+  ['take', ['t', 'a', 'k'], R15, 7],
   ['deck', ['d', 'e', 'k'], R15, 7],
   ['dig', ['d', 'e', 'g'], R15, 7],
   ['tag', ['t', 'a', 'g'], R15, 7],
@@ -174,7 +177,8 @@ const WORDS_7 = [
   ['crate', ['k', 'r', 'a', 't'], R19, 8],
   ['eagle', ['e', 'g', 'l'], R19, 8],
   ['glee', ['g', 'l', 'e'], R19, 8],
-  ['glean / glen', ['g', 'l', 'e', 'n'], R19, 8],
+  ['glean', ['g', 'l', 'e', 'n'], R19, 8],
+  ['glen', ['g', 'l', 'e', 'n'], R19, 8],
   ['gleam', ['g', 'l', 'e', 'm'], R19, 8],
   ['glare', ['g', 'l', 'a', 'r'], R19, 8],
   ['acre', ['a', 'k', 'r'], R19, 8],
@@ -223,13 +227,18 @@ const WORDS_8 = [
   ['minimum', ['men', 'e', 'men'], R27, 12],
   ['had', ['h', 'a', 'd'], R28, 13],
   ['him', ['h', 'e', 'm'], R28, 13],
+  ['aid', ['a', 'd'], R28, 13],
   ['net', ['n', 'e', 't'], R28, 13],
   ['need', ['n', 'e', 'd'], R28, 13],
+  ['meet', ['m', 'e', 't'], R28, 13],
+  ['man', ['m', 'a', 'n'], R28, 13],
   ['tin', ['t', 'e', 'n'], R28, 13],
   ['tan', ['t', 'a', 'n'], R28, 13],
   ['cat', ['k', 'a', 't'], R28, 13],
   ['kid', ['k', 'e', 'd'], R28, 13],
-  ['her / here', ['h', 'e', 'r'], R28, 13],
+  ['came', ['k', 'a', 'm'], R28, 13],
+  ['her', ['e', 'r'], R28, 13, 'The Manual prints her without the h dot, the outline of the brief form were (p. 14); here has it (p. 13).'],
+  ['here', ['h', 'e', 'r'], R28, 13],
   ['ready', ['r', 'e', 'd', 'e'], R28, 13],
   ['led', ['l', 'e', 'd'], R28, 14],
   ['late', ['l', 'a', 't'], R28, 14],
@@ -238,6 +247,7 @@ const WORDS_8 = [
   ['tree', ['t', 'r', 'e'], R28, 14],
   ['train', ['t', 'r', 'a', 'n'], R28, 14],
   ['clean', ['k', 'l', 'e', 'n'], R28, 14],
+  ['lack', ['l', 'a', 'k'], R28, 14],
   ['leg', ['l', 'e', 'g'], R28, 14],
   ['attack', ['a', 't', 'a', 'k'], R28, 14],
   ['headache', ['h', 'e', 'd', 'a', 'k'], R28, 14],
@@ -293,7 +303,8 @@ export const VOWEL_MARKS = {
   ready: '. ', led: '.', late: '-', laid: '-', tree: '-', train: '-', clean: '-', leg: '.',
   headache: '.-', eke: '-', egg: '.', gay: '-', ear: '-', aim: '-', ate: '-', eat: '-', may: '-',
   me: '-', heat: '-', head: '.', get: '.', met: '.', team: '-', dream: '-', mean: '-', eager: '-',
-  today: '-',
+  today: '-', cake: '-', red: '.', read: '-', take: '-', glen: '.', here: '-', aid: '-', meet: '-',
+  came: '-',
 };
 const MARK_TOKEN = { '-': 'v-dash', '.': 'v-dot' };
 
@@ -320,7 +331,8 @@ const wordExample = (level, source) => ([word, plain, rule, note]) => {
   };
 };
 
-// Level 7 and 8 titles may name several words that share one outline ("rid / red / read").
+// Level 7 and 8 titles may name several words that share one outline ("knees / niece"); words
+// whose outlines differ only by a printed vowel mark (rid, red, read) are examples of their own.
 const wordExampleAt = (level) => ([title, plain, rule, page, note]) => {
   const names = title.split(' / ');
   const outline = withVowelMarks(names[0], plain);

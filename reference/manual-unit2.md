@@ -18,8 +18,8 @@ added that the manual does not print.
   carry them as printed (`VOWEL_MARKS` in `app/data/examples.js`; tokens `v-dot`,
   `v-dash` before the circle). Later units print none. The marks are "seldom used": the
   pad checks one that is written but only notes one that is left out. Words whose
-  outlines differ only by marks share one example (rid / red / read, tack / take,
-  glean / glen); a shared example carries the mark of its first word.
+  outlines differ only by marks are examples of their own, each with its printed mark
+  (rid, red, read; tack, take; glean, glen).
 - §16: "Some vowels are so obscure or neutral that they are omitted when they do not
   contribute to speed or legibility. For example, the e in the words taken and maker is
   absolutely useless, and is omitted." Hence `taken` = t a k n, `maker` = m a k r.
@@ -73,11 +73,14 @@ added that the manual does not print.
 | 14 | 7 | rainy | r a n e |
 | 14 | 7 | dream | d r e m |
 | 15 | 7 | writ | r e t |
-| 15 | 7 | rid / red / read | r e d |
+| 15 | 7 | rid | r e d |
+| 15 | 7 | red | r e d (dot) |
+| 15 | 7 | read | r e d (dash) |
 | 15 | 7 | rate | r a t |
 | 15 | 7 | raid | r a d |
 | 15 | 7 | ticket | t e k e t |
-| 15 | 7 | tack / take | t a k |
+| 15 | 7 | tack | t a k |
+| 15 | 7 | take | t a k (dash) |
 | 15 | 7 | deck | d e k |
 | 15 | 7 | dig | d e g |
 | 15 | 7 | tag | t a g |
@@ -98,7 +101,8 @@ added that the manual does not print.
 | 19 | 8 | crate | k r a t |
 | 19 | 8 | eagle | e g l |
 | 19 | 8 | glee | g l e |
-| 19 | 8 | glean / glen | g l e n |
+| 19 | 8 | glean | g l e n (dash) |
+| 19 | 8 | glen | g l e n (dot) |
 | 19 | 8 | gleam | g l e m |
 | 19 | 8 | glare | g l a r |
 | 19 | 8 | acre | a k r |

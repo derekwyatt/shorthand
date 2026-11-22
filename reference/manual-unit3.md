@@ -49,7 +49,13 @@ tokens are stroke ids plus `a` / `e` circles and the `h` dot; vowel marks are om
 | 28 | 13 | tan | t a n |
 | 28 | 13 | cat | k a t |
 | 28 | 13 | kid | k e d |
-| 28 | 13 | her / here | h e r |
+| 28 | 13 | aid | a d (dash) |
+| 28 | 13 | meet | m e t (dash) |
+| 28 | 13 | man | m a n |
+| 28 | 13 | came | k a m (dash) |
+| 28 | 13 | her | e r (printed without the h dot) |
+| 28 | 13 | here | h e r (dash) |
+| 28 | 14 | lack | l a k |
 | 28 | 13 | ready | r e d e |
 | 28 | 14 | led | l e d |
 | 28 | 14 | late | l a t |
@@ -81,9 +87,10 @@ Did / date (`ted`) and time (`tem`) are already level 2 brief forms.
 ## Left out, and why
 
 - **Drill words with the outline of an existing example** (not repeated in level 8; the
-  lesson uses the existing example and says so): eight = ate, add, aid = add, tea, day,
-  me, may, met / meet = met, made = maid, mean, man = main, make, get, take = tack / take,
-  came = calm, air, head, read = rid / red / read, rate, cream, milk, lack = lake.
+  lesson uses the existing example and says so): eight = ate, add, tea, day, me, may,
+  met, made = maid, mean, make, get, take, air, head, read, rate, cream, milk. (aid, meet,
+  man, came and lack differ from add, met, main, calm and lake by their vowel marks, §8, so
+  they are examples of their own.)
 - **many, money (§27):** both are `men e`, the level 4 example "many".
 - **month (§27):** the final th is too small on the plate to tell the over form from the
   under form (as with hath, wrath, myth in Unit 2).

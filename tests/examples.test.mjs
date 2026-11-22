@@ -19,7 +19,7 @@ test('levels run on without gaps, one per manual unit from Unit 2, every example
 });
 
 test('level sizes and unique ids', () => {
-  assert.deepEqual([1, 2, 3, 4, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41].map((n) => atLevel(n).length), [30, 22, 33, 26, 61, 44, 80, 113, 24, 84, 46, 72, 65, 68, 46, 75, 17, 57, 60, 29, 27, 56, 51, 24, 44, 24, 10, 53, 23, 19, 68, 32, 17, 60, 7, 15, 15, 8, 13]);
+  assert.deepEqual([1, 2, 3, 4, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41].map((n) => atLevel(n).length), [30, 22, 33, 26, 65, 50, 80, 113, 24, 84, 46, 72, 65, 68, 46, 75, 17, 57, 60, 29, 27, 56, 51, 24, 44, 24, 10, 53, 23, 19, 68, 32, 17, 60, 7, 15, 15, 8, 13]);
   assert.ok(atLevel(5).length >= 30);
   assert.ok(atLevel(6).length >= 30);
   assert.equal(new Set(EXAMPLES.map((e) => e.id)).size, EXAMPLES.length);
@@ -44,12 +44,14 @@ test('circle-word outlines are unique and never equal a brief form', () => {
 });
 
 test('Unit 2 and Unit 3 examples cite a manual page and have unique outlines in their level', () => {
+  // p. 14 prints the brief form were as p. 13 prints her: e + r
+  const SAME = new Set(['brief-were']);
   for (const n of [7, 8]) {
     const seen = new Map();
     for (const e of atLevel(n)) {
       assert.match(e.source, /^Gregg Shorthand Manual \(1929\), p\. \d+$/, e.id);
       assert.ok(['word', 'brief'].includes(e.kind), e.id);
-      assert.ok(!seen.has(key(e)), `${e.id} has the outline of ${seen.get(key(e))}`);
+      assert.ok(!seen.has(key(e)) || SAME.has(e.id), `${e.id} has the outline of ${seen.get(key(e))}`);
       seen.set(key(e), e.id);
     }
   }

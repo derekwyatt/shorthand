@@ -5,7 +5,7 @@
 //   rules: { key: text }             rule text quoted or paraphrased from the manual
 //   words: [[title, outline, rule key, page, note?]]
 //                                    title may name several words sharing one outline
-//                                    ("rid / red / read"); the id is word-<first word>
+//                                    ("knees / niece"); the id is word-<first word>
 //   brief: [[title, outline, page, note?]]   brief forms; the id is brief-<first name>
 //   phrases: [[title, outline, page, note?]] joined phrases; the id is phrase-<title>
 //   lesson: [step]                   { read: [title, ref, text[], show[], plates[]] },
