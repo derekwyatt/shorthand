@@ -222,6 +222,16 @@ export function createQuiz({ panel, pad, assist, unitPx }) {
     else renderWrite(question, example, answer);
   }
 
+  // The outline on ruled lines, unlabelled: the enlarged view is scaled to fit, so only its size
+  // against the rules tells similar strokes apart (a long ch from a short t).
+  const ruled = (example) => [el('div', { className: 'ex-caption', textContent: 'On the pad, at actual size' }), actualSizeStrip([example], { lineSpacing: pad.lineSpacing, labels: false })];
+
+  // The manual's printed outline, captioned with its page, when it prints one.
+  function printed(example) {
+    const img = printedOutline(example);
+    return img ? [printedCaption(img.page), el('div', { className: 'ex-plate' }, img)] : [];
+  }
+
   function renderRead(question, example, answer) {
     setPad([]);
     const status = el('div', { className: 'quiz-result' });
@@ -240,18 +250,12 @@ export function createQuiz({ panel, pad, assist, unitPx }) {
       status.className = `quiz-result ${correct ? 'good' : 'bad'}`;
       status.textContent = correct ? 'Correct' : `Not quite: it says “${example.title}”`;
       // The manual's printed outline (it names the word, so only after answering).
-      const printed = printedOutline(example);
-      reveal.replaceChildren(el('p', { className: 'explain-row' }, explainLink(example)), ...meaningLines(example), ...(printed ? [
-        printedCaption(printed.page),
-        el('div', { className: 'ex-plate' }, printed),
-      ] : []));
+      reveal.replaceChildren(el('p', { className: 'explain-row' }, explainLink(example)), ...meaningLines(example), ...printed(example));
       panel.append(nextButton());
     }
 
     choices.append(...question.choices.filter((id) => BY_ID.has(id)).map((id) => choiceButton(id, lock)));
-    // The outline on ruled lines too, unlabelled: its size against the rules tells similar strokes apart.
-    const ruled = [el('div', { className: 'ex-caption', textContent: 'On the pad, at actual size' }), actualSizeStrip([example], { lineSpacing: pad.lineSpacing, labels: false })];
-    panel.replaceChildren(header(), el('div', { className: 'quiz-prompt', textContent: question.prompt }), enlarged(example, !answer), ...ruled, choices, status, reveal);
+    panel.replaceChildren(header(), el('div', { className: 'quiz-prompt', textContent: question.prompt }), enlarged(example, !answer), ...ruled(example), choices, status, reveal);
     if (answer) lock(answer.chosenId);
   }
 
@@ -266,7 +270,7 @@ export function createQuiz({ panel, pad, assist, unitPx }) {
       checkBtn = null;
       status.className = `quiz-result ${correct ? 'good' : 'bad'}`;
       status.textContent = correct ? 'Correct' : 'Not quite';
-      feedback.replaceChildren(...(result ? [scoreBlock(result)] : []), enlarged(example, true), el('div', { className: 'ex-meaning' }, el('p', { className: 'explain-row' }, explainLink(example)), ...meaningLines(example)));
+      feedback.replaceChildren(...(result ? [scoreBlock(result)] : []), enlarged(example, true), ...ruled(example), el('div', { className: 'ex-meaning' }, el('p', { className: 'explain-row' }, explainLink(example)), ...meaningLines(example), ...printed(example)));
       panel.append(nextButton());
       if (result) assist.drawCheck(result);
     }
