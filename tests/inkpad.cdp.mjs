@@ -509,6 +509,8 @@ try {
       const { generateQuiz } = await import('./js/quizgen.js');
       window.fetch = async () => new Response(JSON.stringify(generateQuiz({ n: ${n}, types: ['${type}']${seed === undefined ? '' : `, seed: ${seed}`} })), { headers: { 'Content-Type': 'application/json' } });
     })()`);
+    // No level is ticked until a unit's lessons are finished: tick one so Start is enabled.
+    await evaluate(`(() => { const i = document.querySelector('#quiz-panel .quiz-opts input'); if (!i.checked) i.click(); })()`);
     await clickText('Start quiz');
     await sleep(400);
   };

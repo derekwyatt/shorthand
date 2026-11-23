@@ -6,6 +6,7 @@ import { generateQuiz } from './quizgen.js';
 import { actualSizeStrip, enlargedSVG, scoreClass, printedOutline, printedCaption } from './practice.js';
 import { getWriterScale, learnWriterScale } from './writer.js';
 import { explainLink } from './explain.js';
+import { completedUnits } from './lessons.js';
 import { el, button, svgEl } from './dom.js';
 
 const STORE_KEY = 'gregg.quiz.v1';
@@ -92,7 +93,13 @@ function overlaySVG(strokes, result, unitPx) {
 }
 
 export function createQuiz({ panel, pad, assist, unitPx }) {
-  const options = { levels: LEVELS.map((l) => l.id), types: TYPE_OPTIONS.map(([t]) => t), n: 10 };
+  // levels: null until a quiz is started; until then the start screen ticks the levels of the
+  // units whose lessons are finished, and nothing else.
+  const options = { levels: null, types: TYPE_OPTIONS.map(([t]) => t), n: 10 };
+  const finishedLevels = () => {
+    const units = new Set(completedUnits());
+    return LEVELS.filter((l) => l.unit != null && units.has(l.unit)).map((l) => l.id);
+  };
   let quiz = null; // { questions: [{ question, example }], index, answers: [], local }; series questions have example null
   let screen = 'start';
   let checkBtn = null; // the write question's Check button, while it is on screen
@@ -130,7 +137,7 @@ export function createQuiz({ panel, pad, assist, unitPx }) {
     screen = 'start';
     checkBtn = null;
     setPad([]);
-    const levels = optionGroup('Levels', LEVEL_OPTIONS, options.levels.map(String));
+    const levels = optionGroup('Levels', LEVEL_OPTIONS, (options.levels ?? finishedLevels()).map(String));
     const types = optionGroup('Question types', TYPE_OPTIONS, options.types);
     const lens = el('div', { className: 'quiz-len' });
     for (const n of LENGTHS) {
@@ -145,9 +152,13 @@ export function createQuiz({ panel, pad, assist, unitPx }) {
       options.types = checkedValues(types.box);
       begin();
     });
+    const ready = () => { start.disabled = !checkedValues(levels.box).length || !checkedValues(types.box).length; };
+    levels.box.addEventListener('change', ready);
+    types.box.addEventListener('change', ready);
+    ready();
     panel.replaceChildren(
       el('h2', { textContent: 'Quiz' }),
-      levels.heading, levels.box, types.heading, types.box,
+      levels.heading, el('p', { className: 'quiz-note', textContent: 'Tick the levels to be quizzed on. The levels of units whose lessons you have finished are ticked for you.' }), levels.box, types.heading, types.box,
       el('h3', { textContent: 'Length' }), lens, start,
       el('h3', { textContent: 'Last quizzes' }), recentList(),
     );

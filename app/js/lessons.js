@@ -67,6 +67,15 @@ export function keyItems(line) {
 const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII', 'XIII', 'XIV', 'XV', 'XVI', 'XVII', 'XVIII', 'XIX', 'XX'];
 const roman = (n) => ROMAN[n] ?? String(n);
 
+// The units whose lesson has every task done (the quiz ticks their levels).
+export function completedUnits() {
+  const { done } = loadProgress();
+  return LESSONS.filter((l) => {
+    const set = new Set(done[l.id] || []);
+    return l.steps.filter(isTask).every((s) => set.has(stepKey(s)));
+  }).map((l) => l.unit);
+}
+
 function loadProgress() {
   const defaults = { unit: LESSONS[0].id, at: {}, done: {} };
   try {
